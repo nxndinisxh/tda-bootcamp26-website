@@ -1,0 +1,243 @@
+{
+  "users": [
+    {
+      "id": "user_super_admin",
+      "name": "TDA Super Admin",
+      "email": "admin@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yu8G3.V8LdEryO5sXKtEP3YHuMX/WNb1W",
+      "domains": [
+        "Machine Learning",
+        "Deep Learning",
+        "DAV",
+        "DSA",
+        "WebDev"
+      ],
+      "role": "super_admin",
+      "adminDomains": [
+        "Machine Learning",
+        "Deep Learning",
+        "DAV",
+        "DSA",
+        "WebDev"
+      ],
+      "createdAt": "2026-05-22T05:31:01.364Z"
+    },
+    {
+      "id": "user_dsa_admin",
+      "name": "Rohan Sharma",
+      "email": "rohan.sharma@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuWN84PkEaQDEwuVOkLEahRRXItKmCvo.",
+      "domains": [
+        "DSA"
+      ],
+      "role": "admin",
+      "adminDomains": [
+        "DSA"
+      ],
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "user_1",
+      "name": "Aditya Sen",
+      "email": "aditya.sen@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": [
+        "DSA",
+        "WebDev",
+        "Machine Learning"
+      ],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "user_2",
+      "name": "Neha Gupta",
+      "email": "neha.gupta@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": [
+        "Machine Learning",
+        "Deep Learning"
+      ],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "user_3",
+      "name": "Kabir Mehta",
+      "email": "kabir.mehta@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": [
+        "DAV",
+        "WebDev"
+      ],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    }
+  ],
+  "resources": [
+    {
+      "id": "res_1",
+      "domain": "DSA",
+      "title": "Asymptotic Analysis & Big O Notation",
+      "description": "A comprehensive guide to understanding time and space complexity, recurrence relations, and master theorem.",
+      "link": "https://www.geeksforgeeks.org/analysis-algorithms-big-o-analysis/",
+      "week": "Week 1",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "res_2",
+      "domain": "DSA",
+      "title": "Mastering Linked Lists and Trees",
+      "description": "Interactive visualization and practice problems for singly/doubly linked lists, binary trees, and BST operations.",
+      "link": "https://visualgo.net/en/list",
+      "week": "Week 2",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "res_3",
+      "domain": "Machine Learning",
+      "title": "Introduction to Linear Regression & Cost Functions",
+      "description": "Mathematical derivation of simple linear regression, gradient descent, and evaluation metrics (MSE, R2).",
+      "link": "https://towardsdatascience.com/linear-regression-detailed-view-ea73175d60e1",
+      "week": "Week 1",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "res_4",
+      "domain": "WebDev",
+      "title": "HTML & CSS Deep Dive",
+      "description": "Modern CSS layouts using Flexbox, CSS Grid, custom properties, and responsive design guidelines.",
+      "link": "https://developer.mozilla.org/en-US/docs/Learn/CSS",
+      "week": "Week 1",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "res_5",
+      "domain": "Deep Learning",
+      "title": "Neural Networks Basics & Backpropagation",
+      "description": "Visual explanation of neural networks, weights, biases, activation functions, and backpropagation calculations.",
+      "link": "https://www.youtube.com/watch?v=Ilg3gGewQ5U",
+      "week": "Week 1",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "res_6",
+      "domain": "DAV",
+      "title": "Data Cleaning and Wrangling with Pandas",
+      "description": "Handling missing values, duplicates, filtering data, grouping, and merging datasets using Pandas.",
+      "link": "https://pandas.pydata.org/docs/user_guide/10min.html",
+      "week": "Week 1",
+      "createdAt": "2026-05-22T05:31:01.365Z"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "ann_1",
+      "domain": "DSA",
+      "title": "Week 1 Coding Challenge Live!",
+      "content": "The first coding challenge on Arrays and String manipulation is now live. Complete the problems by Sunday 11:59 PM.",
+      "date": "2026-05-22T05:31:01.365Z",
+      "author": "Rohan Sharma"
+    },
+    {
+      "id": "ann_2",
+      "domain": "Machine Learning",
+      "title": "Kaggle Competition Rules",
+      "content": "Welcome to the ML Domain! We have set up our first Kaggle competition. Please join using your university email.",
+      "date": "2026-05-22T05:31:01.365Z",
+      "author": "TDA Super Admin"
+    },
+    {
+      "id": "ann_3",
+      "domain": "WebDev",
+      "title": "Git & GitHub Hands-on Workshop",
+      "content": "We will be hosting a hands-on session on Git branching models, pull requests, and hosting static sites on Friday at 6:00 PM.",
+      "date": "2026-05-22T05:31:01.365Z",
+      "author": "TDA Super Admin"
+    }
+  ],
+  "leaderboard": [
+    {
+      "id": "lb_1",
+      "userId": "user_1",
+      "userName": "Aditya Sen",
+      "domain": "DSA",
+      "scores": {
+        "Week 1 Task": 85,
+        "Week 2 Task": 90,
+        "week2": 100
+      },
+      "totalScore": 275,
+      "rank": 1
+    },
+    {
+      "id": "lb_2",
+      "userId": "user_1",
+      "userName": "Aditya Sen",
+      "domain": "WebDev",
+      "scores": {
+        "Project Proposal": 95
+      },
+      "totalScore": 95,
+      "rank": 2
+    },
+    {
+      "id": "lb_3",
+      "userId": "user_1",
+      "userName": "Aditya Sen",
+      "domain": "Machine Learning",
+      "scores": {
+        "Classification Task": 80
+      },
+      "totalScore": 80,
+      "rank": 2
+    },
+    {
+      "id": "lb_4",
+      "userId": "user_2",
+      "userName": "Neha Gupta",
+      "domain": "Machine Learning",
+      "scores": {
+        "Classification Task": 95
+      },
+      "totalScore": 95,
+      "rank": 1
+    },
+    {
+      "id": "lb_5",
+      "userId": "user_2",
+      "userName": "Neha Gupta",
+      "domain": "Deep Learning",
+      "scores": {
+        "CNN Implementation": 90
+      },
+      "totalScore": 90,
+      "rank": 1
+    },
+    {
+      "id": "lb_6",
+      "userId": "user_3",
+      "userName": "Kabir Mehta",
+      "domain": "WebDev",
+      "scores": {
+        "Project Proposal": 100
+      },
+      "totalScore": 100,
+      "rank": 1
+    },
+    {
+      "id": "lb_7",
+      "userId": "user_3",
+      "userName": "Kabir Mehta",
+      "domain": "DAV",
+      "scores": {
+        "Visualization Task": 88
+      },
+      "totalScore": 88,
+      "rank": 1
+    }
+  ]
+}

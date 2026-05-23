@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #02223e;
+  --color-brand-bg-light: #06385d;
+  --color-brand-card: rgba(6, 42, 73, 0.45);
+  --color-brand-border: rgba(212, 193, 182, 0.12);
+  --color-brand-primary: #60a6dc;
+  --color-brand-warm: #d4c1b6;
+  
+  --color-accent-purple: #8b5cf6;
+  --color-accent-blue: #60a6dc;
+  --color-accent-emerald: #10b981;
+  --color-accent-gold: #d4c1b6;
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(96, 166, 220, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(212, 193, 182, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(6, 56, 93, 0.3) 0%, transparent 70%);
+  color: #f3f4f6;
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Glassmorphism utility aligned to Bright Path aesthetic */
+.glass {
+  background: rgba(6, 42, 73, 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 193, 182, 0.12);
+}
+
+/* Notched organic card matching Bright Path reference image */
+.notched-card {
+  background: rgba(6, 42, 73, 0.5);
+  border: 1px solid rgba(212, 193, 182, 0.15);
+  backdrop-filter: blur(12px);
+  border-top-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+  border-top-right-radius: 6px;
+  border-bottom-left-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #02223e;
+}
+::-webkit-scrollbar-thumb {
+  background: #60a6dc;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4c1b6;
+}
+
+/* Soft glow animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(96, 166, 220, 0.3), 0 0 20px rgba(96, 166, 220, 0.1);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(96, 166, 220, 0.6), 0 0 35px rgba(96, 166, 220, 0.3);
+  }
+}
+
+.text-glow-primary {
+  animation: pulseGlow 4s infinite ease-in-out;
+}
+
+/* Custom input field style */
+.brand-input {
+  background-color: rgba(2, 34, 62, 0.5);
+  border: 1px solid rgba(212, 193, 182, 0.2);
+  border-radius: 12px;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.brand-input:focus {
+  border-color: #60a6dc;
+  box-shadow: 0 0 0 2px rgba(96, 166, 220, 0.15);
+  outline: none;
+}
+
+/* Rounded border styling inspired by organic curves in the layout */
+.pill-border {
+  border-radius: 24px;
+}
+
+/* Gradient background for hero segments */
+.bg-hero-gradient {
+  background: linear-gradient(180deg, #02223e 0%, rgba(6, 42, 73, 0.7) 100%);
+}
+
+/* Pulse animation for sparkles */
+@keyframes sparklePulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.85); }
+  50% { opacity: 0.95; transform: scale(1.15); }
+}
+
+.sparkle-pulse {
+  animation: sparklePulse 3s infinite ease-in-out;
+}
