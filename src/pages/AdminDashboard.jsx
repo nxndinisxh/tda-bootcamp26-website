@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     }
 
     fetchInitialData();
-  }, [user, selectedDomain]);
+  }, [user, selectedDomain, activePanel]);
 
   const fetchInitialData = async () => {
     setLoading(true);

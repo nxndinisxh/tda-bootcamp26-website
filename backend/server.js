@@ -1,3 +1,4 @@
+import connectDB from "./config/db.js";
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
@@ -5,7 +6,11 @@ import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import db from './database.js';
+
+import User from './models/User.js';
+import Resource from './models/Resource.js';
+import Announcement from './models/Announcement.js';
+import Leaderboard from './models/Leaderboard.js';
 
 dotenv.config();
 
@@ -17,7 +22,7 @@ const PORT = process.env.PORT;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Initialize Database
-await db.init();
+await connectDB();
 
 // Middleware
 app.use(cors());
@@ -106,10 +111,9 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   try {
-    const users = await db.getUsers();
-
-    // Check if user already exists
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+    // FIX: Use findOne instead of fetching all users
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
       return res.status(400).json({ message: 'An account with this email already exists.' });
     }
 
@@ -118,38 +122,32 @@ app.post('/api/auth/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Create user
-    const newUser = {
+    const newUser = await User.create({
       id: `user_${Date.now()}`,
       name,
-      email,
+      email: email.toLowerCase(),
       passwordHash,
       domains,
-      role: 'user', // Default is normal user
+      role: 'user',
       adminDomains: [],
       createdAt: new Date().toISOString()
-    };
+    });
 
-    users.push(newUser);
-    await db.saveUsers(users);
-
-    // Automatically create blank leaderboard entries for the user's selected domains
-    const leaderboard = await db.getLeaderboard();
+    // FIX: Create leaderboard entries directly with insertMany (only new ones, not the whole array)
+    const leaderboardEntries = [];
     for (const domain of domains) {
-      // Find current rank size for this domain to set initial rank
-      const domainEntries = leaderboard.filter(e => e.domain === domain);
-      const nextRank = domainEntries.length + 1;
-
-      leaderboard.push({
+      const domainCount = await Leaderboard.countDocuments({ domain });
+      leaderboardEntries.push({
         id: `lb_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         userId: newUser.id,
         userName: newUser.name,
         domain,
         scores: {},
         totalScore: 0,
-        rank: nextRank
+        rank: domainCount + 1
       });
     }
-    await db.saveLeaderboard(leaderboard);
+    await Leaderboard.insertMany(leaderboardEntries);
 
     res.status(201).json({ message: 'Registration successful. You can now log in.' });
   } catch (error) {
@@ -167,8 +165,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   try {
-    const users = await db.getUsers();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password.' });
@@ -212,8 +209,7 @@ app.post('/api/auth/login', async (req, res) => {
 // Get profile
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const users = await db.getUsers();
-    const user = users.find(u => u.id === req.user.id);
+    const user = await User.findOne({ id: req.user.id });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -233,18 +229,17 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 
 // --- RESOURCES ENDPOINTS ---
 
-// Get domain resources (available to users registered in that domain or admins)
+// Get domain resources
 app.get('/api/domains/:domain/resources', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
-  // Validate user has access to this domain (either registered in it or is admin)
   if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
     return res.status(403).json({ message: `Access denied. You are not registered for the ${domain} domain.` });
   }
 
   try {
-    const allResources = await db.getResources();
-    const domainResources = allResources.filter(r => r.domain === domain);
+    // FIX: Query by domain directly instead of fetching all and filtering
+    const domainResources = await Resource.find({ domain });
     res.json(domainResources);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving resources.' });
@@ -261,8 +256,8 @@ app.post('/api/domains/:domain/resources', authenticateToken, requireDomainAcces
   }
 
   try {
-    const resources = await db.getResources();
-    const newResource = {
+    // FIX: Use Resource.create() instead of db.getResources() / db.saveResources()
+    const newResource = await Resource.create({
       id: `res_${Date.now()}`,
       domain,
       title,
@@ -270,10 +265,7 @@ app.post('/api/domains/:domain/resources', authenticateToken, requireDomainAcces
       link,
       week,
       createdAt: new Date().toISOString()
-    };
-
-    resources.push(newResource);
-    await db.saveResources(resources);
+    });
 
     res.status(201).json(newResource);
   } catch (error) {
@@ -287,23 +279,25 @@ app.put('/api/domains/:domain/resources/:id', authenticateToken, requireDomainAc
   const { title, description, link, week } = req.body;
 
   try {
-    const resources = await db.getResources();
-    const idx = resources.findIndex(r => r.id === id);
+    // FIX: Use findOneAndUpdate() instead of db.getResources() / db.saveResources()
+    const updated = await Resource.findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          ...(title && { title }),
+          ...(description !== undefined && { description }),
+          ...(link && { link }),
+          ...(week && { week })
+        }
+      },
+      { new: true }
+    );
 
-    if (idx === -1) {
+    if (!updated) {
       return res.status(404).json({ message: 'Resource not found' });
     }
 
-    resources[idx] = {
-      ...resources[idx],
-      title: title || resources[idx].title,
-      description: description !== undefined ? description : resources[idx].description,
-      link: link || resources[idx].link,
-      week: week || resources[idx].week
-    };
-
-    await db.saveResources(resources);
-    res.json(resources[idx]);
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: 'Failed to update resource.' });
   }
@@ -314,15 +308,12 @@ app.delete('/api/domains/:domain/resources/:id', authenticateToken, requireDomai
   const { id } = req.params;
 
   try {
-    let resources = await db.getResources();
-    const exists = resources.some(r => r.id === id);
+    // FIX: Use findOneAndDelete() instead of db.getResources() / db.saveResources()
+    const deleted = await Resource.findOneAndDelete({ id });
 
-    if (!exists) {
+    if (!deleted) {
       return res.status(404).json({ message: 'Resource not found' });
     }
-
-    resources = resources.filter(r => r.id !== id);
-    await db.saveResources(resources);
 
     res.json({ message: 'Resource deleted successfully' });
   } catch (error) {
@@ -342,8 +333,8 @@ app.get('/api/domains/:domain/announcements', authenticateToken, async (req, res
   }
 
   try {
-    const announcements = await db.getAnnouncements();
-    const domainAnnouncements = announcements.filter(a => a.domain === domain);
+    // FIX: Query by domain directly, sorted newest first
+    const domainAnnouncements = await Announcement.find({ domain }).sort({ date: -1 });
     res.json(domainAnnouncements);
   } catch (error) {
     res.status(500).json({ message: 'Failed to load announcements.' });
@@ -360,18 +351,15 @@ app.post('/api/domains/:domain/announcements', authenticateToken, requireDomainA
   }
 
   try {
-    const announcements = await db.getAnnouncements();
-    const newAnnouncement = {
+    // FIX: Use Announcement.create() instead of db.getAnnouncements() / db.saveAnnouncements()
+    const newAnnouncement = await Announcement.create({
       id: `ann_${Date.now()}`,
       domain,
       title,
       content,
       date: new Date().toISOString(),
       author: req.user.name
-    };
-
-    announcements.unshift(newAnnouncement); // Newest first
-    await db.saveAnnouncements(announcements);
+    });
 
     res.status(201).json(newAnnouncement);
   } catch (error) {
@@ -384,15 +372,12 @@ app.delete('/api/domains/:domain/announcements/:id', authenticateToken, requireD
   const { id } = req.params;
 
   try {
-    let announcements = await db.getAnnouncements();
-    const exists = announcements.some(a => a.id === id);
+    // FIX: Use findOneAndDelete() instead of db.getAnnouncements() / db.saveAnnouncements()
+    const deleted = await Announcement.findOneAndDelete({ id });
 
-    if (!exists) {
+    if (!deleted) {
       return res.status(404).json({ message: 'Announcement not found' });
     }
-
-    announcements = announcements.filter(a => a.id !== id);
-    await db.saveAnnouncements(announcements);
 
     res.json({ message: 'Announcement deleted.' });
   } catch (error) {
@@ -408,17 +393,16 @@ app.get('/api/leaderboard/:domain', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
   try {
-    const leaderboard = await db.getLeaderboard();
-    const domainEntries = leaderboard
-      .filter(e => e.domain === domain)
-      .sort((a, b) => b.totalScore - a.totalScore);
+    // FIX: Query by domain and sort directly in MongoDB
+    const domainEntries = await Leaderboard.find({ domain }).sort({ totalScore: -1 }).lean();
 
     // Re-calculate ranks dynamically for display
-    domainEntries.forEach((entry, index) => {
-      entry.rank = index + 1;
-    });
+    const ranked = domainEntries.map((entry, index) => ({
+      ...entry.toObject(),
+      rank: index + 1
+    }));
 
-    res.json(domainEntries);
+    res.json(ranked);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch leaderboard.' });
   }
@@ -427,7 +411,7 @@ app.get('/api/leaderboard/:domain', authenticateToken, async (req, res) => {
 // Get overall leaderboard
 app.get('/api/leaderboard', authenticateToken, async (req, res) => {
   try {
-    const leaderboard = await db.getLeaderboard();
+    const leaderboard = await Leaderboard.find().lean();
 
     // Aggregate scores per user
     const userScores = {};
@@ -447,11 +431,8 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
     });
 
     const overallList = Object.values(userScores)
-      .sort((a, b) => b.totalScore - a.totalScore);
-
-    overallList.forEach((entry, index) => {
-      entry.rank = index + 1;
-    });
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .map((entry, index) => ({ ...entry, rank: index + 1 }));
 
     res.json(overallList);
   } catch (error) {
@@ -474,18 +455,17 @@ app.post('/api/leaderboard/:domain/scores', authenticateToken, requireDomainAcce
   }
 
   try {
-    const leaderboard = await db.getLeaderboard();
-    let entry = leaderboard.find(e => e.userId === userId && e.domain === domain);
+    // FIX: Use findOne to get the entry, modify it, then save — no more insertMany for updates
+    let entry = await Leaderboard.findOne({ userId, domain });
 
     if (!entry) {
-      // Find user name
-      const users = await db.getUsers();
-      const user = users.find(u => u.id === userId);
+      // User doesn't have a leaderboard entry yet — look them up
+      const user = await User.findOne({ id: userId });
       if (!user) {
         return res.status(404).json({ message: 'User not found in system.' });
       }
 
-      entry = {
+      entry = new Leaderboard({
         id: `lb_${Date.now()}`,
         userId,
         userName: user.name,
@@ -493,27 +473,21 @@ app.post('/api/leaderboard/:domain/scores', authenticateToken, requireDomainAcce
         scores: {},
         totalScore: 0,
         rank: 999
-      };
-      leaderboard.push(entry);
+      });
     }
 
-    // Update the task score
-    entry.scores[taskName] = parsedScore;
-
-    // Recalculate total score
+    // Update the task score and recalculate total
+    entry.scores = { ...entry.scores, [taskName]: parsedScore };
     entry.totalScore = Object.values(entry.scores).reduce((sum, val) => sum + val, 0);
+    entry.markModified('scores'); // ← required for Object type fields
+    await entry.save();
 
-    // Save leaderboard
-    await db.saveLeaderboard(leaderboard);
-
-    // Recalculate ranks in this domain
-    const allDomainEntries = leaderboard.filter(e => e.domain === domain);
-    allDomainEntries.sort((a, b) => b.totalScore - a.totalScore);
-    allDomainEntries.forEach((e, idx) => {
-      e.rank = idx + 1;
-    });
-
-    await db.saveLeaderboard(leaderboard);
+    // Recalculate and persist ranks for all entries in this domain
+    const allDomainEntries = await Leaderboard.find({ domain }).sort({ totalScore: -1 });
+    const rankUpdates = allDomainEntries.map((e, idx) =>
+      Leaderboard.findOneAndUpdate({ _id: e._id }, { $set: { rank: idx + 1 } })
+    );
+    await Promise.all(rankUpdates);
 
     res.json({ message: 'Score updated successfully', entry });
   } catch (error) {
@@ -528,10 +502,8 @@ app.post('/api/leaderboard/:domain/scores', authenticateToken, requireDomainAcce
 // List all users
 app.get('/api/admin/users', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
-    const users = await db.getUsers();
-    // Return users without passwords
-    const sanitizedUsers = users.map(({ passwordHash, ...rest }) => rest);
-    res.json(sanitizedUsers);
+    const users = await User.find().select('-passwordHash');
+    res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch users.' });
   }
@@ -551,35 +523,31 @@ app.put('/api/admin/users/:id/role', authenticateToken, requireRole(['super_admi
   }
 
   try {
-    const users = await db.getUsers();
-    const idx = users.findIndex(u => u.id === id);
+    // FIX: Use findOne + save instead of fetching all users and db.saveUsers()
+    const user = await User.findOne({ id });
 
-    if (idx === -1) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    // Do not allow demoting the main super admin if it's the logged-in super admin itself (to prevent locking out)
-    if (users[idx].email === 'admin@learner.manipal.edu' && role !== 'super_admin') {
+    // Prevent demoting the primary super admin
+    if (user.email === 'admin@learner.manipal.edu' && role !== 'super_admin') {
       return res.status(400).json({ message: 'The primary Super Admin account cannot be demoted.' });
     }
 
-    users[idx] = {
-      ...users[idx],
-      role,
-      adminDomains: role === 'admin' ? adminDomains : (role === 'super_admin' ? VALID_DOMAINS : [])
-    };
-
-    await db.saveUsers(users);
+    user.role = role;
+    user.adminDomains = role === 'admin' ? adminDomains : (role === 'super_admin' ? VALID_DOMAINS : []);
+    await user.save();
 
     res.json({
       message: 'User role updated successfully.',
       user: {
-        id: users[idx].id,
-        name: users[idx].name,
-        email: users[idx].email,
-        role: users[idx].role,
-        domains: users[idx].domains,
-        adminDomains: users[idx].adminDomains
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        domains: user.domains,
+        adminDomains: user.adminDomains
       }
     });
   } catch (error) {
