@@ -398,7 +398,7 @@ app.get('/api/leaderboard/:domain', authenticateToken, async (req, res) => {
 
     // Re-calculate ranks dynamically for display
     const ranked = domainEntries.map((entry, index) => ({
-      ...entry.toObject(),
+      ...entry,
       rank: index + 1
     }));
 
