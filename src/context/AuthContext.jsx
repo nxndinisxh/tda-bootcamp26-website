@@ -1,97 +1,135 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { useUser, useAuth as useClerkAuth } from '@clerk/clerk-react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const { isLoaded: clerkAuthLoaded, isSignedIn, getToken, signOut } = useClerkAuth();
+  const { user: clerkUser, isLoaded: clerkUserLoaded } = useUser();
+
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('tda_token') || null);
+  const [token, setToken] = useState(null);
+  const [isOnboardingRequired, setIsOnboardingRequired] = useState(false);
   const [loading, setLoading] = useState(true);
+  // domainError is set when the server rejects the session due to invalid email domain
+  const [domainError, setDomainError] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
+    const syncUser = async () => {
+      if (!clerkAuthLoaded || !clerkUserLoaded) {
+        return;
+      }
+
+      if (!isSignedIn || !clerkUser) {
+        setUser(null);
+        setToken(null);
+        setIsOnboardingRequired(false);
+        setDomainError(null);
         setLoading(false);
         return;
       }
 
       try {
+        const clerkToken = await getToken();
+        setToken(clerkToken);
+
         const res = await fetch('/api/auth/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${clerkToken}`
           }
         });
 
         if (res.ok) {
           const userData = await res.json();
           setUser(userData);
+          setIsOnboardingRequired(false);
+          setDomainError(null);
+        } else if (res.status === 403) {
+          // Server rejected this account due to email domain restriction
+          const data = await res.json();
+          setDomainError(data.message || 'Only learner.manipal.edu accounts are allowed.');
+          setUser(null);
+          setIsOnboardingRequired(false);
+        } else if (res.status === 404) {
+          const data = await res.json();
+          if (data.onboardingRequired) {
+            setIsOnboardingRequired(true);
+            setUser(null);
+            setDomainError(null);
+          } else {
+            setUser(null);
+            setIsOnboardingRequired(false);
+            setDomainError(null);
+          }
         } else {
-          // Token expired or invalid
-          logout();
+          console.error('Auth sync failed with status:', res.status);
+          const errData = await res.text();
+          console.error('Auth sync error data:', errData);
+          setUser(null);
+          // If it fails, assume they might need onboarding so they aren't kicked out
+          setIsOnboardingRequired(true);
+          setDomainError(null);
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
-        // Don't log out on network error, keep token
+        console.error('Error syncing user with backend:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUser();
-  }, [token]);
+    syncUser();
+  }, [isSignedIn, clerkUser, clerkAuthLoaded, clerkUserLoaded, getToken]);
 
-  const login = async (email, password) => {
+  const onboard = async (domains, name) => {
     try {
-      const res = await fetch('/api/auth/login', {
+      const clerkToken = await getToken();
+      const res = await fetch('/api/auth/onboard', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${clerkToken}`
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ domains, name })
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed.');
+        // Surface domain errors specially so Onboarding can show them
+        if (res.status === 403 && data.domainError) {
+          setDomainError(data.message);
+        }
+        throw new Error(data.message || 'Onboarding failed.');
       }
 
-      localStorage.setItem('tda_token', data.token);
-      setToken(data.token);
       setUser(data.user);
+      setIsOnboardingRequired(false);
+      setDomainError(null);
       return { success: true };
     } catch (error) {
+      console.error('Onboarding failed:', error);
       return { success: false, error: error.message };
     }
   };
 
-  const register = async (name, email, password, domains) => {
-    try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, password, domains })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed.');
-      }
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('tda_token');
-    setToken(null);
+  const logout = async () => {
+    await signOut();
     setUser(null);
+    setToken(null);
+    setIsOnboardingRequired(false);
+    setDomainError(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      token,
+      loading: loading || !clerkAuthLoaded || !clerkUserLoaded,
+      isOnboardingRequired,
+      domainError,
+      onboard,
+      logout,
+      isSignedIn
+    }}>
       {children}
     </AuthContext.Provider>
   );

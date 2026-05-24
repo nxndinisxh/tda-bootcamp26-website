@@ -27,7 +27,7 @@ class Database {
     try {
       // Ensure the directory exists
       await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-      
+
       try {
         const fileContent = await fs.readFile(DB_PATH, 'utf8');
         this.data = JSON.parse(fileContent);

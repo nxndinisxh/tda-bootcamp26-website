@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Code, Database, Brain, Globe, BarChart2, Shield, ArrowRight, Award, Users } from 'lucide-react';
 
@@ -56,7 +56,11 @@ const Sparkle = ({ className }) => (
 );
 
 export default function Landing() {
-  const { user } = useAuth();
+  const { user, isOnboardingRequired, logout, isSignedIn } = useAuth();
+
+  if (isOnboardingRequired) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div className="flex flex-col gap-20 py-8 relative">
@@ -93,7 +97,7 @@ export default function Landing() {
 
         <div className="mt-10 flex flex-wrap gap-4 justify-center">
           {user ? (
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center gap-4">
               <span className="text-gray-400 text-sm">Welcome back, {user.name}! Access your registered domains below:</span>
               <div className="flex flex-wrap gap-3 mt-2 justify-center">
                 {user.domains.map(d => (
@@ -107,6 +111,22 @@ export default function Landing() {
                   </Link>
                 ))}
               </div>
+              <button
+                onClick={logout}
+                className="mt-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold px-6 py-3 rounded-xl transition"
+              >
+                Logout
+              </button>
+            </div>
+          ) : isSignedIn ? (
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-gray-400 text-sm">Syncing your profile with the database...</span>
+              <button
+                onClick={logout}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold px-6 py-3 rounded-xl transition"
+              >
+                Logout
+              </button>
             </div>
           ) : (
             <>
@@ -185,7 +205,7 @@ export default function Landing() {
                     )
                   ) : (
                     <Link
-                      to="/register"
+                      to={isSignedIn ? "/onboarding" : "/register"}
                       className="text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold text-xs flex items-center gap-1.5 transition"
                     >
                       <span>Join Bootcamp</span>
