@@ -36,6 +36,6 @@ const leaderboardSchema = new mongoose.Schema({
     type: Number,
     default: 999
   }
-});
+}, { minimize: false });
 
 export default mongoose.model("Leaderboard", leaderboardSchema);
