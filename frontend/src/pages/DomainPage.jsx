@@ -23,14 +23,6 @@ const DOMAIN_DESCRIPTIONS = {
   'DAV': 'Gain command over data engineering, cleaning, exploratory statistics, and visual graphing tools.'
 };
 
-const formatExternalLink = (url) => {
-  if (!url) return '';
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-  return `https://${url}`;
-};
-
 const Sparkle = ({ className }) => (
   <span className={`text-white/30 font-bold select-none pointer-events-none ${className}`}>
     ✦
@@ -401,7 +393,7 @@ export default function DomainPage() {
 
                           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
                             <a
-                              href={formatExternalLink(res.link)}
+                              href={res.link}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold flex items-center gap-1 hover:underline"
@@ -543,7 +535,7 @@ export default function DomainPage() {
                             </td>
                             <td className="py-4 px-6 text-gray-400">
                               <div className="flex flex-wrap gap-2">
-                                {Object.keys(entry.scores || {}).length === 0 ? (
+                                {!entry.scores || Object.keys(entry.scores).length === 0 ? (
                                   <span className="text-[10px] text-gray-500 italic">No tasks completed yet</span>
                                 ) : (
                                   Object.entries(entry.scores || {}).map(([task, score]) => (

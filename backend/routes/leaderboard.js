@@ -1,10 +1,30 @@
 import express from 'express';
 import Leaderboard from '../models/Leaderboard.js';
 import User from '../models/User.js';
-import { authenticateToken, requireDomainAccess } from '../middleware/authMiddleware.js';
+import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get domain leaderboard
+router.get('/:domain', authenticateToken, async (req, res) => {
+  const { domain } = req.params;
+
+  try {
+    const domainEntries = await Leaderboard.find({ domain }).sort({ totalScore: -1 }).lean();
+
+    const ranked = domainEntries.map((entry, index) => ({
+      ...entry,
+      scores: entry.scores || {},
+      rank: index + 1
+    }));
+
+    res.json(ranked);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch leaderboard.' });
+  }
+});
+
+// Get overall leaderboard
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const leaderboard = await Leaderboard.find().lean();
@@ -35,23 +55,7 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/:domain', authenticateToken, async (req, res) => {
-  const { domain } = req.params;
-
-  try {
-    const domainEntries = await Leaderboard.find({ domain }).sort({ totalScore: -1 }).lean();
-
-    const ranked = domainEntries.map((entry, index) => ({
-      ...entry,
-      rank: index + 1
-    }));
-
-    res.json(ranked);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch leaderboard.' });
-  }
-});
-
+// Update score for a user in a domain
 router.post('/:domain/scores', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
   const { userId, taskName, score } = req.body;

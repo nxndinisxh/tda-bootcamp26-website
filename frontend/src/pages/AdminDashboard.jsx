@@ -389,12 +389,12 @@ export default function AdminDashboard() {
                             </td>
                             <td className="py-3 px-4 text-gray-400">
                               <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(entry.scores || {}).map(([task, score]) => (
+                                {Object.entries(entry.scores).map(([task, score]) => (
                                   <span key={task} className="bg-white/3 text-[9px] px-2 py-0.5 rounded border border-white/5">
                                     {task}: <strong className="text-gray-300">{score}</strong>
                                   </span>
                                 ))}
-                                {Object.keys(entry.scores || {}).length === 0 && (
+                                {Object.keys(entry.scores).length === 0 && (
                                   <span className="text-xxs text-gray-500 italic">No task grades</span>
                                 )}
                               </div>

@@ -1,10 +1,11 @@
 import express from 'express';
 import Resource from '../models/Resource.js';
-import { authenticateToken, requireDomainAccess } from '../middleware/authMiddleware.js';
+import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
 
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 
-router.get('/', authenticateToken, async (req, res) => {
+// Get domain resources
+router.get('/:domain/resources', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
   if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
@@ -19,7 +20,8 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.post('/', authenticateToken, requireDomainAccess(), async (req, res) => {
+// Add resource
+router.post('/:domain/resources', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
   const { title, description, link, week } = req.body;
 
@@ -44,7 +46,8 @@ router.post('/', authenticateToken, requireDomainAccess(), async (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
+// Update resource
+router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
   const { title, description, link, week } = req.body;
 
@@ -72,7 +75,8 @@ router.put('/:id', authenticateToken, requireDomainAccess(), async (req, res) =>
   }
 });
 
-router.delete('/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
+// Delete resource
+router.delete('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
 
   try {

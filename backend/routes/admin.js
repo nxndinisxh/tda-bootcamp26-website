@@ -1,10 +1,11 @@
 import express from 'express';
 import User from '../models/User.js';
-import { authenticateToken, requireRole } from '../middleware/authMiddleware.js';
-import { VALID_DOMAINS } from '../middleware/authMiddleware.js';
+import { VALID_DOMAINS } from '../config/constants.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// List all users
 router.get('/users', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   try {
     const users = await User.find().select('-passwordHash');
@@ -14,6 +15,7 @@ router.get('/users', authenticateToken, requireRole(['super_admin']), async (req
   }
 });
 
+// Update user role and admin domains (Super Admin only)
 router.put('/users/:id/role', authenticateToken, requireRole(['super_admin']), async (req, res) => {
   const { id } = req.params;
   const { role, adminDomains } = req.body;
