@@ -14,6 +14,7 @@ router.get('/:domain', authenticateToken, async (req, res) => {
 
     const ranked = domainEntries.map((entry, index) => ({
       ...entry,
+      scores: entry.scores || {},
       rank: index + 1
     }));
 

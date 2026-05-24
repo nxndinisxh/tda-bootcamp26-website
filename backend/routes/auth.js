@@ -6,10 +6,12 @@ import Leaderboard from '../models/Leaderboard.js';
 import { VALID_DOMAINS } from '../config/constants.js';
 import { authenticateToken } from '../middleware/auth.js';
 
+import authLimiter from '../middleware/authLimiter.js';
+
 const router = express.Router();
 
 // Register
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const { name, email, password, domains } = req.body;
 
   if (!name || !email || !password || !domains) {
@@ -77,7 +79,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {

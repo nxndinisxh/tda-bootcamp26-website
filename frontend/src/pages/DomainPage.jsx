@@ -535,10 +535,10 @@ export default function DomainPage() {
                             </td>
                             <td className="py-4 px-6 text-gray-400">
                               <div className="flex flex-wrap gap-2">
-                                {Object.keys(entry.scores).length === 0 ? (
+                                {!entry.scores || Object.keys(entry.scores).length === 0 ? (
                                   <span className="text-[10px] text-gray-500 italic">No tasks completed yet</span>
                                 ) : (
-                                  Object.entries(entry.scores).map(([task, score]) => (
+                                  Object.entries(entry.scores || {}).map(([task, score]) => (
                                     <span key={task} className="bg-white/5 text-xxs px-2.5 py-1 rounded-md border border-white/5 flex gap-1">
                                       <span className="text-gray-500">{task}:</span>
                                       <span className="font-semibold text-gray-300">{score}</span>
