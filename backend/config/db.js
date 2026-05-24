@@ -8,7 +8,9 @@ const connectDB = async () => {
     return cachedConnection;
   }
 
+  console.log("Checking MONGO_URI environment variable presence...");
   if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI is missing from environment variables!");
     throw new Error("MONGO_URI environment variable is missing");
   }
 
