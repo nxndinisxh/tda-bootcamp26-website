@@ -1,11 +1,10 @@
 import express from 'express';
 import Announcement from '../models/Announcement.js';
-import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
+import { authenticateToken, requireDomainAccess } from '../middleware/authMiddleware.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-// Get domain announcements
-router.get('/:domain/announcements', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
   if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
@@ -20,8 +19,7 @@ router.get('/:domain/announcements', authenticateToken, async (req, res) => {
   }
 });
 
-// Create announcement
-router.post('/:domain/announcements', authenticateToken, requireDomainAccess(), async (req, res) => {
+router.post('/', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
   const { title, content } = req.body;
 
@@ -45,8 +43,7 @@ router.post('/:domain/announcements', authenticateToken, requireDomainAccess(), 
   }
 });
 
-// Delete announcement
-router.delete('/:domain/announcements/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
+router.delete('/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
 
   try {
