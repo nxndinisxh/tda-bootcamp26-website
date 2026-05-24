@@ -11,8 +11,6 @@ import announcementsRouter from './routes/announcements.js';
 import leaderboardRouter from './routes/leaderboard.js';
 import adminRouter from './routes/admin.js';
 
-import apiLimiter from './middleware/apiLimiter.js';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,17 +18,21 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Initialize Database
-await connectDB();
-
-app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(apiLimiter); // api limiter to all routes
+
+// Lazy database connection middleware for serverless robustness
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection middleware error:", error);
+    res.status(500).json({ message: "Database connection failed" });
+  }
+});
 
 // Routes
 app.use('/api/auth', authRouter);
@@ -48,7 +50,4 @@ app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+export default app;
