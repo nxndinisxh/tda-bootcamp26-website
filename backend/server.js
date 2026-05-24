@@ -29,8 +29,11 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (error) {
-    console.error("Database connection middleware error:", error);
-    res.status(500).json({ message: "Database connection failed" });
+    console.error("Database connection middleware error:", error.message);
+    res.status(500).json({ 
+      message: "Database connection failed", 
+      error: error.message 
+    });
   }
 });
 
@@ -48,6 +51,15 @@ app.use(express.static(distPath));
 // Fallback to React app index.html for client-side routing in production (ignoring /api)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
+});
+
+// Global Error Handler to catch all unhandled route/middleware exceptions and return JSON
+app.use((err, req, res, next) => {
+  console.error("Global express error:", err);
+  res.status(500).json({
+    message: "An internal server error occurred",
+    error: err.message
+  });
 });
 
 export default app;

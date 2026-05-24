@@ -49,7 +49,15 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(text || `Server returned error status ${res.status}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.message || 'Login failed.');
       }
@@ -73,7 +81,15 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ name, email, password, domains })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(text || `Server returned error status ${res.status}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.message || 'Registration failed.');
       }
