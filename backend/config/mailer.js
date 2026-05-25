@@ -94,7 +94,7 @@ export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPa
           <!-- Footer -->
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(212, 193, 182, 0.12); font-size: 11px; text-align: center; color: #718096;">
             <p style="margin: 0;">This is an automated notification from the TDA Bootcamp 2026 System.</p>
-            <p style="margin: 5px 0 0 0;">Manipal Academy of Higher Education</p>
+            <p style="margin: 5px 0 0 0;">Manipal Institute of Technology</p>
           </div>
         </div>
       </body>
@@ -174,7 +174,7 @@ export const sendVerificationEmail = async (toEmail, userName, otp, token) => {
           <!-- Footer -->
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(212, 193, 182, 0.12); font-size: 11px; text-align: center; color: #718096;">
             <p style="margin: 0;">This is an automated verification message from the TDA Bootcamp 2026 System.</p>
-            <p style="margin: 5px 0 0 0;">Manipal Academy of Higher Education</p>
+            <p style="margin: 5px 0 0 0;">Manipal Institute of Technology</p>
           </div>
         </div>
       </body>
