@@ -43,24 +43,21 @@ const getTransporter = async () => {
 };
 
 // Dispatch email welcome message
-export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPassword = null) => {
+export const sendWelcomeEmail = async (toEmail, userName, selectedDomains) => {
   try {
     const mailTransporter = await getTransporter();
     const fromAddress = process.env.SMTP_FROM || '"TDA Bootcamp Organizers" <noreply@manipal.edu>';
 
     const domainListHtml = selectedDomains.length > 0 
       ? selectedDomains.map(d => `<li style="margin-bottom: 6px; font-weight: bold; color: #60a6dc;">✦ ${d}</li>`).join('')
-      : `<li style="font-style: italic; color: #a0aec0;">No tracks selected yet (onboarding required)</li>`;
+      : `<li style="font-style: italic; color: #a0aec0;">No tracks selected yet</li>`;
 
-    const credentialsHtml = rawPassword 
-      ? `<div style="background-color: rgba(96, 166, 220, 0.08); border: 1px solid rgba(96, 166, 220, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
-           <p style="margin: 0 0 8px 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Registered Email:</strong> ${toEmail}</p>
-           <p style="margin: 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Password:</strong> <code style="background-color: #02223e; padding: 3px 6px; border-radius: 4px; color: #60a6dc; font-weight: bold;">${rawPassword}</code></p>
-         </div>`
-      : `<div style="background-color: rgba(212, 193, 182, 0.08); border: 1px solid rgba(212, 193, 182, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
-           <p style="margin: 0 0 8px 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>SSO Integration:</strong> Microsoft SSO enabled</p>
-           <p style="margin: 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;">Log in securely using your university Microsoft Account details.</p>
-         </div>`;
+    const detailsHtml = `
+      <div style="background-color: rgba(96, 166, 220, 0.08); border: 1px solid rgba(96, 166, 220, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Username / Name:</strong> ${userName}</p>
+        <p style="margin: 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Registered Email ID:</strong> ${toEmail}</p>
+      </div>
+    `;
 
     const htmlBody = `
       <!DOCTYPE html>
@@ -78,11 +75,11 @@ export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPa
           </div>
 
           <!-- Body -->
-          <h2 style="font-size: 20px; color: #fff; margin-top: 0; font-weight: 700;">Registration Confirmed!</h2>
+          <h2 style="font-size: 20px; color: #fff; margin-top: 0; font-weight: 700;">Account Activated!</h2>
           <p style="font-size: 14px; line-height: 1.6; color: #a0aec0;">Hello <strong style="color: #fff;">${userName}</strong>,</p>
-          <p style="font-size: 14px; line-height: 1.6; color: #a0aec0;">Welcome to the Manipal University TDA Bootcamp 2026. Your operational portal account has been successfully set up with the following details:</p>
+          <p style="font-size: 14px; line-height: 1.6; color: #a0aec0;">Your email has been successfully verified, and your bootcamp account is now active. Here are your registration details:</p>
 
-          ${credentialsHtml}
+          ${detailsHtml}
 
           <h3 style="font-size: 15px; color: #fff; border-bottom: 1px solid rgba(212, 193, 182, 0.12); padding-bottom: 8px; margin-top: 30px;">Selected Tracks:</h3>
           <ul style="list-style-type: none; padding-left: 0; font-size: 14px;">
@@ -90,7 +87,7 @@ export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPa
           </ul>
 
           <p style="font-size: 14px; line-height: 1.6; color: #a0aec0; margin-top: 30px;">
-            Please log in to check announcements, access weekly reading resources, and view the track leaderboards.
+            Please log in to check announcements, access weekly reading resources, and track your progress on the leaderboard.
           </p>
 
           <!-- Footer -->
@@ -106,18 +103,12 @@ export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPa
     const mailOptions = {
       from: fromAddress,
       to: toEmail,
-      subject: '✦ Welcome to TDA Bootcamp 2026 - Registration Confirmed ✦',
+      subject: '✦ Welcome to TDA Bootcamp 2026 - Account Activated ✦',
       html: htmlBody,
     };
 
     const info = await mailTransporter.sendMail(mailOptions);
     console.log(`Mailer: Email successfully sent to ${toEmail}. MessageID: ${info.messageId}`);
-    
-    // If using Ethereal, log the preview URL
-    if (nodemailer.getTestMessageUrl(info)) {
-      console.log(`Mailer (Ethereal Debug): Preview URL available at: ${nodemailer.getTestMessageUrl(info)}`);
-    }
-    
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`Mailer: Failed to send welcome email to ${toEmail}:`, err.message);
