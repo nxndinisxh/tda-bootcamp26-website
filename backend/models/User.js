@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema({
     required: false
   },
 
+  tempPassword: {
+    type: String,
+    required: false
+  },
+
   domains: {
     type: [String],
     default: []

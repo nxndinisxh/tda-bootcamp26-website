@@ -17,7 +17,7 @@ export default function Verify() {
   const [success, setSuccess] = useState('');
   
   // Resend Timer State
-  const [resendTimer, setResendTimer] = useState(60);
+  const [resendTimer, setResendTimer] = useState(30);
   const [resendLoading, setResendLoading] = useState(false);
 
   const inputRefs = useRef([]);
@@ -139,7 +139,7 @@ export default function Verify() {
       }
       
       setSuccess('A new verification code has been sent to your email.');
-      setResendTimer(60);
+      setResendTimer(30);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0].focus();
     } catch (err) {

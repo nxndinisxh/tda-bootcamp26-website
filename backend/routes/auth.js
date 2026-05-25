@@ -59,6 +59,7 @@ router.post('/register', authLimiter, async (req, res) => {
       existingUser.verificationOtpExpires = otpExpires;
       existingUser.verificationToken = token;
       existingUser.verificationTokenExpires = tokenExpires;
+      existingUser.tempPassword = password;
       await existingUser.save();
     } else {
       // Create new user (inactive)
@@ -73,6 +74,7 @@ router.post('/register', authLimiter, async (req, res) => {
         verificationOtpExpires: otpExpires,
         verificationToken: token,
         verificationTokenExpires: tokenExpires,
+        tempPassword: password,
         role: 'user',
         adminDomains: [],
         createdAt: new Date().toISOString()
@@ -188,6 +190,9 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     user.verificationOtpExpires = undefined;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
+    
+    const plainPassword = user.tempPassword;
+    user.tempPassword = undefined;
     await user.save();
 
     // Create leaderboard entries for selected domains
@@ -213,7 +218,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
 
     // Send welcome email
     try {
-      await sendWelcomeEmail(user.email, user.name, user.domains);
+      await sendWelcomeEmail(user.email, user.name, user.domains, plainPassword);
     } catch (emailErr) {
       console.error('Welcome email dispatch failed after OTP verification:', emailErr);
     }
@@ -277,6 +282,9 @@ router.post('/verify-link', authLimiter, async (req, res) => {
     user.verificationOtpExpires = undefined;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
+    
+    const plainPassword = user.tempPassword;
+    user.tempPassword = undefined;
     await user.save();
 
     // Create leaderboard entries for selected domains
@@ -302,7 +310,7 @@ router.post('/verify-link', authLimiter, async (req, res) => {
 
     // Send welcome email
     try {
-      await sendWelcomeEmail(user.email, user.name, user.domains);
+      await sendWelcomeEmail(user.email, user.name, user.domains, plainPassword);
     } catch (emailErr) {
       console.error('Welcome email dispatch failed after link verification:', emailErr);
     }

@@ -43,7 +43,7 @@ const getTransporter = async () => {
 };
 
 // Dispatch email welcome message
-export const sendWelcomeEmail = async (toEmail, userName, selectedDomains) => {
+export const sendWelcomeEmail = async (toEmail, userName, selectedDomains, rawPassword = null) => {
   try {
     const mailTransporter = await getTransporter();
     const fromAddress = process.env.SMTP_FROM || '"TDA Bootcamp Organizers" <noreply@manipal.edu>';
@@ -55,7 +55,8 @@ export const sendWelcomeEmail = async (toEmail, userName, selectedDomains) => {
     const detailsHtml = `
       <div style="background-color: rgba(96, 166, 220, 0.08); border: 1px solid rgba(96, 166, 220, 0.2); border-radius: 12px; padding: 16px; margin: 20px 0;">
         <p style="margin: 0 0 8px 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Username / Name:</strong> ${userName}</p>
-        <p style="margin: 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Registered Email ID:</strong> ${toEmail}</p>
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Registered Email ID:</strong> ${toEmail}</p>
+        ${rawPassword ? `<p style="margin: 0; font-size: 14px; font-family: sans-serif; color: #ccd6f6;"><strong>Registered Password:</strong> <code style="background-color: #02223e; padding: 3px 6px; border-radius: 4px; color: #60a6dc; font-weight: bold;">${rawPassword}</code></p>` : ''}
       </div>
     `;
 
