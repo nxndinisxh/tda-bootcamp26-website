@@ -20,8 +20,8 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 
   // 1. Strict email validation
-  if (!email.endsWith('@learner.manipal.edu')) {
-    return res.status(400).json({ message: 'Only university emails ending with @learner.manipal.edu are allowed.' });
+  if (!email.endsWith('@gmail.com')) {
+    return res.status(400).json({ message: 'Only @gmail.com emails are allowed.' });
   }
 
   // 2. Validate domains

@@ -48,7 +48,7 @@ export default function Register() {
       return;
     }
 
-    if (!email.endsWith('@learner.manipal.edu')) {
+    if (!email.endsWith('@learner.manipal.edu') && !email.endsWith('@gmail.com')) {
       setError('Registration is restricted to @learner.manipal.edu accounts only.');
       return;
     }
@@ -134,7 +134,7 @@ export default function Register() {
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                University Email Address
+                Email Address
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
@@ -145,11 +145,11 @@ export default function Register() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="username@learner.manipal.edu"
+                  placeholder="username@gmail.com"
                   className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
                 />
               </div>
-              <p className="mt-1 text-[10px] text-gray-500">Only @learner.manipal.edu email domains are allowed.</p>
+              <p className="mt-1 text-[10px] text-gray-500">Only @gmail.com email domains are allowed.</p>
             </div>
 
             {/* Passwords */}
