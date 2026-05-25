@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import DomainPage from './pages/DomainPage';
 import AdminDashboard from './pages/AdminDashboard';
+import Verify from './pages/Verify';
 import { LogOut, LayoutDashboard, Compass, ShieldAlert, Award } from 'lucide-react';
 
 // Protected Route Guard for general logged-in users
@@ -114,6 +115,7 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify" element={<Verify />} />
 
               <Route
                 path="/domains/:domain"

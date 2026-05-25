@@ -14,8 +14,9 @@ import adminRouter from './routes/admin.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load dotenv relative to this file
+// Load dotenv relative to this file (both backend/.env and root .env)
 dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 
@@ -61,5 +62,12 @@ app.use((err, req, res, next) => {
     error: err.message
   });
 });
+
+const PORT = process.env.PORT || 5000;
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[Local Dev] Backend server running on port ${PORT}`);
+  });
+}
 
 export default app;
