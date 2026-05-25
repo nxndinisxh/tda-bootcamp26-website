@@ -20,7 +20,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -42,25 +42,22 @@ export default function Register() {
     setError('');
     setSuccess('');
 
-    // Field check
+    // Standard email registration
     if (!name || !email || !password || !confirmPassword) {
       setError('All fields are required.');
       return;
     }
 
-    // Email domain restriction
     if (!email.endsWith('@learner.manipal.edu')) {
       setError('Registration is restricted to @learner.manipal.edu accounts only.');
       return;
     }
 
-    // Password match
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    // Domain range restriction
     if (selectedDomains.length < 1 || selectedDomains.length > 3) {
       setError('Please select between 1 and 3 domains.');
       return;
@@ -71,9 +68,9 @@ export default function Register() {
     setLoading(false);
 
     if (res.success) {
-      setSuccess('Account created successfully! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
+      setSuccess('Verification email sent! Redirecting to verification page...');
+      setTimeout(() => { 
+        navigate(`/verify?email=${encodeURIComponent(email)}`); 
       }, 2000);
     } else {
       setError(res.error);
@@ -90,7 +87,7 @@ export default function Register() {
         <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.05)_0,transparent_50%)] pointer-events-none" />
-        
+
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Create Your Account</h2>
           <p className="mt-2 text-sm text-gray-400">
@@ -112,7 +109,7 @@ export default function Register() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             {/* Full Name */}
             <div>
@@ -205,11 +202,11 @@ export default function Register() {
                 {AVAILABLE_DOMAINS.map((domain) => {
                   const isChecked = selectedDomains.includes(domain);
                   return (
-                    <label 
+                    <label
                       key={domain}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer select-none ${
-                        isChecked 
-                          ? 'bg-[#60a6dc]/15 border-[#60a6dc]/40 text-white' 
+                        isChecked
+                          ? 'bg-[#60a6dc]/15 border-[#60a6dc]/40 text-white'
                           : 'bg-[#02223e]/50 border-[#d4c1b6]/10 text-gray-400 hover:bg-[#06385d]/40'
                       }`}
                     >

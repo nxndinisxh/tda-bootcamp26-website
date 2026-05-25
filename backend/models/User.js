@@ -23,7 +23,32 @@ const userSchema = new mongoose.Schema({
 
   passwordHash: {
     type: String,
-    required: true
+    required: false
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  verificationOtp: {
+    type: String,
+    required: false
+  },
+
+  verificationOtpExpires: {
+    type: Date,
+    required: false
+  },
+
+  verificationToken: {
+    type: String,
+    required: false
+  },
+
+  verificationTokenExpires: {
+    type: Date,
+    required: false
   },
 
   domains: {

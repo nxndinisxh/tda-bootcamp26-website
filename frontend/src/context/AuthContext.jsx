@@ -59,7 +59,12 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed.');
+        return { 
+          success: false, 
+          error: data.message || 'Login failed.', 
+          unverified: data.unverified,
+          email: data.email 
+        };
       }
 
       localStorage.setItem('tda_token', data.token);
@@ -106,8 +111,56 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const verifyEmailWithOtp = async (email, otp) => {
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, otp })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'OTP verification failed.');
+      }
+
+      localStorage.setItem('tda_token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const verifyEmailWithToken = async (tokenVal) => {
+    try {
+      const res = await fetch('/api/auth/verify-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token: tokenVal })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Link verification failed.');
+      }
+
+      localStorage.setItem('tda_token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, verifyEmailWithOtp, verifyEmailWithToken }}>
       {children}
     </AuthContext.Provider>
   );

@@ -31,6 +31,9 @@ export default function Login() {
 
     if (res.success) {
       navigate('/');
+    } else if (res.unverified) {
+      // Redirect to the verification screen
+      navigate(`/verify?email=${encodeURIComponent(res.email)}`);
     } else {
       setError(res.error);
     }
@@ -61,7 +64,7 @@ export default function Login() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
