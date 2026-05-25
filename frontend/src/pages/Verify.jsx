@@ -252,7 +252,7 @@ export default function Verify() {
                     value={digit}
                     onChange={(e) => handleOtpChange(e, idx)}
                     onKeyDown={(e) => handleKeyDown(e, idx)}
-                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold bg-[#02223e]/65 border border-[#d4c1b6]/25 rounded-xl text-white focus:outline-none focus:border-[#60a6dc] focus:ring-1 focus:ring-[#60a6dc] transition"
+                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold bg-brand-bg/65 border border-[#d4c1b6]/25 rounded-xl text-white focus:outline-none focus:border-[#60a6dc] focus:ring-1 focus:ring-[#60a6dc] transition"
                   />
                 ))}
               </div>
@@ -262,10 +262,10 @@ export default function Verify() {
               <button
                 type="submit"
                 disabled={loading || otp.join('').length !== 6}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-[#02223e] bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-[#02223e]" />
+                  <Loader2 className="h-5 w-5 animate-spin text-brand-bg" />
                 ) : (
                   <span className="flex items-center gap-2">Activate Account <ArrowRight size={16} /></span>
                 )}

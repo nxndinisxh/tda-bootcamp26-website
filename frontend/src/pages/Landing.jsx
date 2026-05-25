@@ -74,7 +74,7 @@ export default function Landing() {
         <Sparkle className="absolute bottom-6 right-6 text-xl" />
 
         {/* Glow circles */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(96,166,220,0.1)_0%,transparent_60%)] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-[radial-gradient(circle,rgba(96,166,220,0.1)_0%,transparent_60%)] pointer-events-none" />
 
         <span className="text-xs font-bold tracking-widest text-[#60a6dc] bg-[#60a6dc]/10 border border-[#60a6dc]/20 px-4 py-2 rounded-full mb-6 uppercase">
           The Data Alchemists (TDA) Bootcamp '26
@@ -82,7 +82,7 @@ export default function Landing() {
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight">
           BUILDING BRIGHTER MINDS <br />
-          <span className="bg-gradient-to-r from-[#60a6dc] via-[#d4c1b6] to-[#60a6dc] bg-clip-text text-transparent text-glow-primary">
+          <span className="bg-linear-to-r from-[#60a6dc] via-[#d4c1b6] to-[#60a6dc] bg-clip-text text-transparent text-glow-primary">
             TOGETHER
           </span>
         </h1>
@@ -100,7 +100,7 @@ export default function Landing() {
                   <Link
                     key={d}
                     to={`/domains/${encodeURIComponent(d)}`}
-                    className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-[#02223e] font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-[#60a6dc]/15"
+                    className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-brand-bg font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-[#60a6dc]/15"
                   >
                     <span>{d}</span>
                     <ArrowRight size={16} />
@@ -112,9 +112,9 @@ export default function Landing() {
             <>
               <Link
                 to="/register"
-                className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/95 text-[#02223e] font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-[#60a6dc]/10"
+                className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/95 text-brand-bg font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-[#60a6dc]/10"
               >
-                <span>Register with @learner.manipal.edu</span>
+                <span>Register with @gmail.com</span>
                 <ArrowRight size={18} />
               </Link>
               <Link
@@ -152,7 +152,7 @@ export default function Landing() {
                 <Sparkle className="absolute top-4 right-4 text-xs opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <div>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-r ${domain.color} text-white mb-4 shadow-sm`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-linear-to-r ${domain.color} text-white mb-4 shadow-sm`}>
                     <Icon size={24} />
                   </div>
                   <h3 className="text-lg font-bold flex items-center gap-2 text-white">
@@ -225,7 +225,7 @@ export default function Landing() {
 
         <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {TEAM_MEMBERS.map((member) => (
-            <div key={member.name} className="flex flex-col items-center text-center bg-[#06385d]/30 border border-[#d4c1b6]/10 rounded-2xl p-4 hover:border-[#d4c1b6]/20 transition">
+            <div key={member.name} className="flex flex-col items-center text-center bg-brand-bg-light/30 border border-[#d4c1b6]/10 rounded-2xl p-4 hover:border-[#d4c1b6]/20 transition">
               <img
                 src={member.img}
                 alt={member.name}

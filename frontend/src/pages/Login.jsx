@@ -20,8 +20,8 @@ export default function Login() {
       return;
     }
 
-    if (!email.endsWith('@learner.manipal.edu')) {
-      setError('Only @learner.manipal.edu emails are authorized.');
+    if (!email.endsWith('@gmail.com')) {
+      setError('Only @gmail.com emails are authorized.');
       return;
     }
 
@@ -53,7 +53,7 @@ export default function Login() {
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
           <p className="mt-2 text-sm text-gray-400">
-            Sign in with your university account to continue
+            Sign in with your @gmail.com account to continue
           </p>
         </div>
 
@@ -79,11 +79,11 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="yourname@learner.manipal.edu"
+                  placeholder="user@gmail.com"
                   className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
                 />
               </div>
-              <p className="mt-1 text-[10px] text-gray-500">Must end in @learner.manipal.edu</p>
+              <p className="mt-1 text-[10px] text-gray-500">Must end in @gmail.com</p>
             </div>
 
             <div>
@@ -110,10 +110,10 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-[#02223e] bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <LogIn className="h-5 w-5 text-[#02223e]/70 group-hover:text-[#02223e] transition" aria-hidden="true" />
+                <LogIn className="h-5 w-5 text-brand-bg/70 group-hover:text-brand-bg transition" aria-hidden="true" />
               </span>
               {loading ? 'Signing In...' : 'Sign In'}
             </button>

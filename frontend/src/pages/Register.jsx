@@ -48,8 +48,8 @@ export default function Register() {
       return;
     }
 
-    if (!email.endsWith('@learner.manipal.edu') && !email.endsWith('@gmail.com')) {
-      setError('Registration is restricted to @learner.manipal.edu accounts only.');
+    if (!email.endsWith('@gmail.com')) {
+      setError('Registration is restricted to @gmail.com accounts only.');
       return;
     }
 
@@ -198,7 +198,7 @@ export default function Register() {
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
                 Domain Selection (Choose 1 to 3)
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-[#06385d]/20 p-4 rounded-2xl border border-[#d4c1b6]/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-brand-bg-light/20 p-4 rounded-2xl border border-[#d4c1b6]/10">
                 {AVAILABLE_DOMAINS.map((domain) => {
                   const isChecked = selectedDomains.includes(domain);
                   return (
@@ -207,7 +207,7 @@ export default function Register() {
                       className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer select-none ${
                         isChecked
                           ? 'bg-[#60a6dc]/15 border-[#60a6dc]/40 text-white'
-                          : 'bg-[#02223e]/50 border-[#d4c1b6]/10 text-gray-400 hover:bg-[#06385d]/40'
+                          : 'bg-brand-bg/50 border-[#d4c1b6]/10 text-gray-400 hover:bg-brand-bg-light/40'
                       }`}
                     >
                       <input
@@ -231,10 +231,10 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || selectedDomains.length === 0}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-[#02223e] bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <UserPlus className="h-5 w-5 text-[#02223e]/70 group-hover:text-[#02223e] transition" aria-hidden="true" />
+                <UserPlus className="h-5 w-5 text-brand-bg/70 group-hover:text-brand-bg transition" aria-hidden="true" />
               </span>
               {loading ? 'Registering...' : 'Register'}
             </button>
