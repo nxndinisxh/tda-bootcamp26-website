@@ -52,8 +52,8 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    // First login check -> force password reset
-    if (user.isFirstLogin) {
+    // First login check -> force password reset (except for admin/super_admin)
+    if (user.isFirstLogin && user.role !== 'admin' && user.role !== 'super_admin') {
       return res.json({
         isFirstLogin: true,
         userId: user.id,
