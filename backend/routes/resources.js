@@ -1,5 +1,7 @@
 import express from 'express';
 import Resource from '../models/Resource.js';
+import WeekLock from '../models/WeekLock.js';
+import UserProgress from '../models/UserProgress.js';
 import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -13,9 +15,48 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
   }
 
   try {
-    const domainResources = await Resource.find({ domain });
-    res.json(domainResources);
+    // Sort resources by order ascending, then by createdAt ascending
+    const domainResources = await Resource.find({ domain }).sort({ order: 1, createdAt: 1 });
+    
+    // Fetch week lock definitions for this domain
+    const locks = await WeekLock.find({ domain });
+    const lockMap = {};
+    locks.forEach(l => {
+      lockMap[l.week] = l.isLocked;
+    });
+
+    // Fetch user completion progress
+    const progressList = await UserProgress.find({ userId: req.user.id });
+    const completedResourceIds = new Set(
+      progressList.filter(p => p.completed).map(p => p.resourceId)
+    );
+
+    const isUserAdmin = req.user.role === 'super_admin' || (req.user.role === 'admin' && req.user.adminDomains.includes(domain));
+
+    // Map progress and mask locked resources if user is a normal student
+    const processedResources = domainResources.map(res => {
+      const resObj = res.toObject();
+      const isWeekLocked = lockMap[res.week] !== false; // Default to locked if lock setting doesn't exist
+
+      resObj.completed = completedResourceIds.has(res.id);
+
+      if (isWeekLocked && !isUserAdmin) {
+        resObj.isLocked = true;
+        resObj.link = '#';
+        resObj.description = 'This resource is locked. Wait for the domain head to unlock this week.';
+      } else {
+        resObj.isLocked = false;
+      }
+
+      return resObj;
+    });
+
+    res.json({
+      resources: processedResources,
+      weekLocks: locks
+    });
   } catch (error) {
+    console.error('Error retrieving resources:', error);
     res.status(500).json({ message: 'Error retrieving resources.' });
   }
 });
@@ -23,7 +64,7 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
 // Add resource
 router.post('/:domain/resources', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
-  const { title, description, link, week } = req.body;
+  const { title, description, link, week, order } = req.body;
 
   if (!title || !link || !week) {
     return res.status(400).json({ message: 'Title, link, and week are required.' });
@@ -37,6 +78,7 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
       description: description || '',
       link,
       week,
+      order: Number(order) || 0,
       createdAt: new Date().toISOString()
     });
 
@@ -49,19 +91,19 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 // Update resource
 router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
-  const { title, description, link, week } = req.body;
+  const { title, description, link, week, order } = req.body;
 
   try {
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (link) updateData.link = link;
+    if (week) updateData.week = week;
+    if (order !== undefined) updateData.order = Number(order) || 0;
+
     const updated = await Resource.findOneAndUpdate(
       { id },
-      {
-        $set: {
-          ...(title && { title }),
-          ...(description !== undefined && { description }),
-          ...(link && { link }),
-          ...(week && { week })
-        }
-      },
+      { $set: updateData },
       { new: true }
     );
 
@@ -89,6 +131,69 @@ router.delete('/:domain/resources/:id', authenticateToken, requireDomainAccess()
     res.json({ message: 'Resource deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete resource.' });
+  }
+});
+
+// Toggle week lock status
+router.put('/:domain/weeks/:week/lock', authenticateToken, requireDomainAccess(), async (req, res) => {
+  const { domain, week } = req.params;
+  const { isLocked } = req.body;
+
+  if (isLocked === undefined) {
+    return res.status(400).json({ message: 'isLocked field is required.' });
+  }
+
+  try {
+    const lock = await WeekLock.findOneAndUpdate(
+      { domain, week },
+      { $set: { isLocked: Boolean(isLocked) } },
+      { upsert: true, new: true }
+    );
+    res.json({ message: 'Week lock status updated successfully.', lock });
+  } catch (error) {
+    console.error('Failed to update week lock status:', error);
+    res.status(500).json({ message: 'Failed to update week lock status.' });
+  }
+});
+
+// Toggle resource completion progress
+router.put('/:domain/resources/:id/progress', authenticateToken, async (req, res) => {
+  const { domain, id } = req.params;
+  const { completed } = req.body;
+
+  if (completed === undefined) {
+    return res.status(400).json({ message: 'completed field is required.' });
+  }
+
+  if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
+    return res.status(403).json({ message: `Access denied. You are not registered for the ${domain} domain.` });
+  }
+
+  try {
+    // Find the resource
+    const resource = await Resource.findOne({ id, domain });
+    if (!resource) {
+      return res.status(404).json({ message: 'Resource not found in this domain.' });
+    }
+
+    // Verify if week is locked
+    const lock = await WeekLock.findOne({ domain, week: resource.week });
+    const isWeekLocked = lock ? lock.isLocked : true;
+    const isUserAdmin = req.user.role === 'super_admin' || (req.user.role === 'admin' && req.user.adminDomains.includes(domain));
+    if (isWeekLocked && !isUserAdmin) {
+      return res.status(403).json({ message: 'Cannot mark resource as completed in a locked week.' });
+    }
+
+    const progress = await UserProgress.findOneAndUpdate(
+      { userId: req.user.id, resourceId: id },
+      { $set: { completed: Boolean(completed), completedAt: new Date() } },
+      { upsert: true, new: true }
+    );
+
+    res.json({ message: 'Progress updated successfully.', progress });
+  } catch (error) {
+    console.error('Progress update error:', error);
+    res.status(500).json({ message: 'Failed to update progress.' });
   }
 });
 

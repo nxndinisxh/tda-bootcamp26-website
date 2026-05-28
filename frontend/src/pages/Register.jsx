@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
+import { User, Mail, Lock, UserPlus, AlertCircle, CheckCircle, Sun, Waves } from 'lucide-react';
 
 const AVAILABLE_DOMAINS = [
   'Machine Learning',
@@ -10,6 +10,12 @@ const AVAILABLE_DOMAINS = [
   'DSA',
   'WebDev'
 ];
+
+const BeachDecoration = ({ icon: Icon, className }) => (
+  <span className={`text-beach-coral/25 pointer-events-none select-none absolute ${className}`}>
+    <Icon size={16} />
+  </span>
+);
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -79,31 +85,32 @@ export default function Register() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-xl w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-[#d4c1b6]/15 relative">
-        {/* Corner Sparkles */}
-        <span className="absolute top-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute top-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute bottom-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
+      <div className="max-w-xl w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-white/60 relative shadow-md">
+        
+        {/* Decorative elements */}
+        <BeachDecoration icon={Sun} className="top-4 left-4" />
+        <BeachDecoration icon={Waves} className="top-4 right-4" />
+        <BeachDecoration icon={Waves} className="bottom-4 left-4" />
+        <BeachDecoration icon={Sun} className="bottom-4 right-4" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.05)_0,transparent_50%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(244,162,97,0.05)_0,transparent_50%)] pointer-events-none" />
 
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Create Your Account</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <h2 className="text-3xl font-extrabold text-beach-teal-dark tracking-tight">Create Your Account</h2>
+          <p className="mt-2 text-sm text-beach-teal/70 font-semibold">
             Register to join the Bootcamp and track your domain progress
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-start gap-2 text-sm">
+          <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-4 rounded-xl flex items-start gap-2 text-sm font-semibold">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl flex items-start gap-2 text-sm">
+          <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-4 rounded-xl flex items-start gap-2 text-sm font-semibold">
             <CheckCircle size={18} className="shrink-0 mt-0.5" />
             <span>{success}</span>
           </div>
@@ -113,11 +120,11 @@ export default function Register() {
           <div className="space-y-4">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                 Full Name
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                   <User size={18} />
                 </span>
                 <input
@@ -126,18 +133,18 @@ export default function Register() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
+                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm font-semibold"
                 />
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                 Email Address
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                   <Mail size={18} />
                 </span>
                 <input
@@ -146,20 +153,20 @@ export default function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="username@gmail.com"
-                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
+                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm font-semibold"
                 />
               </div>
-              <p className="mt-1 text-[10px] text-gray-500">Only @gmail.com email domains are allowed.</p>
+              <p className="mt-1 text-[10px] text-beach-teal/50 font-bold">Only @gmail.com email domains are allowed.</p>
             </div>
 
             {/* Passwords */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                     <Lock size={18} />
                   </span>
                   <input
@@ -168,17 +175,17 @@ export default function Register() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
+                    className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm font-semibold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                     <Lock size={18} />
                   </span>
                   <input
@@ -187,7 +194,7 @@ export default function Register() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
+                    className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm font-semibold"
                   />
                 </div>
               </div>
@@ -195,10 +202,10 @@ export default function Register() {
 
             {/* Domain Selection */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                 Domain Selection (Choose 1 to 3)
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-brand-bg-light/20 p-4 rounded-2xl border border-[#d4c1b6]/10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-beach-teal-light/5 p-4 rounded-2xl border border-beach-teal/15">
                 {AVAILABLE_DOMAINS.map((domain) => {
                   const isChecked = selectedDomains.includes(domain);
                   return (
@@ -206,23 +213,23 @@ export default function Register() {
                       key={domain}
                       className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer select-none ${
                         isChecked
-                          ? 'bg-[#60a6dc]/15 border-[#60a6dc]/40 text-white'
-                          : 'bg-brand-bg/50 border-[#d4c1b6]/10 text-gray-400 hover:bg-brand-bg-light/40'
+                          ? 'bg-beach-teal/10 border-beach-teal/40 text-beach-teal-dark font-bold shadow-xxs'
+                          : 'bg-white/40 border-beach-teal/10 text-beach-teal/60 hover:bg-white/60 font-semibold'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => handleDomainChange(domain)}
-                        className="rounded border-[#d4c1b6]/25 text-[#60a6dc] focus:ring-[#60a6dc] h-4 w-4 accent-[#60a6dc] cursor-pointer"
+                        className="rounded border-beach-teal/20 text-beach-coral focus:ring-beach-coral h-4 w-4 accent-beach-coral cursor-pointer"
                       />
                       <span className="text-sm font-medium">{domain}</span>
                     </label>
                   );
                 })}
               </div>
-              <p className="mt-1.5 text-[10px] text-gray-400">
-                Selected: <span className="font-semibold text-[#60a6dc]">{selectedDomains.length} / 3</span>
+              <p className="mt-1.5 text-[10px] text-beach-teal/60 font-semibold">
+                Selected: <span className="font-bold text-beach-coral">{selectedDomains.length} / 3</span>
               </p>
             </div>
           </div>
@@ -231,20 +238,20 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || selectedDomains.length === 0}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-beach-coral to-beach-gold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-beach-coral transition cursor-pointer disabled:opacity-50 shadow-md shadow-beach-coral/15"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <UserPlus className="h-5 w-5 text-brand-bg/70 group-hover:text-brand-bg transition" aria-hidden="true" />
+                <UserPlus className="h-5 w-5 text-white/80 group-hover:text-white transition" aria-hidden="true" />
               </span>
               {loading ? 'Registering...' : 'Register'}
             </button>
           </div>
         </form>
 
-        <div className="text-center pt-4 border-t border-[#d4c1b6]/10">
-          <p className="text-sm text-gray-400">
+        <div className="text-center pt-4 border-t border-beach-teal/10">
+          <p className="text-sm text-beach-teal/60 font-semibold">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition">
+            <Link to="/login" className="font-bold text-beach-coral hover:text-beach-teal transition">
               Sign In here
             </Link>
           </p>

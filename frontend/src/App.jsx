@@ -12,7 +12,7 @@ import { LogOut, LayoutDashboard, Compass, ShieldAlert, Award } from 'lucide-rea
 // Protected Route Guard for general logged-in users
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-brand-bg flex items-center justify-center text-white">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-beach-teal font-semibold">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 };
@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children }) => {
 // Protected Route Guard for Admin/Super-Admin
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-brand-bg flex items-center justify-center text-white">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-beach-teal font-semibold">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'admin' && user.role !== 'super_admin') {
     return <Navigate to="/" replace />;
@@ -33,15 +33,15 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-[#d4c1b6]/10">
+    <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/40">
       <Link to="/" className="flex items-center gap-2">
-        <span className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-[#60a6dc] to-[#d4c1b6] bg-clip-text text-transparent text-glow-primary">
+        <span className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-beach-coral via-beach-gold to-beach-coral bg-clip-text text-transparent text-glow-sunset">
           TDA
         </span>
       </Link>
 
       <div className="flex items-center gap-6">
-        <Link to="/" className="text-gray-300 hover:text-white transition font-medium">Home</Link>
+        <Link to="/" className="text-beach-teal hover:text-beach-coral transition font-bold">Home</Link>
 
         {user && (
           <>
@@ -50,7 +50,7 @@ const Navbar = () => {
                 <Link
                   key={d}
                   to={`/domains/${encodeURIComponent(d)}`}
-                  className="text-xs bg-[#60a6dc]/10 text-[#60a6dc] border border-[#60a6dc]/20 px-3 py-1 rounded-full hover:bg-[#60a6dc]/25 transition"
+                  className="text-xs bg-beach-teal/10 text-beach-teal border border-beach-teal/20 px-3 py-1 rounded-full hover:bg-beach-teal/20 transition font-bold"
                 >
                   {d}
                 </Link>
@@ -60,21 +60,21 @@ const Navbar = () => {
             {(user.role === 'admin' || user.role === 'super_admin') && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1 text-[#d4c1b6] hover:text-[#d4c1b6]/90 transition text-sm font-medium"
+                className="flex items-center gap-1 text-beach-teal-light hover:text-beach-teal transition text-sm font-bold"
               >
                 <LayoutDashboard size={18} />
                 <span>Dashboard</span>
               </Link>
             )}
 
-            <div className="flex items-center gap-4 pl-4 border-l border-white/10">
+            <div className="flex items-center gap-4 pl-4 border-l border-beach-teal/15">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-white">{user.name}</p>
-                <p className="text-xs text-gray-400 capitalize">{user.role.replace('_', ' ')}</p>
+                <p className="text-sm font-bold text-beach-teal-dark">{user.name}</p>
+                <p className="text-[10px] text-beach-teal/70 capitalize font-medium">{user.role.replace('_', ' ')}</p>
               </div>
               <button
                 onClick={logout}
-                className="flex items-center gap-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 px-3 py-1.5 rounded-lg border border-red-500/20 transition cursor-pointer text-sm"
+                className="flex items-center gap-1.5 bg-beach-coral/10 text-beach-coral hover:bg-beach-coral/20 px-3 py-1.5 rounded-lg border border-beach-coral/20 transition cursor-pointer text-sm font-bold"
               >
                 <LogOut size={16} />
                 <span>Logout</span>
@@ -87,13 +87,13 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="text-gray-300 hover:text-white transition px-4 py-2 text-sm font-medium"
+              className="text-beach-teal hover:text-beach-coral transition px-4 py-2 text-sm font-bold"
             >
               Login
             </Link>
             <Link
               to="/register"
-              className="bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-[#02223e] font-semibold px-4 py-2 rounded-lg text-sm transition"
+              className="bg-beach-coral hover:bg-beach-coral/90 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow-md shadow-beach-coral/15"
             >
               Register
             </Link>
@@ -108,7 +108,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-brand-bg text-gray-100 flex flex-col pt-20">
+        <div className="min-h-screen text-beach-teal-dark flex flex-col pt-20">
           <Navbar />
           <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
