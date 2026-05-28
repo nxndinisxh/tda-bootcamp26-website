@@ -39,14 +39,14 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, [token]);
 
-  const login = async (email, password) => {
+  const login = async (userId, password) => {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ userId, password })
       });
 
       const contentType = res.headers.get("content-type");
@@ -65,6 +65,46 @@ export const AuthProvider = ({ children }) => {
           unverified: data.unverified,
           email: data.email 
         };
+      }
+
+      if (data.isFirstLogin) {
+        return {
+          success: true,
+          isFirstLogin: true,
+          userId: data.userId
+        };
+      }
+
+      localStorage.setItem('tda_token', data.token);
+      setToken(data.token);
+      setUser(data.user);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const resetPassword = async (userId, tempPassword, newPassword) => {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, tempPassword, newPassword })
+      });
+
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(text || `Server returned error status ${res.status}`);
+      }
+
+      if (!res.ok) {
+        return { success: false, error: data.message || 'Password reset failed.' };
       }
 
       localStorage.setItem('tda_token', data.token);
@@ -160,7 +200,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, verifyEmailWithOtp, verifyEmailWithToken }}>
+    <AuthContext.Provider value={{ user, token, loading, login, resetPassword, register, logout, verifyEmailWithOtp, verifyEmailWithToken }}>
       {children}
     </AuthContext.Provider>
   );

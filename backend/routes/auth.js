@@ -2,6 +2,9 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import User from '../models/User.js';
 import Leaderboard from '../models/Leaderboard.js';
 import { VALID_DOMAINS } from '../config/constants.js';
@@ -9,114 +12,35 @@ import { authenticateToken } from '../middleware/auth.js';
 import authLimiter from '../middleware/authLimiter.js';
 import { sendWelcomeEmail, sendVerificationEmail } from '../config/mailer.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const router = express.Router();
 
-// Register
+// Register (Disabled in favor of CSV onboarding)
 router.post('/register', authLimiter, async (req, res) => {
-  const { name, email, password, domains } = req.body;
-
-  if (!name || !email || !password || !domains) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-
-  // 1. Strict email validation
-  if (!email.endsWith('@gmail.com')) {
-    return res.status(400).json({ message: 'Only @gmail.com emails are allowed.' });
-  }
-
-  // 2. Validate domains
-  if (!Array.isArray(domains) || domains.length < 1 || domains.length > 3) {
-    return res.status(400).json({ message: 'You must select between 1 and 3 domains.' });
-  }
-
-  const invalidDomains = domains.filter(d => !VALID_DOMAINS.includes(d));
-  if (invalidDomains.length > 0) {
-    return res.status(400).json({ message: `Invalid domain selected: ${invalidDomains.join(', ')}` });
-  }
-
-  try {
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    
-    if (existingUser && existingUser.isVerified) {
-      return res.status(400).json({ message: 'An account with this email already exists.' });
-    }
-
-    // Generate OTP & Link token
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-    const token = crypto.randomBytes(32).toString('hex');
-    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    if (existingUser && !existingUser.isVerified) {
-      // Update unverified user registration details
-      existingUser.name = name;
-      existingUser.passwordHash = passwordHash;
-      existingUser.domains = domains;
-      existingUser.verificationOtp = otp;
-      existingUser.verificationOtpExpires = otpExpires;
-      existingUser.verificationToken = token;
-      existingUser.verificationTokenExpires = tokenExpires;
-      existingUser.tempPassword = password;
-      await existingUser.save();
-    } else {
-      // Create new user (inactive)
-      await User.create({
-        id: `user_${Date.now()}`,
-        name,
-        email: email.toLowerCase(),
-        passwordHash,
-        domains,
-        isVerified: false,
-        verificationOtp: otp,
-        verificationOtpExpires: otpExpires,
-        verificationToken: token,
-        verificationTokenExpires: tokenExpires,
-        tempPassword: password,
-        role: 'user',
-        adminDomains: [],
-        createdAt: new Date().toISOString()
-      });
-    }
-
-    // Send verification email (OTP and link)
-    try {
-      await sendVerificationEmail(email.toLowerCase(), name, otp, token);
-    } catch (emailErr) {
-      console.error('Failed to send verification email:', emailErr);
-    }
-
-    res.status(201).json({ 
-      message: 'Verification email sent. Please check your inbox.',
-      email: email.toLowerCase()
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Internal server error during registration.' });
-  }
+  return res.status(403).json({ message: 'Self-registration is disabled. Accounts are pre-created.' });
 });
 
-// Login
+// Login (Using registration number as userId)
 router.post('/login', authLimiter, async (req, res) => {
-  const { email, password } = req.body;
+  const { userId, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  if (!userId || !password) {
+    return res.status(400).json({ message: 'Registration Number and password are required' });
   }
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ id: userId.trim() });
 
     if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+      return res.status(401).json({ message: 'Invalid Registration Number or password.' });
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+      return res.status(401).json({ message: 'Invalid Registration Number or password.' });
     }
 
     // Block unverified accounts
@@ -125,6 +49,15 @@ router.post('/login', authLimiter, async (req, res) => {
         message: 'Please verify your email before logging in.', 
         unverified: true, 
         email: user.email 
+      });
+    }
+
+    // First login check -> force password reset
+    if (user.isFirstLogin) {
+      return res.json({
+        isFirstLogin: true,
+        userId: user.id,
+        message: 'First login detected. Password reset is required.'
       });
     }
 
@@ -158,7 +91,111 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 });
 
-// Verify OTP Endpoint
+// Reset Password (and log plain password in CSV)
+router.post('/reset-password', authLimiter, async (req, res) => {
+  const { userId, tempPassword, newPassword } = req.body;
+
+  if (!userId || !tempPassword || !newPassword) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ id: userId.trim() });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Verify the temporary/previous password
+    const isMatch = await bcrypt.compare(tempPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid temporary password.' });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    user.passwordHash = passwordHash;
+    user.isFirstLogin = false;
+    await user.save();
+
+    // Log the new real password into a new CSV file
+    try {
+      const csvFilePath = path.join(__dirname, '../updated_passwords.csv');
+      if (!fs.existsSync(csvFilePath)) {
+        fs.writeFileSync(csvFilePath, 'Reg No,Name,Email,New Password,Reset At\n', 'utf8');
+      }
+      
+      const escapedName = `"${user.name.replace(/"/g, '""')}"`;
+      const escapedEmail = `"${user.email.replace(/"/g, '""')}"`;
+      const escapedPassword = `"${newPassword.replace(/"/g, '""')}"`;
+      const row = `${user.id},${escapedName},${escapedEmail},${escapedPassword},${new Date().toISOString()}\n`;
+      fs.appendFileSync(csvFilePath, row, 'utf8');
+      console.log(`Password reset logged for user ${user.id} to updated_passwords.csv`);
+    } catch (csvErr) {
+      console.error('Failed to log updated password to CSV file:', csvErr);
+    }
+
+    // Automatically initialize leaderboard entries for their domains if they don't exist yet
+    const leaderboardEntries = [];
+    for (const domain of user.domains) {
+      const exists = await Leaderboard.findOne({ userId: user.id, domain });
+      if (!exists) {
+        const domainCount = await Leaderboard.countDocuments({ domain });
+        leaderboardEntries.push({
+          id: `lb_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          userId: user.id,
+          userName: user.name,
+          domain,
+          scores: {},
+          totalScore: 0,
+          rank: domainCount + 1
+        });
+      }
+    }
+    if (leaderboardEntries.length > 0) {
+      await Leaderboard.insertMany(leaderboardEntries);
+    }
+
+    // Send a welcome mail confirming activation (includes username, email, domains)
+    try {
+      await sendWelcomeEmail(user.email, user.name, user.domains);
+    } catch (emailErr) {
+      console.error('Failed to send welcome email after password reset:', emailErr);
+    }
+
+    // Log in automatically by generating a JWT session
+    const payload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      domains: user.domains,
+      adminDomains: user.adminDomains
+    };
+
+    const jwtSecret = process.env.JWT_SECRET;
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: '1d' });
+
+    res.json({
+      message: 'Password reset successfully!',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        domains: user.domains,
+        adminDomains: user.adminDomains
+      }
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Internal server error during password reset.' });
+  }
+});
+
+// Verify OTP Endpoint (for legacy logins if any)
 router.post('/verify-otp', authLimiter, async (req, res) => {
   const { email, otp } = req.body;
 
@@ -254,7 +291,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
   }
 });
 
-// Verify Link Endpoint
+// Verify Link Endpoint (for legacy links if any)
 router.post('/verify-link', authLimiter, async (req, res) => {
   const { token } = req.body;
 

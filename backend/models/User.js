@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  isFirstLogin: {
+    type: Boolean,
+    default: true
+  },
+
   verificationOtp: {
     type: String,
     required: false

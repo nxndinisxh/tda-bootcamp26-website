@@ -12,14 +12,14 @@ const DOMAIN_DETAILS = [
     accent: 'bg-[#60a6dc]/10 text-[#60a6dc] border-[#60a6dc]/25'
   },
   {
-    name: 'Machine Learning',
+    name: 'AI ML',
     desc: 'Dive into supervised and unsupervised learning, regression models, classification algorithms, and feature engineering.',
     icon: Brain,
     color: 'from-[#60a6dc] to-[#06385d]',
     accent: 'bg-[#60a6dc]/10 text-[#60a6dc] border-[#60a6dc]/25'
   },
   {
-    name: 'Deep Learning',
+    name: 'Gen Ai',
     desc: 'Build and train neural networks, CNNs for computer vision, RNNs/Transformers for NLP, and generative models.',
     icon: Shield,
     color: 'from-[#d4c1b6] to-[#02223e]',
