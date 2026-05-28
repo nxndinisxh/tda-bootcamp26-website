@@ -9,6 +9,12 @@ const authLimiter = rateLimiter({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: {
+        keyGeneratorIpFallback: false
+    },
+    keyGenerator: (req) => {
+        return req.headers['x-session-id'] || req.ip;
+    }
 });
 
 export default authLimiter;

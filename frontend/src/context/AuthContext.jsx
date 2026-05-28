@@ -2,6 +2,15 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const AuthContext = createContext(null);
 
+const getSessionId = () => {
+  let sessionId = sessionStorage.getItem('tda_session_id');
+  if (!sessionId) {
+    sessionId = 'sess_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+    sessionStorage.setItem('tda_session_id', sessionId);
+  }
+  return sessionId;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('tda_token') || null);
@@ -17,7 +26,8 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await fetch('/api/auth/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-Session-ID': getSessionId()
           }
         });
 
@@ -44,7 +54,8 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
         },
         body: JSON.stringify({ userId, password })
       });
@@ -89,7 +100,8 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
         },
         body: JSON.stringify({ userId, tempPassword, newPassword })
       });
@@ -121,7 +133,8 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
         },
         body: JSON.stringify({ name, email, password, domains })
       });
@@ -156,7 +169,8 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
         },
         body: JSON.stringify({ email, otp })
       });
@@ -180,7 +194,8 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch('/api/auth/verify-link', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
         },
         body: JSON.stringify({ token: tokenVal })
       });
@@ -199,8 +214,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resendOtp = async (email) => {
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-ID': getSessionId()
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(text || `Server returned error status ${res.status}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to resend verification code.');
+      }
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, resetPassword, register, logout, verifyEmailWithOtp, verifyEmailWithToken }}>
+    <AuthContext.Provider value={{ user, token, loading, login, resetPassword, register, logout, verifyEmailWithOtp, verifyEmailWithToken, resendOtp }}>
       {children}
     </AuthContext.Provider>
   );

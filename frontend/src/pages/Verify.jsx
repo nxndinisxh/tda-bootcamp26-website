@@ -6,7 +6,7 @@ import { Mail, ShieldCheck, AlertCircle, ArrowRight, RefreshCw, Loader2 } from '
 export default function Verify() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { verifyEmailWithOtp, verifyEmailWithToken } = useAuth();
+  const { verifyEmailWithOtp, verifyEmailWithToken, resendOtp } = useAuth();
 
   const tokenParam = searchParams.get('token');
   const emailParam = searchParams.get('email') || '';
@@ -127,15 +127,10 @@ export default function Verify() {
     setSuccess('');
     
     try {
-      const res = await fetch('/api/auth/resend-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailParam })
-      });
-      const data = await res.json();
+      const res = await resendOtp(emailParam);
       
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to resend verification code.');
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to resend verification code.');
       }
       
       setSuccess('A new verification code has been sent to your email.');
