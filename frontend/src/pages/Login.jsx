@@ -21,7 +21,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!userId || !password) {
       setError('Please fill in all fields.');
       return;
@@ -86,7 +86,7 @@ export default function Login() {
           <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.06)_0,transparent_50%)] pointer-events-none" />
-          
+
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-white tracking-tight">Set New Password</h2>
             <p className="mt-2 text-sm text-gray-400">
@@ -184,7 +184,7 @@ export default function Login() {
         <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
 
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.06)_0,transparent_50%)] pointer-events-none" />
-        
+
         <div className="text-center">
           <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
           <p className="mt-2 text-sm text-gray-400">
@@ -214,7 +214,7 @@ export default function Login() {
                   required
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  placeholder="e.g. 240962067"
+                  placeholder="e.g. 2409XXXXX"
                   className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
                 />
               </div>
@@ -260,12 +260,6 @@ export default function Login() {
             </button>
           </div>
         </form>
-
-        <div className="text-center pt-4 border-t border-[#d4c1b6]/10">
-          <p className="text-xs text-gray-400 leading-relaxed">
-            Accounts are pre-created by organizers. Sign in using your student Registration Number as both username and default password.
-          </p>
-        </div>
       </div>
     </div>
   );
