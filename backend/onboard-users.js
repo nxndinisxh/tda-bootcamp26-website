@@ -105,10 +105,8 @@ const onboardUsers = async () => {
         user.passwordHash = passwordHash;
         user.domains = domains;
         user.isVerified = true;
-        // Reset first-login if needed
-        if (user.isFirstLogin === undefined) {
-          user.isFirstLogin = true;
-        }
+        // Reset first-login to true since password is set to temporary
+        user.isFirstLogin = true;
         await user.save();
       } else {
         console.log(`Creating new user: ${regNo} (${name})...`);
