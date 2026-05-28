@@ -87,15 +87,9 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="text-gray-300 hover:text-white transition px-4 py-2 text-sm font-medium"
+              className="bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-[#02223e] font-semibold px-5 py-2 rounded-lg text-sm transition"
             >
               Login
-            </Link>
-            <Link
-              to="/register"
-              className="bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-[#02223e] font-semibold px-4 py-2 rounded-lg text-sm transition"
-            >
-              Register
             </Link>
           </div>
         )}
@@ -114,7 +108,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              {/* <Route path="/register" element={<Register />} /> */}
               <Route path="/verify" element={<Verify />} />
 
               <Route

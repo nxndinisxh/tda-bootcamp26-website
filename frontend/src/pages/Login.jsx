@@ -262,11 +262,8 @@ export default function Login() {
         </form>
 
         <div className="text-center pt-4 border-t border-[#d4c1b6]/10">
-          <p className="text-sm text-gray-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition">
-              Onboarding Info
-            </Link>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Accounts are pre-created by organizers. Sign in using your student Registration Number as both username and default password.
           </p>
         </div>
       </div>

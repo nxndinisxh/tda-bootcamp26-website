@@ -111,17 +111,11 @@ export default function Landing() {
           ) : (
             <>
               <Link
-                to="/register"
-                className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/95 text-brand-bg font-bold px-6 py-3 rounded-xl transition shadow-lg shadow-[#60a6dc]/10"
-              >
-                <span>Register with @gmail.com</span>
-                <ArrowRight size={18} />
-              </Link>
-              <Link
                 to="/login"
-                className="bg-white/5 hover:bg-white/10 text-white border border-[#d4c1b6]/15 font-semibold px-6 py-3 rounded-xl transition"
+                className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/95 text-brand-bg font-bold px-8 py-3.5 rounded-xl transition shadow-lg shadow-[#60a6dc]/10"
               >
-                Sign In
+                <span>Access Portal</span>
+                <ArrowRight size={18} />
               </Link>
             </>
           )}
@@ -185,10 +179,10 @@ export default function Landing() {
                     )
                   ) : (
                     <Link
-                      to="/register"
+                      to="/login"
                       className="text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold text-xs flex items-center gap-1.5 transition"
                     >
-                      <span>Join Bootcamp</span>
+                      <span>Access Domain</span>
                       <ArrowRight size={14} />
                     </Link>
                   )}

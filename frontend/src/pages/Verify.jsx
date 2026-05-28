@@ -179,10 +179,10 @@ export default function Verify() {
               <p className="text-red-400 text-sm">{error}</p>
               <div className="pt-4">
                 <Link
-                  to="/register"
+                  to="/login"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition"
                 >
-                  Return to Register <ArrowRight size={16} />
+                  Return to Login <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
@@ -292,14 +292,14 @@ export default function Verify() {
         ) : (
           <div className="text-center py-4 space-y-4">
             <p className="text-sm text-gray-400">
-              No email was provided. Please go back to the registration screen to sign up.
+              No email was provided. Please return to the login screen to sign in.
             </p>
             <div className="pt-2">
               <Link
-                to="/register"
+                to="/login"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition"
               >
-                Go to Register <ArrowRight size={16} />
+                Go to Login <ArrowRight size={16} />
               </Link>
             </div>
           </div>
