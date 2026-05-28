@@ -53,3 +53,8 @@ coverage/
 
 # eslint cache
 .eslintcache
+
+#CSV
+*.csv
+*.CSV
+*.Csv

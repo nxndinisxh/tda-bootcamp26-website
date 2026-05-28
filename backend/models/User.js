@@ -23,7 +23,42 @@ const userSchema = new mongoose.Schema({
 
   passwordHash: {
     type: String,
-    required: true
+    required: false
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  isFirstLogin: {
+    type: Boolean,
+    default: true
+  },
+
+  verificationOtp: {
+    type: String,
+    required: false
+  },
+
+  verificationOtpExpires: {
+    type: Date,
+    required: false
+  },
+
+  verificationToken: {
+    type: String,
+    required: false
+  },
+
+  verificationTokenExpires: {
+    type: Date,
+    required: false
+  },
+
+  tempPassword: {
+    type: String,
+    required: false
   },
 
   domains: {

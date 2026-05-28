@@ -62,25 +62,27 @@ class Database {
 
       // Super Admin
       this.data.users.push({
-        id: 'user_super_admin',
+        id: '000000000',
         name: 'TDA Super Admin',
         email: 'admin@learner.manipal.edu',
         passwordHash: superAdminPasswordHash,
-        domains: ['Machine Learning', 'Deep Learning', 'DAV', 'DSA', 'WebDev'],
+        domains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
         role: 'super_admin',
-        adminDomains: ['Machine Learning', 'Deep Learning', 'DAV', 'DSA', 'WebDev'],
+        adminDomains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
+        isFirstLogin: false,
         createdAt: new Date().toISOString()
       });
 
       // Domain Admin (DSA Head)
       this.data.users.push({
-        id: 'user_dsa_admin',
+        id: '111111111',
         name: 'Rohan Sharma',
         email: 'rohan.sharma@learner.manipal.edu',
         passwordHash: dsaAdminPasswordHash,
         domains: ['DSA'],
         role: 'admin',
         adminDomains: ['DSA'],
+        isFirstLogin: false,
         createdAt: new Date().toISOString()
       });
 

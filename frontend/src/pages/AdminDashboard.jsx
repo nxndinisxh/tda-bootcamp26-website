@@ -15,7 +15,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-const VALID_DOMAINS = ['Machine Learning', 'Deep Learning', 'DAV', 'DSA', 'WebDev'];
+const VALID_DOMAINS = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
 
 const Sparkle = ({ className }) => (
   <span className={`text-white/30 font-bold select-none pointer-events-none sparkle-pulse ${className}`}>

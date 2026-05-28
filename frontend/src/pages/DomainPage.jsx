@@ -17,8 +17,8 @@ import {
 
 const DOMAIN_DESCRIPTIONS = {
   'DSA': 'Master advanced concepts of algorithms, data structures, complexity analysis, and competitive programming techniques.',
-  'Machine Learning': 'Explore supervised learning, classification, clustering, regression models, and optimization strategies.',
-  'Deep Learning': 'Understand artificial neural networks, convolution neural networks, sequence modeling, and deep generative architectures.',
+  'AI ML': 'Explore supervised learning, classification, clustering, regression models, and optimization strategies.',
+  'Gen Ai': 'Understand artificial neural networks, convolution neural networks, sequence modeling, and deep generative architectures.',
   'WebDev': 'Build fast, interactive, and beautiful frontends combined with scalable APIs, databases, and hosting pipelines.',
   'DAV': 'Gain command over data engineering, cleaning, exploratory statistics, and visual graphing tools.'
 };
