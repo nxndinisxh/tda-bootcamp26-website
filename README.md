@@ -1,4 +1,4 @@
-# TDA Bootcamp '26 Portal 🧪⚡
+# TDA Bootcamp '26 Portal
 
 The official portal for **The Data Alchemists (TDA) Bootcamp '26**, providing track progress tracking, resources, and leaderboards for bootcamp participants.
 
