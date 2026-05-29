@@ -92,37 +92,30 @@ const onboardUsers = async () => {
         continue;
       }
 
+      // Check if user already exists in database
+      const userExists = await User.findOne({ id: regNo });
+      if (userExists) {
+        console.log(`User ${regNo} (${name}) already exists. Skipping.`);
+        continue;
+      }
+
       // Hash password using bcrypt
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(tempPassword, salt);
 
-      // Check if user already exists in database
-      let user = await User.findOne({ id: regNo });
-      if (user) {
-        console.log(`User ${regNo} (${name}) already exists. Updating details...`);
-        user.name = name;
-        user.email = email;
-        user.passwordHash = passwordHash;
-        user.domains = domains;
-        user.isVerified = true;
-        // Reset first-login to true since password is set to temporary
-        user.isFirstLogin = true;
-        await user.save();
-      } else {
-        console.log(`Creating new user: ${regNo} (${name})...`);
-        await User.create({
-          id: regNo,
-          name,
-          email,
-          passwordHash,
-          domains,
-          isVerified: true,
-          isFirstLogin: true,
-          role: 'user',
-          adminDomains: [],
-          createdAt: new Date().toISOString()
-        });
-      }
+      console.log(`Creating new user: ${regNo} (${name})...`);
+      await User.create({
+        id: regNo,
+        name,
+        email,
+        passwordHash,
+        domains,
+        isVerified: true,
+        isFirstLogin: true,
+        role: 'user',
+        adminDomains: [],
+        createdAt: new Date().toISOString()
+      });
       onboardedCount++;
     }
 

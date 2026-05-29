@@ -1,183 +1,251 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Code, Database, Brain, Globe, BarChart2, Shield, ArrowRight, Award, Users } from 'lucide-react';
+import { Code, Brain, Globe, BarChart2, Shield, ArrowRight, ArrowUpRight } from 'lucide-react';
 
 const DOMAIN_DETAILS = [
   {
     name: 'DSA',
-    desc: 'Master algorithms, data structures, and problem-solving patterns. Essential for technical interviews and efficient code.',
+    desc: 'Algorithms, data structures & problem-solving patterns for technical interviews.',
     icon: Code,
-    color: 'from-[#60a6dc] to-[#d4c1b6]',
-    accent: 'bg-[#60a6dc]/10 text-[#60a6dc] border-[#60a6dc]/25'
+    gradient: 'from-[#0d9488] to-[#14b8a6]',
+    pill: 'bg-teal-50 text-teal-700 border-teal-200',
+    dot: 'bg-teal-400',
   },
   {
     name: 'AI ML',
     desc: 'Dive into supervised and unsupervised learning, regression models, classification algorithms, and feature engineering.',
     icon: Brain,
-    color: 'from-[#60a6dc] to-[#06385d]',
-    accent: 'bg-[#60a6dc]/10 text-[#60a6dc] border-[#60a6dc]/25'
+    gradient: 'from-[#0891b2] to-[#06b6d4]',
+    pill: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    dot: 'bg-cyan-400',
   },
   {
     name: 'Gen Ai',
     desc: 'Build and train neural networks, CNNs for computer vision, RNNs/Transformers for NLP, and generative models.',
     icon: Shield,
-    color: 'from-[#d4c1b6] to-[#02223e]',
-    accent: 'bg-[#d4c1b6]/10 text-[#d4c1b6] border-[#d4c1b6]/25'
+    gradient: 'from-[#f97316] to-[#fb923c]',
+    pill: 'bg-orange-50 text-orange-700 border-orange-200',
+    dot: 'bg-orange-400',
   },
   {
     name: 'WebDev',
-    desc: 'Create highly responsive, modern, and high-performance full-stack web applications with modern frameworks.',
+    desc: 'Full-stack modern web apps with performance-first frameworks and tooling.',
     icon: Globe,
-    color: 'from-[#60a6dc] to-[#d4c1b6]',
-    accent: 'bg-[#60a6dc]/10 text-[#60a6dc] border-[#60a6dc]/25'
+    gradient: 'from-[#8b5cf6] to-[#a78bfa]',
+    pill: 'bg-violet-50 text-violet-700 border-violet-200',
+    dot: 'bg-violet-400',
   },
   {
     name: 'DAV',
-    desc: 'Analyze, clean, and visualize complex datasets. Make data-driven decisions using stats, Pandas, and Matplotlib.',
+    desc: 'Data analysis, visualization & decision-making with Pandas and Matplotlib.',
     icon: BarChart2,
-    color: 'from-[#d4c1b6] to-[#06385d]',
-    accent: 'bg-[#d4c1b6]/10 text-[#d4c1b6] border-[#d4c1b6]/25'
-  }
+    gradient: 'from-[#eab308] to-[#facc15]',
+    pill: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+    dot: 'bg-yellow-400',
+  },
 ];
 
-const TEAM_MEMBERS = [
-  { name: 'Dr. Anita Rao', role: 'Faculty Advisor', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=60' },
-  { name: 'Aryan Mehta', role: 'Super Admin / Lead', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=60' },
-  { name: 'Rohan Sharma', role: 'DSA Domain Head', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=60' },
-  { name: 'Pooja Hegde', role: 'ML Domain Head', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=60' }
-];
+/* Animated counter */
+function useCountUp(target, duration = 1400, start = false) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let raf;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min((now - t0) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(ease * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, start]);
+  return val;
+}
 
-// 4-point sparkle component matching Bright Path layout
-const Sparkle = ({ className }) => (
-  <span className={`text-white/40 font-bold select-none pointer-events-none sparkle-pulse ${className}`}>
-    ✦
-  </span>
-);
+function StatPill({ value, label, suffix = '', duration = 1400 }) {
+  const ref = useRef(null);
+  const [fired, setFired] = useState(false);
+  const count = useCountUp(value, duration, fired);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setFired(true); }, { threshold: 0.5 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className="flex flex-col items-center">
+      <span className="text-2xl font-black text-beach-teal-dark tabular-nums">{count}{suffix}</span>
+      <span className="text-xs text-beach-teal/55 font-semibold mt-0.5 uppercase tracking-widest">{label}</span>
+    </div>
+  );
+}
 
 export default function Landing() {
   const { user } = useAuth();
+  const displayedDomains = DOMAIN_DETAILS.filter((d) =>
+    !user ? true : user.domains?.includes(d.name)
+  );
 
   return (
-    <div className="flex flex-col gap-20 py-8 relative">
-      {/* Background Decorative Sparkles */}
-      <Sparkle className="absolute top-48 left-12 text-sm animate-pulse" />
-      <Sparkle className="absolute top-96 right-24 text-lg animate-pulse" />
-      <Sparkle className="absolute bottom-[30%] left-[15%] text-base animate-pulse" />
+    <div className="flex flex-col gap-0 relative overflow-x-hidden">
 
-      {/* Hero Section */}
-      <section className="relative text-center py-20 flex flex-col items-center justify-center min-h-[65vh] rounded-3xl overflow-hidden glass border border-[#d4c1b6]/10 px-6 bg-hero-gradient">
-        {/* Four Corner Sparkles matching the reference image */}
-        <Sparkle className="absolute top-6 left-6 text-xl" />
-        <Sparkle className="absolute top-6 right-6 text-xl" />
-        <Sparkle className="absolute bottom-6 left-6 text-xl" />
-        <Sparkle className="absolute bottom-6 right-6 text-xl" />
+      {/* ── HERO ────────────────────────────────────────────── */}
+      <section className="relative flex flex-col items-center justify-center text-center pt-20 pb-16 px-6 min-h-[52vh]">
 
-        {/* Glow circles */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-[radial-gradient(circle,rgba(96,166,220,0.1)_0%,transparent_60%)] pointer-events-none" />
+        {/* Subtle radial bloom */}
+        <div
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 55% at 50% 10%, rgba(20,184,166,0.10) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, rgba(249,115,22,0.07) 0%, transparent 70%)',
+          }}
+        />
 
-        <span className="text-xs font-bold tracking-widest text-[#60a6dc] bg-[#60a6dc]/10 border border-[#60a6dc]/20 px-4 py-2 rounded-full mb-6 uppercase">
-          The Data Alchemists (TDA) Bootcamp '26
+        {/* Eyebrow */}
+        <span
+          className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.18em] uppercase text-beach-teal border border-beach-teal/25 bg-beach-teal/5 px-4 py-1.5 rounded-full mb-6"
+          style={{ animation: 'fadeUp 0.5s ease both' }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-beach-coral animate-pulse" />
+          TDA Bootcamp '26 · Summer Edition
         </span>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight">
-          BUILDING BRIGHTER MINDS <br />
-          <span className="bg-linear-to-r from-[#60a6dc] via-[#d4c1b6] to-[#60a6dc] bg-clip-text text-transparent text-glow-primary">
-            TOGETHER
+        {/* Headline — tight & impactful */}
+        <h1
+          className="text-[clamp(2.4rem,6vw,4.5rem)] font-black leading-[1.04] tracking-tighter text-beach-teal-dark max-w-3xl"
+          style={{ animation: 'fadeUp 0.55s 0.08s ease both' }}
+        >
+          Build Brighter<br />
+          <span className="relative inline-block">
+            <span
+              className="bg-gradient-to-r from-beach-coral via-beach-gold to-beach-coral bg-clip-text text-transparent"
+              style={{ backgroundSize: '200% auto', animation: 'shimmer 4s linear infinite' }}
+            >
+              Minds Together
+            </span>
+            {/* underline stroke */}
+            <svg className="absolute -bottom-1 left-0 w-full" height="6" viewBox="0 0 300 6" preserveAspectRatio="none">
+              <path d="M0 4 Q75 0 150 4 Q225 8 300 4" stroke="#F4A261" strokeWidth="2.5" fill="none" strokeLinecap="round"
+                style={{ strokeDasharray: 320, strokeDashoffset: 320, animation: 'drawLine 0.9s 0.5s ease forwards' }} />
+            </svg>
           </span>
         </h1>
 
-        <p className="mt-6 text-gray-300 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-          Welcome to TDA BootCamp'26.
+        <p
+          className="mt-5 text-beach-teal/65 text-base sm:text-[17px] max-w-lg leading-relaxed font-medium"
+          style={{ animation: 'fadeUp 0.6s 0.18s ease both' }}
+        >
+          Catch the wave of knowledge this summer — curated tracks, live rankings & a community of builders.
         </p>
 
-        <div className="mt-10 flex flex-wrap gap-4 justify-center">
+        {/* CTA */}
+        <div
+          className="mt-8 flex flex-wrap gap-3 justify-center"
+          style={{ animation: 'fadeUp 0.6s 0.28s ease both' }}
+        >
           {user ? (
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-gray-400 text-sm">Welcome back, {user.name}! Access your registered domains below:</span>
-              <div className="flex flex-wrap gap-3 mt-2 justify-center">
-                {user.domains.map(d => (
-                  <Link
-                    key={d}
-                    to={`/domains/${encodeURIComponent(d)}`}
-                    className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-brand-bg font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-[#60a6dc]/15"
-                  >
-                    <span>{d}</span>
-                    <ArrowRight size={16} />
-                  </Link>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {user.domains.map((d) => (
+                <Link
+                  key={d}
+                  to={`/domains/${encodeURIComponent(d)}`}
+                  className="group flex items-center gap-2 bg-gradient-to-r from-beach-coral to-beach-gold text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md shadow-beach-coral/20 hover:shadow-beach-coral/35 hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  {d}
+                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              ))}
             </div>
           ) : (
             <>
               <Link
                 to="/login"
-                className="flex items-center gap-2 bg-[#60a6dc] hover:bg-[#60a6dc]/95 text-brand-bg font-bold px-8 py-3.5 rounded-xl transition shadow-lg shadow-[#60a6dc]/10"
+                className="group flex items-center gap-2 bg-gradient-to-r from-beach-coral to-beach-gold text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-beach-coral/25 hover:shadow-beach-coral/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
               >
                 <span>Access Portal</span>
-                <ArrowRight size={18} />
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-beach-teal border border-beach-teal/25 bg-beach-teal/5 hover:bg-beach-teal/10 font-bold text-sm px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
+              >
+                Sign In
               </Link>
             </>
           )}
         </div>
+
+        {/* Stat row */}
+        <div
+          className="mt-12 flex items-center gap-8 sm:gap-14 justify-center"
+          style={{ animation: 'fadeUp 0.6s 0.4s ease both' }}
+        >
+          <StatPill value={5} label="Tracks" />
+          <div className="w-px h-8 bg-beach-teal/15" />
+          <StatPill value={200} suffix="+" label="Students" duration={1600} />
+          <div className="w-px h-8 bg-beach-teal/15" />
+          <StatPill value={8} label="Weeks" />
+        </div>
       </section>
 
-      {/* Domains Section */}
-      <section id="domains" className="flex flex-col gap-8">
-        <div className="text-center relative">
-          <Sparkle className="absolute -top-6 right-1/4 text-xs animate-bounce" />
-          <h2 className="text-3xl font-bold tracking-tight">Select & Excel in Domains</h2>
-          <p className="text-gray-400 mt-2 max-w-xl mx-auto text-sm">
-            Choose up to 3 tracks to access curated resources, class announcements, and check your rank.
+      {/* ── THIN DIVIDER ─────────────────────────────────────── */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-beach-teal/15 to-transparent my-2" />
+
+      {/* ── DOMAINS ──────────────────────────────────────────── */}
+      <section className="py-16 px-4 max-w-6xl mx-auto w-full">
+
+        <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-1">Learning Tracks</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-beach-teal-dark tracking-tight">
+              {user ? 'Your Active Tracks' : 'Choose Your Path'}
+            </h2>
+          </div>
+          <p className="text-beach-teal/55 text-sm font-medium max-w-xs text-right hidden sm:block">
+            {user ? 'Access exclusive resources & track your rank.' : 'Up to 3 tracks. Curated resources + live leaderboards.'}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {DOMAIN_DETAILS.map((domain) => {
-            const Icon = domain.icon;
-            const isRegistered = user && user.domains.includes(domain.name);
+        {user ? (
+          /* ── REGISTERED: single row, max 5, no wrapping ── */
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${Math.min(displayedDomains.length, 5)}, minmax(0, 1fr))`,
+              gap: '12px',
+            }}
+          >
+            {displayedDomains.slice(0, 5).map((domain, i) => {
+              const Icon = domain.icon;
+              return (
+                <div
+                  key={domain.name}
+                  className="group relative bg-white/60 backdrop-blur-sm border border-white/80 hover:border-beach-teal/20 rounded-2xl p-4 flex flex-col gap-3 hover:shadow-xl hover:shadow-beach-teal/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                  style={{ animation: `fadeUp 0.5s ${i * 70}ms ease both` }}
+                >
+                  {/* Hover gradient wash */}
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${domain.gradient} opacity-0 group-hover:opacity-[0.05] transition-opacity duration-300 pointer-events-none`} />
 
-            return (
-              <div
-                key={domain.name}
-                className="relative group rounded-2xl glass p-6 border border-[#d4c1b6]/10 hover:border-[#d4c1b6]/20 hover:shadow-xl transition flex flex-col justify-between"
-              >
-                {/* Visual sparkles on card hover */}
-                <Sparkle className="absolute top-4 right-4 text-xs opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                <div>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-linear-to-r ${domain.color} text-white mb-4 shadow-sm`}>
-                    <Icon size={24} />
+                  {/* Icon */}
+                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-300 shrink-0`}>
+                    <Icon size={16} />
                   </div>
-                  <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+
+                  {/* Name — single line, no wrap */}
+                  <h3 className="text-[13px] font-black text-beach-teal-dark tracking-tight truncate leading-tight">
                     {domain.name}
-                    {isRegistered && (
-                      <span className="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#60a6dc]/15 text-[#60a6dc] border border-[#60a6dc]/25">
-                        Registered
-                      </span>
-                    )}
                   </h3>
-                  <p className="text-gray-400 text-xs mt-3 leading-relaxed">
+
+                  {/* Description — 2 lines max */}
+                  <p className="text-beach-teal/60 text-[11px] leading-relaxed font-medium line-clamp-2 flex-1">
                     {domain.desc}
                   </p>
-                </div>
 
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
-                  {user ? (
-                    isRegistered ? (
-                      <Link
-                        to={`/domains/${encodeURIComponent(domain.name)}`}
-                        className="text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold text-xs flex items-center gap-1.5 transition"
-                      >
-                        <span>Access Resources</span>
-                        <ArrowRight size={14} />
-                      </Link>
-                    ) : (
-                      <span className="text-gray-500 text-xxs italic">
-                        Not in your registered domains
-                      </span>
-                    )
-                  ) : (
+                  {/* Footer */}
+                  <div className="pt-2 border-t border-beach-teal/8 flex items-center gap-1">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${domain.dot}`} />
                     <Link
                       to="/login"
                       className="text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold text-xs flex items-center gap-1.5 transition"
@@ -185,57 +253,80 @@ export default function Landing() {
                       <span>Access Domain</span>
                       <ArrowRight size={14} />
                     </Link>
-                  )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Leadership & Organizers */}
-      <section className="relative grid grid-cols-1 lg:grid-cols-3 gap-8 items-center p-8 sm:p-12 rounded-3xl border border-[#d4c1b6]/10 glass overflow-hidden">
-        {/* Background stars */}
-        <Sparkle className="absolute top-6 left-6 text-sm" />
-        <Sparkle className="absolute bottom-6 right-6 text-sm" />
-
-        <div className="lg:col-span-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#d4c1b6]">Team</span>
-          <h2 className="text-3xl font-bold tracking-tight mt-2">Organizers & Mentors</h2>
-          <p className="text-gray-400 mt-4 leading-relaxed text-xs">
-            Meet the faculty advisors and student domain heads coordinating the bootcamp. They upload resources, structure syllabi, and score tasks.
-          </p>
-          <div className="flex gap-4 mt-6">
-            <div className="flex items-center gap-1 bg-[#60a6dc]/5 px-3 py-1.5 rounded-lg border border-[#60a6dc]/15 text-xxs text-gray-300">
-              <Users size={12} className="text-[#60a6dc]" />
-              <span>300+ Students</span>
-            </div>
-            <div className="flex items-center gap-1 bg-[#d4c1b6]/5 px-3 py-1.5 rounded-lg border border-[#d4c1b6]/15 text-xxs text-gray-300">
-              <Award size={12} className="text-[#d4c1b6]" />
-              <span>5 Domains</span>
-            </div>
+              );
+            })}
           </div>
-        </div>
+        ) : (
+          /* ── UNREGISTERED: animated slide-in list ── */
+          <div className="flex flex-col gap-3 max-w-3xl">
+            {DOMAIN_DETAILS.map((domain, i) => {
+              const Icon = domain.icon;
+              return (
+                <div
+                  key={domain.name}
+                  className="group flex items-center justify-between gap-4 bg-white/55 backdrop-blur-sm border border-white/80 hover:border-beach-teal/20 rounded-2xl px-5 py-4 hover:shadow-lg hover:shadow-beach-teal/5 hover:translate-x-1 transition-all duration-300"
+                  style={{
+                    animation: 'slideInLeft 0.55s cubic-bezier(0.16,1,0.3,1) both',
+                    animationDelay: `${i * 90}ms`,
+                  }}
+                >
+                  {/* Left: icon + text */}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform duration-300`}>
+                      <Icon size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="text-[15px] font-black text-beach-teal-dark tracking-tight">{domain.name}</h3>
+                        <span className={`text-[9px] font-bold tracking-wider uppercase border px-2 py-0.5 rounded-full shrink-0 ${domain.pill}`}>
+                          Track
+                        </span>
+                      </div>
+                      <p className="text-beach-teal/60 text-[12px] font-medium truncate">{domain.desc}</p>
+                    </div>
+                  </div>
 
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {TEAM_MEMBERS.map((member) => (
-            <div key={member.name} className="flex flex-col items-center text-center bg-brand-bg-light/30 border border-[#d4c1b6]/10 rounded-2xl p-4 hover:border-[#d4c1b6]/20 transition">
-              <img
-                src={member.img}
-                alt={member.name}
-                className="w-14 h-14 rounded-full object-cover border border-[#d4c1b6]/20 mb-3"
-              />
-              <h4 className="font-bold text-xs text-white leading-tight">{member.name}</h4>
-              <p className="text-[10px] text-gray-400 mt-1">{member.role}</p>
-            </div>
-          ))}
-        </div>
+                  {/* Right: CTA */}
+                  <Link
+                    to="/register"
+                    className="shrink-0 flex items-center gap-1.5 bg-white/90 hover:bg-beach-coral hover:text-white text-beach-coral border border-beach-teal/15 font-bold text-[11px] px-4 py-2 rounded-xl transition-all duration-250 shadow-sm group-hover:shadow-md"
+                  >
+                    Join
+                    <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
-      {/* Footer */}
-      <footer className="pt-8 border-t border-[#d4c1b6]/10 flex flex-col sm:flex-row items-center justify-between text-gray-500 text-xs">
-        <p>© 2026 TDA Bootcamp. Exclusive to Students of Manipal Institute of Technology.</p>
+      {/* ── FOOTER ───────────────────────────────────────────── */}
+      <footer className="mt-8 py-6 px-4 border-t border-beach-teal/10 flex flex-col sm:flex-row items-center justify-between text-beach-teal/35 text-[11px] font-semibold tracking-wide max-w-6xl mx-auto w-full">
+        <p>© 2026 TDA Bootcamp — Manipal Institute of Technology</p>
+        <p className="mt-1 sm:mt-0 text-beach-teal/25">Exclusive · Private · Internal</p>
       </footer>
+
+      {/* ── GLOBAL KEYFRAMES ─────────────────────────────────── */}
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-36px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes shimmer {
+          0%   { background-position: 0% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes drawLine {
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
     </div>
   );
 }

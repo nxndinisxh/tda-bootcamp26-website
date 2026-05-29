@@ -1,112 +1,183 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #02223e;
-  --color-brand-bg-light: #06385d;
-  --color-brand-card: rgba(6, 42, 73, 0.45);
-  --color-brand-border: rgba(212, 193, 182, 0.12);
-  --color-brand-primary: #60a6dc;
-  --color-brand-warm: #d4c1b6;
-  
-  --color-accent-purple: #8b5cf6;
-  --color-accent-blue: #60a6dc;
-  --color-accent-emerald: #10b981;
-  --color-accent-gold: #d4c1b6;
+  --color-beach-sand: #ebdcc9;
+  --color-beach-sand-dark: #dec8b1;
+  --color-beach-seafoam: #bcd4cf;
+  --color-beach-teal: #0f4c5c;
+  --color-beach-teal-dark: #072b35;
+  --color-beach-teal-light: #2a9d8f;
+  --color-beach-coral: #e76f51;
+  --color-beach-gold: #f4a261;
+  --color-beach-glass: rgba(248, 245, 240, 0.65);
+  --color-beach-glass-dark: rgba(15, 76, 92, 0.08);
+  --color-beach-glass-border: rgba(255, 255, 255, 0.7);
 }
 
 body {
-  background-color: var(--color-brand-bg);
+  background-color: var(--color-beach-sand);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(96, 166, 220, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(212, 193, 182, 0.05) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(6, 56, 93, 0.3) 0%, transparent 70%);
-  color: #f3f4f6;
-  font-family: 'Outfit', sans-serif;
+    radial-gradient(circle at 10% 20%, rgba(42, 157, 143, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(231, 111, 81, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(188, 212, 207, 0.4) 0%, transparent 80%);
+  color: var(--color-beach-teal-dark);
+  font-family: 'Quicksand', 'Outfit', sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Glassmorphism utility aligned to Bright Path aesthetic */
+/* Glassmorphism for summer theme - represents Frosted Sea-Glass */
 .glass {
-  background: rgba(6, 42, 73, 0.4);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(212, 193, 182, 0.12);
+  background: rgba(250, 247, 242, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px 0 rgba(15, 76, 92, 0.06);
 }
 
-/* Notched organic card matching Bright Path reference image */
-.notched-card {
-  background: rgba(6, 42, 73, 0.5);
-  border: 1px solid rgba(212, 193, 182, 0.15);
+/* Glass card that is slightly darker for secondary/dashboard elements */
+.glass-teal {
+  background: rgba(42, 157, 143, 0.08);
   backdrop-filter: blur(12px);
-  border-top-left-radius: 28px;
-  border-bottom-right-radius: 28px;
-  border-top-right-radius: 6px;
-  border-bottom-left-radius: 6px;
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(42, 157, 143, 0.15);
+}
+
+/* Notched organic card redesigned as a surfboard or driftwood structure */
+.notched-card {
+  background: rgba(250, 247, 242, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-top-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  border-top-right-radius: 8px;
+  border-bottom-left-radius: 8px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(15, 76, 92, 0.08);
 }
 
-/* Custom scrollbar */
+/* Custom summer beach scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #02223e;
+  background: var(--color-beach-sand);
 }
 ::-webkit-scrollbar-thumb {
-  background: #60a6dc;
-  border-radius: 4px;
+  background: var(--color-beach-teal-light);
+  border-radius: 5px;
+  border: 2px solid var(--color-beach-sand);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #d4c1b6;
+  background: var(--color-beach-coral);
 }
 
-/* Soft glow animation */
-@keyframes pulseGlow {
+/* Wave sway horizontal animation */
+@keyframes waveSway {
   0%, 100% {
-    text-shadow: 0 0 10px rgba(96, 166, 220, 0.3), 0 0 20px rgba(96, 166, 220, 0.1);
+    transform: translateX(0) scaleY(1);
   }
   50% {
-    text-shadow: 0 0 18px rgba(96, 166, 220, 0.6), 0 0 35px rgba(96, 166, 220, 0.3);
+    transform: translateX(-2%) scaleY(1.05);
   }
 }
 
-.text-glow-primary {
-  animation: pulseGlow 4s infinite ease-in-out;
+.wave-sway-anim {
+  animation: waveSway 8s infinite ease-in-out;
 }
 
-/* Custom input field style */
+/* Float drift animation for a floating raft / sea-glass look */
+@keyframes floatDrift {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.float-drift {
+  animation: floatDrift 5s infinite ease-in-out;
+}
+
+/* Custom beach input styling */
 .brand-input {
-  background-color: rgba(2, 34, 62, 0.5);
-  border: 1px solid rgba(212, 193, 182, 0.2);
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(15, 76, 92, 0.2);
   border-radius: 12px;
-  color: #fff;
+  color: var(--color-beach-teal-dark);
   transition: all 0.3s ease;
 }
 
 .brand-input:focus {
-  border-color: #60a6dc;
-  box-shadow: 0 0 0 2px rgba(96, 166, 220, 0.15);
+  border-color: var(--color-beach-teal-light);
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.15);
   outline: none;
 }
 
-/* Rounded border styling inspired by organic curves in the layout */
+/* Sunset glowing text for logo and page headings */
+@keyframes sunsetGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(244, 162, 97, 0.2), 0 0 20px rgba(231, 111, 81, 0.1);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(244, 162, 97, 0.5), 0 0 25px rgba(231, 111, 81, 0.3);
+  }
+}
+
+.text-glow-sunset {
+  animation: sunsetGlow 4s infinite ease-in-out;
+}
+
+/* Pill borders */
 .pill-border {
   border-radius: 24px;
 }
 
-/* Gradient background for hero segments */
-.bg-hero-gradient {
-  background: linear-gradient(180deg, #02223e 0%, rgba(6, 42, 73, 0.7) 100%);
+/* Timeline vertical path */
+.timeline-path {
+  position: relative;
+}
+.timeline-path::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--color-beach-teal-light) 0%, var(--color-beach-sand-dark) 100%);
+  border-radius: 1.5px;
 }
 
-/* Pulse animation for sparkles */
-@keyframes sparklePulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.85); }
-  50% { opacity: 0.95; transform: scale(1.15); }
+/* Custom organic shapes for a less boxy look */
+.surfboard-card {
+  border-radius: 65px 65px 30px 30px / 125px 125px 40px 40px;
 }
 
-.sparkle-pulse {
-  animation: sparklePulse 3s infinite ease-in-out;
+.pebble-card-1 {
+  border-radius: 50px 120px 50px 120px / 50px 120px 50px 120px;
+}
+
+.pebble-card-2 {
+  border-radius: 120px 50px 120px 50px / 120px 50px 120px 50px;
+}
+
+.beach-cove-hero {
+  border-radius: 40px 40px 160px 160px / 40px 40px 60px 60px;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 15s linear infinite;
 }
