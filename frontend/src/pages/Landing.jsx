@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Code, Brain, Globe, BarChart2, Shield, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { Code, Brain, Globe, BarChart2, Shield, ArrowRight } from 'lucide-react';
 
 const DOMAIN_DETAILS = [
   {
@@ -247,8 +247,8 @@ export default function Landing() {
                   <div className="pt-2 border-t border-beach-teal/8 flex items-center gap-1">
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${domain.dot}`} />
                     <Link
-                      to="/login"
-                      className="text-[#60a6dc] hover:text-[#60a6dc]/80 font-semibold text-xs flex items-center gap-1.5 transition"
+                      to={`/domains/${encodeURIComponent(domain.name)}`}
+                      className="text-beach-coral hover:text-beach-gold font-bold text-xs flex items-center gap-1.5 transition"
                     >
                       <span>Access Domain</span>
                       <ArrowRight size={14} />
@@ -290,7 +290,7 @@ export default function Landing() {
 
                   {/* Right: CTA */}
                   <Link
-                    to="/register"
+                    to="/login"
                     className="shrink-0 flex items-center gap-1.5 bg-white/90 hover:bg-beach-coral hover:text-white text-beach-coral border border-beach-teal/15 font-bold text-[11px] px-4 py-2 rounded-xl transition-all duration-250 shadow-sm group-hover:shadow-md"
                   >
                     Join
