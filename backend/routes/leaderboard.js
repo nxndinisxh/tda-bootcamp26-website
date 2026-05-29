@@ -4,16 +4,65 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Helper to get overall standings, dynamically aggregating weekly scores if overall is missing
+const getOverallLeaderboard = async (domain) => {
+  let entries = await Leaderboard.find({ 
+    domain, 
+    leaderboardType: 'overall' 
+  }).sort({ rank: 1 }).lean();
+
+  if (entries.length === 0) {
+    const weeklyEntries = await Leaderboard.find({
+      domain,
+      leaderboardType: 'weekly'
+    }).lean();
+
+    if (weeklyEntries.length > 0) {
+      const aggregates = {};
+      for (const entry of weeklyEntries) {
+        const { userId, userName, weekNumber, score } = entry;
+        if (!aggregates[userId]) {
+          aggregates[userId] = {
+            userId,
+            userName,
+            domain,
+            leaderboardType: 'overall',
+            score: 0,
+            weeklyBreakdown: {}
+          };
+        }
+        aggregates[userId].score += score;
+        aggregates[userId].weeklyBreakdown[`week${weekNumber}`] = score;
+      }
+
+      const sorted = Object.values(aggregates).sort((a, b) => b.score - a.score);
+
+      let currentRank = 0;
+      let currentScore = -1;
+      let count = 0;
+      entries = sorted.map((entry) => {
+        count++;
+        if (entry.score !== currentScore) {
+          currentRank = count;
+          currentScore = entry.score;
+        }
+        return {
+          ...entry,
+          rank: currentRank
+        };
+      });
+    }
+  }
+
+  return entries;
+};
+
 // Get overall leaderboard for a domain
 router.get('/:domain/overall', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
   try {
-    const entries = await Leaderboard.find({ 
-      domain, 
-      leaderboardType: 'overall' 
-    }).sort({ rank: 1 }).lean();
-
+    const entries = await getOverallLeaderboard(domain);
     res.json(entries);
   } catch (error) {
     console.error('Failed to fetch overall leaderboard:', error);
@@ -68,11 +117,7 @@ router.get('/:domain', authenticateToken, async (req, res) => {
   const { domain } = req.params;
 
   try {
-    const entries = await Leaderboard.find({ 
-      domain, 
-      leaderboardType: 'overall' 
-    }).sort({ rank: 1 }).lean();
-
+    const entries = await getOverallLeaderboard(domain);
     res.json(entries);
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
