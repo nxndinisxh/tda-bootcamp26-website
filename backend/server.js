@@ -1,6 +1,3 @@
-import dns from 'dns';
-dns.setDefaultResultOrder('ipv4first');
-
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -17,9 +14,10 @@ import adminRouter from './routes/admin.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load dotenv relative to this file (both backend/.env and root .env)
-dotenv.config({ path: path.join(__dirname, '.env') });
-dotenv.config({ path: path.join(__dirname, '../.env') });
+if (!process.env.VERCEL) {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+}
 
 const app = express();
 
@@ -53,12 +51,12 @@ app.use('/api/admin', adminRouter);
 const distPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(distPath));
 
-// Fallback to React app index.html for client-side routing in production (ignoring /api)
+// Fallback to React app index.html for client-side routing (ignoring /api)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Global Error Handler to catch all unhandled route/middleware exceptions and return JSON
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global express error:", err);
   res.status(500).json({

@@ -20,8 +20,9 @@ const authLimiter = rateLimiter({
     },
 
     skip: (req) => {
+        if (process.env.VERCEL) return true;
         if (process.env.NODE_ENV === 'development') return true;
-        const ip = req.ip || req.socket.remoteAddress || '';
+        const ip = req.ip || req.socket?.remoteAddress || '';
         return ip === '::1' || ip === '127.0.0.1' || ip.endsWith('127.0.0.1') || ip === '::ffff:127.0.0.1';
     }
 });
