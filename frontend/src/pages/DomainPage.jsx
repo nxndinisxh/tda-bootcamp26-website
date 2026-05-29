@@ -48,6 +48,22 @@ export default function DomainPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Leaderboard filter states
+  const [leaderboardView, setLeaderboardView] = useState('overall'); // 'overall' or 'weekly'
+  const [leaderboardWeek, setLeaderboardWeek] = useState('');
+  const [availableWeeks, setAvailableWeeks] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  // Leaderboard Upload Modal states
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadModalType, setUploadModalType] = useState('weekly'); // 'weekly' or 'overall'
+  const [uploadModalWeek, setUploadModalWeek] = useState('1');
+  const [uploadModalFile, setUploadModalFile] = useState(null);
+  const [uploadModalError, setUploadModalError] = useState('');
+  const [uploadModalSuccess, setUploadModalSuccess] = useState('');
+  const [uploadModalSkipped, setUploadModalSkipped] = useState([]);
+  const [uploadModalLoading, setUploadModalLoading] = useState(false);
+
   // Admin controls
   const isAdmin = user && (user.role === 'super_admin' || (user.role === 'admin' && user.adminDomains.includes(decodedDomain)));
   
@@ -75,30 +91,63 @@ export default function DomainPage() {
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [resResources, resAnnouncements, resLeaderboard] = await Promise.all([
+      const [resResources, resAnnouncements, resWeeks] = await Promise.all([
         fetch(`/api/domains/${encodeURIComponent(decodedDomain)}/resources`, { headers }),
         fetch(`/api/domains/${encodeURIComponent(decodedDomain)}/announcements`, { headers }),
-        fetch(`/api/leaderboard/${encodeURIComponent(decodedDomain)}`, { headers })
+        fetch(`/api/leaderboards/${encodeURIComponent(decodedDomain)}/weeks`, { headers })
       ]);
 
-      if (!resResources.ok || !resAnnouncements.ok || !resLeaderboard.ok) {
+      if (!resResources.ok || !resAnnouncements.ok || !resWeeks.ok) {
         throw new Error('Failed to load some domain data. Please refresh.');
       }
 
       const resourcesData = await resResources.json();
       const announcementsData = await resAnnouncements.json();
-      const leaderboardData = await resLeaderboard.json();
+      const weeksData = await resWeeks.json();
 
       setResources(resourcesData.resources || []);
       setWeekLocks(resourcesData.weekLocks || []);
       setAnnouncements(announcementsData);
-      setLeaderboard(leaderboardData);
+      setAvailableWeeks(weeksData);
+
+      // Default week selection if available
+      if (weeksData.length > 0) {
+        setLeaderboardWeek(String(weeksData[0]));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Fetch leaderboard standings separately
+  useEffect(() => {
+    const fetchLeaderboardData = async () => {
+      if (!user) return;
+      setLeaderboardLoading(true);
+      try {
+        const headers = { 'Authorization': `Bearer ${token}` };
+        let url = `/api/leaderboards/${encodeURIComponent(decodedDomain)}/overall`;
+        
+        if (leaderboardView === 'weekly' && leaderboardWeek) {
+          url = `/api/leaderboards/${encodeURIComponent(decodedDomain)}/weekly/${leaderboardWeek}`;
+        }
+        
+        const res = await fetch(url, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderboard(data);
+        }
+      } catch (err) {
+        console.error('Failed to load standings:', err);
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+
+    fetchLeaderboardData();
+  }, [decodedDomain, leaderboardView, leaderboardWeek, token, user]);
 
   // Resources Operations
   const handleResourceSubmit = async (e) => {
@@ -210,6 +259,83 @@ export default function DomainPage() {
       await fetchDomainData();
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  const handleLeaderboardUpload = async (e) => {
+    e.preventDefault();
+    setUploadModalError('');
+    setUploadModalSuccess('');
+    setUploadModalSkipped([]);
+    setUploadModalLoading(true);
+
+    if (!uploadModalFile) {
+      setUploadModalError('Please select a CSV file.');
+      setUploadModalLoading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('domain', decodedDomain);
+    formData.append('csvFile', uploadModalFile);
+    if (uploadModalType === 'weekly') {
+      formData.append('weekNumber', uploadModalWeek);
+    }
+
+    try {
+      const url = uploadModalType === 'weekly' 
+        ? '/api/admin/leaderboards/weekly' 
+        : '/api/admin/leaderboards/overall';
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to upload leaderboard.');
+
+      setUploadModalSuccess(`Successfully uploaded standings: ${data.uploaded} records inserted.`);
+      if (data.skipped > 0 && data.errors) {
+        setUploadModalSkipped(data.errors);
+      }
+
+      setUploadModalFile(null);
+      
+      // Refresh weeks and standings list
+      const resWeeks = await fetch(`/api/leaderboards/${encodeURIComponent(decodedDomain)}/weeks`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resWeeks.ok) {
+        const weeksData = await resWeeks.json();
+        setAvailableWeeks(weeksData);
+      }
+
+      let standingsUrl = `/api/leaderboards/${encodeURIComponent(decodedDomain)}/overall`;
+      if (leaderboardView === 'weekly' && leaderboardWeek) {
+        standingsUrl = `/api/leaderboards/${encodeURIComponent(decodedDomain)}/weekly/${leaderboardWeek}`;
+      }
+      const resStandings = await fetch(standingsUrl, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (resStandings.ok) {
+        const standingsData = await resStandings.json();
+        setLeaderboard(standingsData);
+      }
+
+      if (data.skipped === 0) {
+        setTimeout(() => {
+          setShowUploadModal(false);
+          setUploadModalSuccess('');
+        }, 1500);
+      }
+    } catch (err) {
+      setUploadModalError(err.message);
+    } finally {
+      setUploadModalLoading(false);
     }
   };
 
@@ -372,7 +498,7 @@ export default function DomainPage() {
                 </div>
                 <div className="space-y-3">
                   {leaderboard.slice(0, 3).map((player, idx) => (
-                    <div key={player.id} className="flex items-center justify-between bg-white/40 p-3 rounded-xl border border-white/60 text-xs shadow-xxs">
+                    <div key={player.userId || idx} className="flex items-center justify-between bg-white/40 p-3 rounded-xl border border-white/60 text-xs shadow-xxs">
                       <div className="flex items-center gap-3">
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
                           idx === 0 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/45' :
@@ -383,7 +509,7 @@ export default function DomainPage() {
                         </span>
                         <span className="font-bold text-beach-teal-dark">{player.userName}</span>
                       </div>
-                      <span className="font-extrabold text-beach-teal">{player.totalScore} pts</span>
+                      <span className="font-extrabold text-beach-teal">{player.score} pts</span>
                     </div>
                   ))}
                   {leaderboard.length === 0 && (
@@ -653,16 +779,79 @@ export default function DomainPage() {
         )}
 
         {/* Leaderboard Tab */}
-        {activeTab === 'leaderboard' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-bold text-beach-teal-dark">Domain Rankings</h3>
-              <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Manual score listings verified by domain admins</p>
+        {activeTab === 'leaderboard' && (() => {
+          const top10 = leaderboard.slice(0, 10);
+          const userRankIndex = leaderboard.findIndex(entry => entry.userId === user?.id);
+          const isUserInTop10 = userRankIndex !== -1 && userRankIndex < 10;
+          const showUserRowAtBottom = user && userRankIndex !== -1 && !isUserInTop10;
+          const userLeaderboardEntry = showUserRowAtBottom ? leaderboard[userRankIndex] : null;
+
+          return (
+            <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-4 border-b border-beach-teal/10 pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-beach-teal-dark">Domain Rankings</h3>
+                <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Standings and performance tracking</p>
+              </div>
+              
+              {isAdmin && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setUploadModalType('weekly');
+                      setShowUploadModal(true);
+                      setUploadModalError('');
+                      setUploadModalSuccess('');
+                      setUploadModalSkipped([]);
+                    }}
+                    className="bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xxs px-3 py-2 rounded-xl transition shadow-sm cursor-pointer"
+                  >
+                    Upload Weekly CSV
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUploadModalType('overall');
+                      setShowUploadModal(true);
+                      setUploadModalError('');
+                      setUploadModalSuccess('');
+                      setUploadModalSkipped([]);
+                    }}
+                    className="bg-beach-coral hover:bg-beach-coral/90 text-white font-bold text-xxs px-3 py-2 rounded-xl transition shadow-sm cursor-pointer"
+                  >
+                    Upload Overall CSV
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-2">
+                <label className="text-xxs font-bold text-beach-teal/70 uppercase">View:</label>
+                <select
+                  value={leaderboardView === 'overall' ? 'overall' : `weekly:${leaderboardWeek}`}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'overall') {
+                      setLeaderboardView('overall');
+                    } else {
+                      const wk = val.split(':')[1];
+                      setLeaderboardView('weekly');
+                      setLeaderboardWeek(wk);
+                    }
+                  }}
+                  className="px-3 py-2 bg-white/70 border border-beach-teal/15 rounded-xl text-xs font-bold text-beach-teal-dark focus:outline-none cursor-pointer shadow-sm"
+                >
+                  <option value="overall">Overall Standing</option>
+                  {availableWeeks.map(w => (
+                    <option key={w} value={`weekly:${w}`}>Week {w}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {leaderboard.length === 0 ? (
+            {leaderboardLoading ? (
+              <div className="text-beach-teal/40 text-xs italic font-semibold text-center py-12">Loading standings...</div>
+            ) : leaderboard.length === 0 ? (
               <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold">
-                No participants registered or scores posted in this domain.
+                No standings records posted for this view yet.
               </div>
             ) : (
               <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
@@ -672,55 +861,66 @@ export default function DomainPage() {
                       <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
                         <th className="py-4 px-6 text-center w-16">Rank</th>
                         <th className="py-4 px-6">Participant</th>
-                        <th className="py-4 px-6">Task Breakdown</th>
-                        <th className="py-4 px-6 text-right w-32">Total Score</th>
+                        <th className="py-4 px-6 text-right w-32">Score</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
-                      {leaderboard.map((entry, idx) => {
+                      {top10.map((entry, idx) => {
+                        const isCurrentUser = entry.userId === user?.id;
                         return (
-                          <tr key={entry.id} className="hover:bg-white/40 transition">
+                          <tr key={entry._id || idx} className={`transition ${isCurrentUser ? 'bg-beach-teal/10 hover:bg-beach-teal/15 font-bold border-l-4 border-beach-teal' : 'hover:bg-white/40'}`}>
                             <td className="py-4 px-6 text-center">
                               <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-[10px] ${
-                                idx === 0 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/40' :
-                                idx === 1 ? 'bg-beach-seafoam/35 text-beach-teal border border-beach-seafoam/30' :
-                                idx === 2 ? 'bg-beach-sand-dark/35 text-beach-teal-dark border border-beach-sand-dark/20' :
+                                entry.rank === 1 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/40' :
+                                entry.rank === 2 ? 'bg-beach-seafoam/35 text-beach-teal border border-beach-seafoam/30' :
+                                entry.rank === 3 ? 'bg-beach-sand-dark/35 text-beach-teal-dark border border-beach-sand-dark/20' :
+                                isCurrentUser ? 'bg-beach-teal/20 text-beach-teal border border-beach-teal/40' :
                                 'text-beach-teal/40 border border-beach-teal/10'
                               }`}>
-                                {idx + 1}
+                                {entry.rank}
                               </span>
                             </td>
                             <td className="py-4 px-6 font-bold flex items-center gap-2">
-                              <User size={14} className="text-beach-teal/50" />
-                              <span>{entry.userName}</span>
-                            </td>
-                            <td className="py-4 px-6 text-beach-teal/80">
-                              <div className="flex flex-wrap gap-2">
-                                {!entry.scores || Object.keys(entry.scores).length === 0 ? (
-                                  <span className="text-[10px] text-beach-teal/50 italic">No tasks completed yet</span>
-                                ) : (
-                                  Object.entries(entry.scores || {}).map(([task, score]) => (
-                                    <span key={task} className="bg-white/50 text-xxs px-2.5 py-1 rounded-md border border-white/80 flex gap-1 shadow-xxs">
-                                      <span className="text-beach-teal/60 font-bold">{task}:</span>
-                                      <span className="font-extrabold text-beach-teal-dark">{score}</span>
-                                    </span>
-                                  ))
-                                )}
-                              </div>
+                              <User size={14} className={isCurrentUser ? 'text-beach-teal' : 'text-beach-teal/50'} />
+                              <span>{entry.userName} {isCurrentUser && <span className="text-[10px] text-beach-teal font-extrabold">(You)</span>}</span>
                             </td>
                             <td className="py-4 px-6 text-right font-extrabold text-beach-teal-dark">
-                              <span className={idx < 3 ? 'text-beach-coral' : ''}>{entry.totalScore} pts</span>
+                              <span className={entry.rank <= 3 || isCurrentUser ? 'text-beach-coral' : ''}>{entry.score} pts</span>
                             </td>
                           </tr>
                         );
                       })}
+                      {showUserRowAtBottom && (
+                        <>
+                          <tr className="bg-beach-teal-light/5 border-b border-beach-teal/10">
+                            <td colSpan={3} className="py-2 px-6 text-center text-beach-teal/45 font-bold italic select-none">
+                              •••
+                            </td>
+                          </tr>
+                          <tr key={userLeaderboardEntry._id || 'user-row'} className="bg-beach-teal/10 hover:bg-beach-teal/15 transition border-l-4 border-beach-teal font-bold text-beach-teal-dark">
+                            <td className="py-4 px-6 text-center">
+                              <span className="w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-[10px] bg-beach-teal/20 text-beach-teal border border-beach-teal/40">
+                                {userLeaderboardEntry.rank}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 flex items-center gap-2">
+                              <User size={14} className="text-beach-teal" />
+                              <span>{userLeaderboardEntry.userName} <span className="text-[10px] text-beach-teal font-extrabold">(You)</span></span>
+                            </td>
+                            <td className="py-4 px-6 text-right font-extrabold text-beach-coral">
+                              {userLeaderboardEntry.score} pts
+                            </td>
+                          </tr>
+                        </>
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
             )}
-          </div>
-        )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* --- RESOURCE MODAL --- */}
@@ -859,6 +1059,98 @@ export default function DomainPage() {
                   className="px-4 py-2.5 rounded-xl text-xs font-bold bg-beach-teal hover:bg-beach-teal/90 text-white cursor-pointer"
                 >
                   Post
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* --- LEADERBOARD UPLOAD MODAL --- */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-beach-teal-dark/30 backdrop-blur-sm">
+          <div className="glass max-w-lg w-full p-8 rounded-3xl border border-white/70 space-y-6 relative shadow-xl text-beach-teal-dark">
+            <BeachDecoration icon={Sun} className="top-4 right-4" />
+            <h4 className="text-base font-bold text-beach-teal-dark">
+              Upload {uploadModalType === 'weekly' ? 'Weekly' : 'Overall'} Standings CSV
+            </h4>
+            
+            <form onSubmit={handleLeaderboardUpload} className="space-y-4 text-left">
+              {uploadModalType === 'weekly' && (
+                <div>
+                  <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Week Number</label>
+                  <select
+                    value={uploadModalWeek}
+                    onChange={(e) => setUploadModalWeek(e.target.value)}
+                    className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(w => (
+                      <option className="bg-[#f7f5f0]" key={w} value={w}>Week {w}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Select CSV File</label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  required
+                  onChange={(e) => setUploadModalFile(e.target.files[0])}
+                  className="block w-full text-xs text-beach-teal-dark font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-bold file:bg-beach-teal/10 file:text-beach-teal file:cursor-pointer hover:file:bg-beach-teal/20"
+                />
+                <p className="text-[10px] text-beach-teal/60 font-semibold mt-1">
+                  {uploadModalType === 'weekly' 
+                    ? 'Expected headers: Rank, Reg no, Name, Points'
+                    : 'Expected headers: Rank, Reg no, Name, Points Week 1, Points Week 2, ..., Total'
+                  }
+                </p>
+              </div>
+
+              {uploadModalError && (
+                <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-3 rounded-xl text-xxs font-semibold">
+                  {uploadModalError}
+                </div>
+              )}
+
+              {uploadModalSuccess && (
+                <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-3 rounded-xl text-xxs font-semibold">
+                  {uploadModalSuccess}
+                </div>
+              )}
+
+              {uploadModalSkipped.length > 0 && (
+                <div className="bg-beach-coral/10 border border-beach-coral/20 p-4 rounded-xl space-y-2 text-beach-coral text-xxs font-semibold max-h-32 overflow-y-auto">
+                  <p className="font-bold uppercase tracking-wider">Skipped Rows / Errors ({uploadModalSkipped.length}):</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {uploadModalSkipped.map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadModalFile(null);
+                    setUploadModalError('');
+                    setUploadModalSuccess('');
+                    setUploadModalSkipped([]);
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer"
+                  disabled={uploadModalLoading}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-beach-teal hover:bg-beach-teal/90 text-white cursor-pointer"
+                  disabled={uploadModalLoading}
+                >
+                  {uploadModalLoading ? 'Uploading...' : 'Upload'}
                 </button>
               </div>
             </form>

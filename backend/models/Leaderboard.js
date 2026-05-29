@@ -1,12 +1,6 @@
 import mongoose from "mongoose";
 
 const leaderboardSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true
-  },
-
   userId: {
     type: String,
     required: true
@@ -22,19 +16,35 @@ const leaderboardSchema = new mongoose.Schema({
     required: true
   },
 
-  scores: {
+  leaderboardType: {
+    type: String,
+    enum: ["weekly", "overall"],
+    required: true
+  },
+
+  weekNumber: {
+    type: Number,
+    required: false
+  },
+
+  score: {
+    type: Number,
+    required: true
+  },
+
+  weeklyBreakdown: {
     type: Object,
     default: {}
   },
 
-  totalScore: {
-    type: Number,
-    default: 0
-  },
-
   rank: {
     type: Number,
-    default: 999
+    required: true
+  },
+
+  uploadedAt: {
+    type: Date,
+    default: Date.now
   }
 });
 

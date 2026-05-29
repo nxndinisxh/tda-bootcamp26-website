@@ -77,6 +77,106 @@
       "role": "user",
       "adminDomains": [],
       "createdAt": "2026-05-22T05:31:01.365Z"
+    },
+    {
+      "id": "251090051122",
+      "name": "Saksham Srivastava",
+      "email": "saksham.srivastava@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240962350",
+      "name": "Jyosith voona",
+      "email": "jyosith.voona@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240968302",
+      "name": "Avni Thakral",
+      "email": "avni.thakral@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240907510",
+      "name": "Ishani B Menon",
+      "email": "ishani.menon@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "251090051958",
+      "name": "Anish Mani Singh",
+      "email": "anish.singh@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240962067",
+      "name": "Udayan Kelkar",
+      "email": "udayan.kelkar@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240905058",
+      "name": "Asmitha Gottumukkala",
+      "email": "asmitha.g@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "251090290042",
+      "name": "Aryaa Bhavsar",
+      "email": "aryaa.bhavsar@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "251090060662",
+      "name": "Aahir Shetty",
+      "email": "aahir.shetty@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
+    },
+    {
+      "id": "240905630",
+      "name": "Meenakshi Sangeeth",
+      "email": "meenakshi.sangeeth@learner.manipal.edu",
+      "passwordHash": "$2b$10$bszltjH46SmGops46Hd/yuPHcmAyRQIv7Ro8pxdaaKFZeQMfAlvnO",
+      "domains": ["DSA", "DAV", "AI ML", "Gen Ai", "WebDev"],
+      "role": "user",
+      "adminDomains": [],
+      "createdAt": "2026-05-29T10:52:52.000Z"
     }
   ],
   "resources": [
@@ -163,82 +263,48 @@
   ],
   "leaderboard": [
     {
-      "id": "lb_1",
       "userId": "user_1",
       "userName": "Aditya Sen",
       "domain": "DSA",
-      "scores": {
-        "Week 1 Task": 85,
-        "Week 2 Task": 90,
-        "week2": 100
-      },
-      "totalScore": 275,
+      "leaderboardType": "overall",
+      "score": 175,
+      "weeklyBreakdown": { "week1": 85, "week2": 90 },
       "rank": 1
     },
     {
-      "id": "lb_2",
       "userId": "user_1",
       "userName": "Aditya Sen",
-      "domain": "WebDev",
-      "scores": {
-        "Project Proposal": 95
-      },
-      "totalScore": 95,
-      "rank": 2
+      "domain": "DSA",
+      "leaderboardType": "weekly",
+      "weekNumber": 1,
+      "score": 85,
+      "rank": 1
     },
     {
-      "id": "lb_3",
       "userId": "user_1",
       "userName": "Aditya Sen",
-      "domain": "Machine Learning",
-      "scores": {
-        "Classification Task": 80
-      },
-      "totalScore": 80,
-      "rank": 2
-    },
-    {
-      "id": "lb_4",
-      "userId": "user_2",
-      "userName": "Neha Gupta",
-      "domain": "Machine Learning",
-      "scores": {
-        "Classification Task": 95
-      },
-      "totalScore": 95,
+      "domain": "DSA",
+      "leaderboardType": "weekly",
+      "weekNumber": 2,
+      "score": 90,
       "rank": 1
     },
     {
-      "id": "lb_5",
-      "userId": "user_2",
-      "userName": "Neha Gupta",
-      "domain": "Deep Learning",
-      "scores": {
-        "CNN Implementation": 90
-      },
-      "totalScore": 90,
-      "rank": 1
-    },
-    {
-      "id": "lb_6",
       "userId": "user_3",
       "userName": "Kabir Mehta",
       "domain": "WebDev",
-      "scores": {
-        "Project Proposal": 100
-      },
-      "totalScore": 100,
+      "leaderboardType": "overall",
+      "score": 100,
+      "weeklyBreakdown": { "week1": 100 },
       "rank": 1
     },
     {
-      "id": "lb_7",
       "userId": "user_3",
       "userName": "Kabir Mehta",
-      "domain": "DAV",
-      "scores": {
-        "Visualization Task": 88
-      },
-      "totalScore": 88,
+      "domain": "WebDev",
+      "leaderboardType": "weekly",
+      "weekNumber": 1,
+      "score": 100,
       "rank": 1
     }
   ]

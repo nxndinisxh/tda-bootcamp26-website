@@ -7,7 +7,8 @@ import Resource from "./models/Resource.js";
 import Announcement from "./models/Announcement.js";
 import Leaderboard from "./models/Leaderboard.js";
 
-dotenv.config();
+dotenv.config({ path: "./backend/.env" });
+dotenv.config({ path: "./.env" });
 
 const migrateData = async () => {
   try {
@@ -27,9 +28,14 @@ const migrateData = async () => {
     await User.deleteMany({});
     await Resource.deleteMany({});
     await Announcement.deleteMany({});
-    await Leaderboard.deleteMany({});
+    try {
+      await Leaderboard.collection.drop();
+    } catch (err) {
+      // Ignore if collection does not exist yet
+    }
+    await Leaderboard.createIndexes();
 
-    console.log("Old collections cleared");
+    console.log("Old collections cleared and Leaderboard indexes refactored");
 
     // Insert data
     await User.insertMany(data.users);
