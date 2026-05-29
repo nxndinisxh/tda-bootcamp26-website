@@ -36,11 +36,17 @@ export default function AdminDashboard() {
   // Score management states
   const [selectedDomain, setSelectedDomain] = useState('');
   const [leaderboardList, setLeaderboardList] = useState([]);
-  const [scoreForm, setScoreForm] = useState({
-    userId: '',
-    taskName: '',
-    score: ''
-  });
+  
+  // CSV Upload states
+  const [uploadType, setUploadType] = useState('weekly');
+  const [weekNumber, setWeekNumber] = useState('1');
+  const [csvFile, setCsvFile] = useState(null);
+  const [skippedErrors, setSkippedErrors] = useState([]);
+
+  // Viewing states
+  const [viewType, setViewType] = useState('overall'); // 'overall' or 'weekly'
+  const [viewWeek, setViewWeek] = useState('');
+  const [availableWeeks, setAvailableWeeks] = useState([]);
 
   // User promotion states (Super Admin only)
   const [editingUserId, setEditingUserId] = useState(null);
@@ -66,7 +72,7 @@ export default function AdminDashboard() {
     }
 
     fetchInitialData();
-  }, [user, selectedDomain, activePanel]);
+  }, [user, selectedDomain, activePanel, viewType, viewWeek]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -84,10 +90,31 @@ export default function AdminDashboard() {
 
       // Fetch leaderboard for selected domain
       if (selectedDomain) {
-        const res = await fetch(`/api/leaderboard/${encodeURIComponent(selectedDomain)}`, { headers });
-        if (!res.ok) throw new Error(`Failed to load ${selectedDomain} leaderboard.`);
-        const data = await res.json();
-        setLeaderboardList(data);
+        // Fetch available weeks
+        const resWeeks = await fetch(`/api/leaderboards/${encodeURIComponent(selectedDomain)}/weeks`, { headers });
+        let weeksData = [];
+        if (resWeeks.ok) {
+          weeksData = await resWeeks.json();
+          setAvailableWeeks(weeksData);
+        }
+
+        // Set default viewWeek if not set or not in list
+        let currentWeek = viewWeek;
+        if (weeksData.length > 0 && (!currentWeek || !weeksData.includes(Number(currentWeek)))) {
+          currentWeek = String(weeksData[0]);
+          setViewWeek(currentWeek);
+        }
+
+        // Fetch standings based on viewType
+        let fetchUrl = `/api/leaderboards/${encodeURIComponent(selectedDomain)}/overall`;
+        if (viewType === 'weekly' && currentWeek) {
+          fetchUrl = `/api/leaderboards/${encodeURIComponent(selectedDomain)}/weekly/${currentWeek}`;
+        }
+
+        const resStandings = await fetch(fetchUrl, { headers });
+        if (!resStandings.ok) throw new Error(`Failed to load standings.`);
+        const standingsData = await resStandings.json();
+        setLeaderboardList(standingsData);
       }
     } catch (err) {
       setError(err.message);
@@ -151,36 +178,55 @@ export default function AdminDashboard() {
     }
   };
 
-  // Score Handlers (Admins / Super Admin)
-  const handleScoreSubmit = async (e) => {
+  // CSV Upload Handlers (Admins / Super Admin)
+  const handleUploadSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSkippedErrors([]);
 
-    if (!scoreForm.userId || !scoreForm.taskName || scoreForm.score === '') {
-      setError('Please fill in all score details.');
+    if (!selectedDomain) {
+      setError('Please select a domain.');
       return;
     }
 
+    if (!csvFile) {
+      setError('Please select a CSV file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('domain', selectedDomain);
+    formData.append('csvFile', csvFile);
+    if (uploadType === 'weekly') {
+      formData.append('weekNumber', weekNumber);
+    }
+
     try {
-      const res = await fetch(`/api/leaderboard/${encodeURIComponent(selectedDomain)}/scores`, {
+      const uploadUrl = uploadType === 'weekly' 
+        ? '/api/admin/leaderboards/weekly' 
+        : '/api/admin/leaderboards/overall';
+
+      const res = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          userId: scoreForm.userId,
-          taskName: scoreForm.taskName,
-          score: scoreForm.score
-        })
+        body: formData
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update score.');
+      if (!res.ok) throw new Error(data.message || 'Failed to upload leaderboard.');
 
-      setSuccess(`Updated score successfully for participant.`);
-      setScoreForm({ userId: '', taskName: '', score: '' });
+      setSuccess(`Uploaded successfully: ${data.uploaded} records inserted.`);
+      if (data.skipped > 0 && data.errors) {
+        setSkippedErrors(data.errors);
+      }
+
+      setCsvFile(null);
+      const fileInput = document.getElementById('csvFileInput');
+      if (fileInput) fileInput.value = '';
+
       await fetchInitialData();
     } catch (err) {
       setError(err.message);
@@ -258,18 +304,18 @@ export default function AdminDashboard() {
       <div>
         {activePanel === 'scores' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Score Form Widget */}
+            {/* CSV Upload Widget */}
             <div className="relative glass p-6 rounded-2xl border border-white/60 space-y-6 self-start overflow-hidden shadow-sm">
               <BeachDecoration icon={Sun} className="top-3 right-3" />
               <div className="flex items-center gap-2 text-beach-coral">
                 <TrendingUp size={18} />
-                <h3 className="font-bold text-base text-beach-teal-dark">Enter Score Details</h3>
+                <h3 className="font-bold text-base text-beach-teal-dark">Leaderboard CSV Upload</h3>
               </div>
 
               {accessibleDomains.length === 0 ? (
                 <p className="text-xs text-beach-teal/40 italic font-semibold">No assigned domains to manage.</p>
               ) : (
-                <form onSubmit={handleScoreSubmit} className="space-y-4">
+                <form onSubmit={handleUploadSubmit} className="space-y-4">
                   {/* Select Domain */}
                   <div>
                     <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Select Domain</label>
@@ -277,7 +323,7 @@ export default function AdminDashboard() {
                       value={selectedDomain}
                       onChange={(e) => {
                         setSelectedDomain(e.target.value);
-                        setScoreForm({ ...scoreForm, userId: '' });
+                        setSkippedErrors([]);
                       }}
                       className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
                     >
@@ -287,76 +333,144 @@ export default function AdminDashboard() {
                     </select>
                   </div>
 
-                  {/* Select Participant */}
+                  {/* Upload Type Selection */}
                   <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Select Participant</label>
-                    <select
-                      required
-                      value={scoreForm.userId}
-                      onChange={(e) => setScoreForm({ ...scoreForm, userId: e.target.value })}
-                      className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
-                    >
-                      <option className="bg-[#f7f5f0]" value="">-- Choose Participant --</option>
-                      {leaderboardList.map(item => (
-                        <option className="bg-[#f7f5f0]" key={item.userId} value={item.userId}>
-                          {item.userName}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Leaderboard Type</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setUploadType('weekly')}
+                        className={`py-2 text-xxs font-bold rounded-xl border transition ${
+                          uploadType === 'weekly'
+                            ? 'bg-beach-teal text-white border-beach-teal'
+                            : 'bg-white/40 text-beach-teal border-beach-teal/15 hover:bg-white/70'
+                        }`}
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUploadType('overall')}
+                        className={`py-2 text-xxs font-bold rounded-xl border transition ${
+                          uploadType === 'overall'
+                            ? 'bg-beach-teal text-white border-beach-teal'
+                            : 'bg-white/40 text-beach-teal border-beach-teal/15 hover:bg-white/70'
+                        }`}
+                      >
+                        Overall
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Task Name */}
-                  <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Task Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={scoreForm.taskName}
-                      onChange={(e) => setScoreForm({ ...scoreForm, taskName: e.target.value })}
-                      placeholder="e.g. Week 1 Task, Quiz 2"
-                      className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                    />
-                  </div>
+                  {/* Week Selector (For Weekly Type Only) */}
+                  {uploadType === 'weekly' && (
+                    <div>
+                      <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Week Number</label>
+                      <select
+                        value={weekNumber}
+                        onChange={(e) => setWeekNumber(e.target.value)}
+                        className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(w => (
+                          <option className="bg-[#f7f5f0]" key={w} value={w}>Week {w}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-                  {/* Score */}
+                  {/* File Input */}
                   <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Score</label>
+                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Choose CSV File</label>
                     <input
-                      type="number"
+                      id="csvFileInput"
+                      type="file"
+                      accept=".csv"
                       required
-                      min="0"
-                      max="150"
-                      value={scoreForm.score}
-                      onChange={(e) => setScoreForm({ ...scoreForm, score: e.target.value })}
-                      placeholder="e.g. 95"
-                      className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
+                      onChange={(e) => setCsvFile(e.target.files[0])}
+                      className="block w-full text-xs text-beach-teal-dark font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-bold file:bg-beach-teal/10 file:text-beach-teal file:cursor-pointer hover:file:bg-beach-teal/20"
                     />
+                    <p className="text-[10px] text-beach-teal/60 font-semibold mt-1">
+                      {uploadType === 'weekly' 
+                        ? 'Expected headers: Rank, Reg no, Name, Points'
+                        : 'Expected headers: Rank, Reg no, Name, Points Week 1, Points Week 2, ..., Total'
+                      }
+                    </p>
                   </div>
 
                   <button
                     type="submit"
                     className="w-full flex items-center justify-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs py-3 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
                   >
-                    <span>Update Rankings</span>
+                    <span>Upload Standings</span>
                     <ArrowRight size={14} />
                   </button>
                 </form>
               )}
+
+              {/* Skipped / Unregistered Student Errors Display */}
+              {skippedErrors.length > 0 && (
+                <div className="bg-beach-coral/10 border border-beach-coral/20 p-4 rounded-xl space-y-2 text-beach-coral text-xxs font-semibold max-h-48 overflow-y-auto">
+                  <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                    <AlertCircle size={14} />
+                    <span>Skipped Rows / Errors ({skippedErrors.length})</span>
+                  </div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {skippedErrors.map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {/* Current Domain Leaderboard Table */}
+            {/* Current Domain Standings Table */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center flex-wrap gap-2">
                 <h3 className="font-bold text-base text-beach-teal-dark">
-                  Registered Participants on <span className="text-beach-coral">{selectedDomain}</span>
+                  Standings for <span className="text-beach-coral">{selectedDomain}</span>
                 </h3>
+
+                {/* View Selection Controls */}
+                <div className="flex items-center gap-2 bg-white/40 border border-white/60 p-1.5 rounded-xl text-xxs font-bold shadow-xxs">
+                  <button
+                    onClick={() => setViewType('overall')}
+                    className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      viewType === 'overall'
+                        ? 'bg-beach-teal text-white shadow-sm'
+                        : 'text-beach-teal/70 hover:text-beach-teal'
+                    }`}
+                  >
+                    Overall
+                  </button>
+                  <button
+                    onClick={() => setViewType('weekly')}
+                    className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      viewType === 'weekly'
+                        ? 'bg-beach-teal text-white shadow-sm'
+                        : 'text-beach-teal/70 hover:text-beach-teal'
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                  {viewType === 'weekly' && availableWeeks.length > 0 && (
+                    <select
+                      value={viewWeek}
+                      onChange={(e) => setViewWeek(e.target.value)}
+                      className="ml-2 px-2 py-1 bg-white/70 border border-beach-teal/15 rounded-lg text-beach-teal-dark focus:outline-none cursor-pointer text-xxs"
+                    >
+                      {availableWeeks.map(w => (
+                        <option key={w} value={w}>Week {w}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               </div>
 
               {loading && leaderboardList.length === 0 ? (
-                <div className="text-beach-teal/40 text-xs italic font-semibold">Loading participant list...</div>
+                <div className="text-beach-teal/40 text-xs italic font-semibold">Loading standings...</div>
               ) : leaderboardList.length === 0 ? (
                 <div className="glass p-8 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold shadow-sm">
-                  No participants registered for this domain yet.
+                  No standings records uploaded for this view yet.
                 </div>
               ) : (
                 <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
@@ -366,13 +480,13 @@ export default function AdminDashboard() {
                         <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
                           <th className="py-3 px-4 text-center w-12">Rank</th>
                           <th className="py-3 px-4">Name</th>
-                          <th className="py-3 px-4">Scores</th>
-                          <th className="py-3 px-4 text-right w-24">Total</th>
+                          {viewType === 'weekly' && <th className="py-3 px-4">Info</th>}
+                          <th className="py-3 px-4 text-right w-24">Score</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
-                        {leaderboardList.map((entry) => (
-                          <tr key={entry.id} className="hover:bg-white/40 transition">
+                        {leaderboardList.map((entry, index) => (
+                          <tr key={entry._id || index} className="hover:bg-white/40 transition">
                             <td className="py-3 px-4 text-center">
                               <span className={`w-5.5 h-5.5 rounded-full inline-flex items-center justify-center font-bold text-[10px] ${
                                 entry.rank === 1 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/40' :
@@ -386,20 +500,13 @@ export default function AdminDashboard() {
                             <td className="py-3 px-4 font-bold">
                               {entry.userName}
                             </td>
-                            <td className="py-3 px-4 text-beach-teal/80">
-                              <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(entry.scores).map(([task, score]) => (
-                                  <span key={task} className="bg-white/50 text-[9px] px-2 py-0.5 rounded border border-white/80 shadow-xxs">
-                                    {task}: <strong className="text-beach-teal-dark font-extrabold">{score}</strong>
-                                  </span>
-                                ))}
-                                {Object.keys(entry.scores).length === 0 && (
-                                  <span className="text-xxs text-beach-teal/40 italic">No task grades</span>
-                                )}
-                              </div>
-                            </td>
+                            {viewType === 'weekly' && (
+                              <td className="py-3 px-4 text-beach-teal/80">
+                                <span className="text-xxs text-beach-teal/50 italic">Weekly Standings (Week {entry.weekNumber})</span>
+                              </td>
+                            )}
                             <td className="py-3 px-4 text-right font-extrabold text-beach-coral">
-                              {entry.totalScore}
+                              {entry.score}
                             </td>
                           </tr>
                         ))}

@@ -46,6 +46,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/domains', resourcesRouter);
 app.use('/api/domains', announcementsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
+app.use('/api/leaderboards', leaderboardRouter);
 app.use('/api/admin', adminRouter);
 
 // Serve static assets in production
