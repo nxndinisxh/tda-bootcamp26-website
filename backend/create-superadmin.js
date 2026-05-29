@@ -11,53 +11,72 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
+const superAdmins = [
+  {
+    id: '240905552',
+    name: 'nandini',
+    email: 'goodnandini@gmail.com'
+  },
+  {
+    id: '240911088',
+    name: 'muizz',
+    email: 'mmdmuizzahmed.09.a@gmail.com'
+  }
+];
+
 const createSuperAdmin = async () => {
   if (!process.env.MONGO_URI) {
-    console.error('MONGO_URI is missing from environment variables!');
+    console.error('MONGO_URI is missing!');
     process.exit(1);
   }
 
   try {
-    console.log('Connecting to MongoDB Atlas...');
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected.');
 
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('admin123', salt);
 
-    // Check if user already exists
-    let user = await User.findOne({ id: '240905552' });
-    if (user) {
-      console.log('User 240905552 already exists. Updating role to super_admin...');
-      user.name = 'nandini';
-      user.email = 'goodnandini@gmail.com';
-      user.passwordHash = passwordHash;
-      user.role = 'super_admin';
-      user.domains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
-      user.adminDomains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
-      user.isVerified = true;
-      user.isFirstLogin = false;
-      await user.save();
-      console.log('Superadmin updated successfully.');
-    } else {
-      console.log('Creating new Superadmin: 240905552 (nandini)...');
-      await User.create({
-        id: '240905552',
-        name: 'nandini',
-        email: 'goodnandini@gmail.com',
-        passwordHash,
-        domains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
-        role: 'super_admin',
-        adminDomains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
-        isVerified: true,
-        isFirstLogin: false,
-        createdAt: new Date().toISOString()
-      });
-      console.log('Superadmin created successfully.');
+    for (const admin of superAdmins) {
+      const passwordHash = await bcrypt.hash('Wisdom@786', salt);
+
+      let user = await User.findOne({ id: admin.id });
+
+      if (user) {
+        console.log(`Updating ${admin.name}...`);
+
+        user.name = admin.name;
+        user.email = admin.email;
+        user.passwordHash = passwordHash;
+        user.role = 'super_admin';
+        user.domains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+        user.adminDomains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+        user.isVerified = true;
+        user.isFirstLogin = false;
+
+        await user.save();
+
+        console.log(`${admin.name} updated successfully.`);
+      } else {
+        console.log(`Creating ${admin.name}...`);
+
+        await User.create({
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          passwordHash,
+          domains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
+          role: 'super_admin',
+          adminDomains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
+          isVerified: true,
+          isFirstLogin: false,
+          createdAt: new Date().toISOString()
+        });
+
+        console.log(`${admin.name} created successfully.`);
+      }
     }
 
   } catch (err) {
-    console.error('Error creating super admin:', err);
+    console.error(err);
   } finally {
     await mongoose.disconnect();
     console.log('Database disconnected.');
