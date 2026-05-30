@@ -167,12 +167,6 @@ export default function Landing() {
                 <span>Access Portal</span>
                 <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </Link>
-              <Link
-                to="/login"
-                className="flex items-center gap-1.5 text-beach-teal border border-beach-teal/25 bg-beach-teal/5 hover:bg-beach-teal/10 font-bold text-sm px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5"
-              >
-                Sign In
-              </Link>
             </>
           )}
         </div>
