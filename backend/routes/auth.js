@@ -118,18 +118,37 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     user.isFirstLogin = false;
     await user.save();
 
-    // Log the new real password into a new CSV file
+    // Log the new real password into a new CSV file (keeping only the latest reset password)
     try {
       const csvFilePath = path.join(__dirname, '../updated_passwords.csv');
-      if (!fs.existsSync(csvFilePath)) {
-        fs.writeFileSync(csvFilePath, 'Reg No,Name,Email,New Password,Reset At\n', 'utf8');
+      let records = {};
+
+      if (fs.existsSync(csvFilePath)) {
+        const fileContent = fs.readFileSync(csvFilePath, 'utf8');
+        const lines = fileContent.split(/\r?\n/).filter(l => l.trim() !== '');
+        // Parse existing rows (skipping header line)
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          const firstComma = line.indexOf(',');
+          if (firstComma !== -1) {
+            const regNo = line.substring(0, firstComma).trim();
+            records[regNo] = line;
+          }
+        }
       }
       
       const escapedName = `"${user.name.replace(/"/g, '""')}"`;
       const escapedEmail = `"${user.email.replace(/"/g, '""')}"`;
       const escapedPassword = `"${newPassword.replace(/"/g, '""')}"`;
-      const row = `${user.id},${escapedName},${escapedEmail},${escapedPassword},${new Date().toISOString()}\n`;
-      fs.appendFileSync(csvFilePath, row, 'utf8');
+      const newRow = `${user.id},${escapedName},${escapedEmail},${escapedPassword},${new Date().toISOString()}`;
+      
+      // Overwrite/update the row for the current user ID
+      records[user.id] = newRow;
+
+      // Re-write the updated map back to the CSV file
+      const header = 'Reg No,Name,Email,New Password,Reset At\n';
+      const rows = Object.values(records).join('\n') + '\n';
+      fs.writeFileSync(csvFilePath, header + rows, 'utf8');
       console.log(`Password reset logged for user ${user.id} to updated_passwords.csv`);
     } catch (csvErr) {
       console.error('Failed to log updated password to CSV file:', csvErr);

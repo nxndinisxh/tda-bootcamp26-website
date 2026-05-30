@@ -1,20 +1,30 @@
 import express from 'express';
 import Leaderboard from '../models/Leaderboard.js';
+import User from '../models/User.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
+const getActiveUserIds = async () => {
+  const users = await User.find({}, 'id').lean();
+  return users.map(u => u.id);
+};
+
 // Helper to get overall standings, dynamically aggregating weekly scores if overall is missing
 const getOverallLeaderboard = async (domain) => {
+  const activeUserIds = await getActiveUserIds();
+
   let entries = await Leaderboard.find({ 
     domain, 
-    leaderboardType: 'overall' 
+    leaderboardType: 'overall',
+    userId: { $in: activeUserIds }
   }).sort({ rank: 1 }).lean();
 
   if (entries.length === 0) {
     const weeklyEntries = await Leaderboard.find({
       domain,
-      leaderboardType: 'weekly'
+      leaderboardType: 'weekly',
+      userId: { $in: activeUserIds }
     }).lean();
 
     if (weeklyEntries.length > 0) {
@@ -80,10 +90,12 @@ router.get('/:domain/weekly/:week', authenticateToken, async (req, res) => {
   }
 
   try {
+    const activeUserIds = await getActiveUserIds();
     const entries = await Leaderboard.find({ 
       domain, 
       leaderboardType: 'weekly',
-      weekNumber: parsedWeek
+      weekNumber: parsedWeek,
+      userId: { $in: activeUserIds }
     }).sort({ rank: 1 }).lean();
 
     res.json(entries);
