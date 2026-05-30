@@ -1,13 +1,11 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import DomainPage from './pages/DomainPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Verify from './pages/Verify';
-import { LogOut, LayoutDashboard, Compass, ShieldAlert, Award } from 'lucide-react';
+import { LogOut, LayoutDashboard } from 'lucide-react';
 
 // Protected Route Guard for general logged-in users
 const ProtectedRoute = ({ children }) => {
@@ -34,7 +32,8 @@ const Navbar = () => {
 
   return (
     <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/40">
-      <Link to="/" className="flex items-center gap-2">
+      <Link to="/" className="flex items-center gap-2.5">
+        <img src="/TDA-logo.png" alt="TDA Logo" className="h-8 w-auto object-contain hover:scale-105 transition-all duration-200" />
         <span className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-beach-coral via-beach-gold to-beach-coral bg-clip-text text-transparent text-glow-sunset">
           TDA
         </span>
