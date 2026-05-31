@@ -83,7 +83,7 @@ const onboardUsers = async () => {
       const domains = [];
       if (record['DSA'] === 'Yes') domains.push('DSA');
       if (record['DAV'] === 'Yes') domains.push('DAV');
-      if (record['Webdev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
+      if (record['WebDev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
       if (record['AIML'] === 'Yes') domains.push('ML/DL');
       if (record['GEN AI'] === 'Yes') domains.push('Gen & Agentic AI');
 

@@ -15,13 +15,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const dummyUsers = [
   {
     id: '240968178',
-    name: 'Dummy User 1',
-    email: 'dummy1@tda.com'
+    name: 'Umar Siddique',
+    email: 'umarsiddique2601@gmail.com'
   },
   {
     id: '240968508',
-    name: 'Dummy User 2',
-    email: 'dummy2@tda.com'
+    name: 'Adi Shree',
+    email: 'adi.mitmpl2024@learner.manipal.edu'
   }
 ];
 
@@ -40,7 +40,7 @@ const createDummyUsers = async () => {
     const salt = await bcrypt.genSalt(10);
 
     for (const dummy of dummyUsers) {
-      const passwordHash = await bcrypt.hash('Dummy@786', salt);
+      const passwordHash = await bcrypt.hash(dummy.id, salt);
 
       let user = await User.findOne({ id: dummy.id });
 
@@ -53,7 +53,7 @@ const createDummyUsers = async () => {
         user.domains = ALL_DOMAINS;
         user.adminDomains = [];
         user.isVerified = true;
-        user.isFirstLogin = false;
+        user.isFirstLogin = true;
         await user.save();
         console.log(`${dummy.name} updated successfully.`);
       } else {
@@ -67,7 +67,7 @@ const createDummyUsers = async () => {
           role: 'user',
           adminDomains: [],
           isVerified: true,
-          isFirstLogin: false,
+          isFirstLogin: true,
           createdAt: new Date().toISOString()
         });
         console.log(`${dummy.name} created successfully.`);
