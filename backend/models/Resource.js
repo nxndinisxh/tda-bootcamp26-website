@@ -25,8 +25,13 @@ const resourceSchema = new mongoose.Schema({
 
   link: {
     type: String,
-    required: true
+    default: ''
   },
+
+  links: [{
+    label: { type: String, default: '' },
+    url: { type: String, required: true }
+  }],
 
   week: {
     type: String,

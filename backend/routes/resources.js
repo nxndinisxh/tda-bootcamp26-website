@@ -64,10 +64,21 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
 // Add resource
 router.post('/:domain/resources', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
-  const { title, description, link, week, order } = req.body;
+  const { title, description, link, links, week, order } = req.body;
 
-  if (!title || !link || !week) {
-    return res.status(400).json({ message: 'Title, link, and week are required.' });
+  // Accept either a links array or a single link string
+  const resolvedLinks = Array.isArray(links) && links.length > 0
+    ? links.filter(l => l && l.url)
+    : link
+      ? [{ label: 'Resource', url: link }]
+      : [];
+
+  if (!title || !week) {
+    return res.status(400).json({ message: 'Title and week are required.' });
+  }
+
+  if (resolvedLinks.length === 0) {
+    return res.status(400).json({ message: 'At least one link is required.' });
   }
 
   try {
@@ -76,7 +87,8 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
       domain,
       title,
       description: description || '',
-      link,
+      link: resolvedLinks[0]?.url || '',
+      links: resolvedLinks,
       week,
       order: Number(order) || 0,
       createdAt: new Date().toISOString()
@@ -84,6 +96,7 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 
     res.status(201).json(newResource);
   } catch (error) {
+    console.error('Failed to add resource:', error);
     res.status(500).json({ message: 'Failed to add resource.' });
   }
 });
@@ -91,15 +104,24 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 // Update resource
 router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
-  const { title, description, link, week, order } = req.body;
+  const { title, description, link, links, week, order } = req.body;
 
   try {
     const updateData = {};
     if (title) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (link) updateData.link = link;
     if (week) updateData.week = week;
     if (order !== undefined) updateData.order = Number(order) || 0;
+
+    // Handle links array
+    if (Array.isArray(links)) {
+      const resolvedLinks = links.filter(l => l && l.url);
+      updateData.links = resolvedLinks;
+      updateData.link = resolvedLinks[0]?.url || '';
+    } else if (link) {
+      updateData.link = link;
+      updateData.links = [{ label: 'Resource', url: link }];
+    }
 
     const updated = await Resource.findOneAndUpdate(
       { id },
@@ -113,6 +135,7 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
 
     res.json(updated);
   } catch (error) {
+    console.error('Failed to update resource:', error);
     res.status(500).json({ message: 'Failed to update resource.' });
   }
 });
