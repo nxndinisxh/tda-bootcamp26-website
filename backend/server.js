@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 
+import dashboardRouter from './routes/dashboard.js';
 import authRouter from './routes/auth.js';
 import resourcesRouter from './routes/resources.js';
 import announcementsRouter from './routes/announcements.js';
@@ -46,6 +47,7 @@ app.use('/api/domains', announcementsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 app.use('/api/leaderboards', leaderboardRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Serve static assets in production
 const distPath = path.join(__dirname, '../frontend/dist');
