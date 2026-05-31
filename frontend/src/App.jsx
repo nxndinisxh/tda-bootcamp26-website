@@ -38,9 +38,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
       </Link>
 
       <div className="flex items-center gap-6">
-        <Link to="/" className="text-beach-teal hover:text-beach-coral transition font-bold">
-          {user ? 'Dashboard' : 'Home'}
-        </Link>
+
 
         {user && (
           <>
