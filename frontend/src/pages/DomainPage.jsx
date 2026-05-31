@@ -535,8 +535,15 @@ export default function DomainPage() {
                           
                           {/* Collapsible Header */}
                           <div 
-                            onClick={() => toggleWeek(weekName)}
-                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/40 transition select-none bg-white/20 border-b border-beach-teal/5"
+                            onClick={() => {
+                              if (weekLocked && !isAdmin) return;
+                              toggleWeek(weekName);
+                            }}
+                            className={`flex items-center justify-between p-4 transition select-none bg-white/20 border-b border-beach-teal/5 ${
+                              weekLocked && !isAdmin
+                                ? 'cursor-not-allowed opacity-80'
+                                : 'cursor-pointer hover:bg-white/40'
+                            }`}
                           >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-beach-teal/10 flex items-center justify-center text-beach-teal shrink-0">
