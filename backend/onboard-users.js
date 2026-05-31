@@ -19,9 +19,9 @@ const onboardUsers = async () => {
   }
 
   // Find CSV file path
-  let csvPath = path.join(__dirname, '../TDA Bootcamp \'26.xlsx - Sheet2.csv');
+  let csvPath = path.join(__dirname, '../TDA Bootcamp \'26.xlsx - Sheet1.csv');
   if (!fs.existsSync(csvPath)) {
-    csvPath = path.join(__dirname, 'TDA Bootcamp \'26.xlsx - Sheet2.csv');
+    csvPath = path.join(__dirname, 'TDA Bootcamp \'26.xlsx - Sheet1.csv');
   }
   if (!fs.existsSync(csvPath)) {
     // Check if there is any other CSV file in the root directory
@@ -69,9 +69,9 @@ const onboardUsers = async () => {
         record[header] = row[idx];
       });
 
-      const email = record['Learner_Id']?.toLowerCase();
-      const name = record['Name'];
-      const regNo = record['Reg No'];
+      const email = record['Email']?.toLowerCase();
+      const name = record['Full Name'];
+      const regNo = record['Registration Number'];
       const tempPassword = record['Password'];
 
       if (!email || !name || !regNo || !tempPassword) {
@@ -84,8 +84,8 @@ const onboardUsers = async () => {
       if (record['DSA'] === 'Yes') domains.push('DSA');
       if (record['DAV'] === 'Yes') domains.push('DAV');
       if (record['Webdev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
-      if (record['AI ML'] === 'Yes') domains.push('ML/DL');
-      if (record['Gen Ai'] === 'Yes') domains.push('Gen & Agentic AI');
+      if (record['AIML'] === 'Yes') domains.push('ML/DL');
+      if (record['GEN AI'] === 'Yes') domains.push('Gen & Agentic AI');
 
       if (domains.length === 0) {
         console.warn(`User ${name} has no selected domains, skipping.`);
