@@ -31,7 +31,7 @@ const AdminRoute = ({ children }) => {
 const Navbar = ({ darkMode, toggleTheme }) => {
   const { user, logout } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -39,23 +39,26 @@ const Navbar = ({ darkMode, toggleTheme }) => {
     const fetchAnnouncements = async () => {
       try {
         const token = localStorage.getItem('tda_token');
-        const headers = { Authorization: `Bearer ${token}` };
-        const res = await fetch('/api/dashboard/announcements', { headers });
+        const res = await fetch('/api/dashboard/announcements', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         if (res.ok) {
           const data = await res.json();
           setAnnouncements(data || []);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching announcements:', err);
       }
     };
     fetchAnnouncements();
+    const interval = setInterval(fetchAnnouncements, 120000);
+    return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowNotifications(false);
+        setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -99,50 +102,58 @@ const Navbar = ({ darkMode, toggleTheme }) => {
           </>
         )}
 
-        {/* Notification Bell Toggler */}
+        {/* Bell Icon Dropdown (Logged in users only) */}
         {user && (
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10"
-              title="Recent Updates"
+              onClick={() => setIsOpen(!isOpen)}
+              className="bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10 relative"
+              title="Recent Announcements"
             >
-              <Bell size={18} className="text-beach-teal dark:text-white" />
+              <Bell size={18} className="text-beach-teal dark:text-slate-300" />
               {announcements.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white dark:border-[#07141a] animate-pulse" />
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7c3aed] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#7c3aed]"></span>
+                </span>
               )}
             </button>
 
-            {/* Notification Dropdown (Solid background, no glassmorphism) */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2.5 w-80 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden text-left flex flex-col max-h-96">
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/45 flex justify-between items-center">
-                  <span className="text-xs font-bold text-beach-teal-dark dark:text-white uppercase tracking-wider">Recent Updates</span>
-                  <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">
+            {/* Dropdown Menu (No glassmorphism) */}
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden text-left">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
+                  <span className="text-xs font-bold text-beach-teal-dark dark:text-white uppercase tracking-wider">
+                    Recent Updates
+                  </span>
+                  <span className="bg-[#7c3aed]/10 text-[#7c3aed] dark:text-[#a78bfa] text-[10px] px-2 py-0.5 rounded-full font-bold">
                     {announcements.length} New
                   </span>
                 </div>
 
-                <div className="overflow-y-auto divide-y divide-gray-100 dark:divide-slate-800/60 max-h-80">
+                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
                   {announcements.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-xs text-gray-400 dark:text-slate-500 italic font-semibold">
-                      No recent updates.
+                    <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic font-medium">
+                      No announcements yet.
                     </div>
                   ) : (
                     announcements.map((ann) => (
-                      <div key={ann.id} className="p-4 hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition duration-150">
-                        <div className="flex justify-between items-start gap-2 mb-1">
-                          <span className="text-[10px] font-bold text-purple-600 dark:text-violet-400 uppercase tracking-wide">
+                      <div 
+                        key={ann.id || ann._id} 
+                        className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition duration-150"
+                      >
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="text-[9px] font-bold text-[#7c3aed] dark:text-[#a78bfa] uppercase tracking-wider bg-[#7c3aed]/5 px-2 py-0.5 rounded">
                             {ann.domain}
                           </span>
-                          <span className="text-[9px] text-gray-400 dark:text-slate-500 font-semibold shrink-0">
+                          <span className="text-[9px] text-slate-400 font-semibold shrink-0">
                             {new Date(ann.date).toLocaleDateString()}
                           </span>
                         </div>
-                        <h4 className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
+                        <h4 className="font-bold text-xs text-slate-800 dark:text-white mt-1">
                           {ann.title}
                         </h4>
-                        <p className="text-[11px] text-gray-600 dark:text-slate-350 mt-1 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-normal font-medium whitespace-pre-wrap">
                           {ann.content}
                         </p>
                       </div>

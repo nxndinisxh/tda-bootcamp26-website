@@ -634,34 +634,35 @@ export default function DomainPage() {
                                           </div>
 
                                           <div className="flex items-center gap-2 shrink-0">
-                                            {!res.isLocked && !isAdmin && (
-                                              <button
-                                                onClick={() => handleProgressToggle(res.id, res.completed)}
-                                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
-                                                  res.completed
-                                                    ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
-                                                    : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
-                                                }`}
-                                              >
-                                                <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
-                                                  res.completed
-                                                    ? 'bg-beach-teal-light border-beach-teal-light text-white'
-                                                    : 'border-beach-teal/20 bg-white'
-                                                }`}>
-                                                  {res.completed && (
-                                                    <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
-                                                      <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-                                                    </svg>
-                                                  )}
-                                                </span>
-                                                <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
-                                              </button>
-                                            )}
-                                            {res.isLocked && (
+                                            {res.isLocked ? (
                                               <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
                                                 <Lock size={10} />
                                                 <span>Locked</span>
                                               </span>
+                                            ) : (
+                                              !isAdmin && (
+                                                <button
+                                                  onClick={() => handleProgressToggle(res.id, res.completed)}
+                                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
+                                                    res.completed
+                                                      ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
+                                                      : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
+                                                  }`}
+                                                >
+                                                  <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                                                    res.completed
+                                                      ? 'bg-beach-teal-light border-beach-teal-light text-white'
+                                                      : 'border-beach-teal/20 bg-white'
+                                                  }`}>
+                                                    {res.completed && (
+                                                      <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
+                                                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                      </svg>
+                                                    )}
+                                                  </span>
+                                                  <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
+                                                </button>
+                                              )
                                             )}
 
                                             {isAdmin && (
