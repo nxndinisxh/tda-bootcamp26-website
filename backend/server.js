@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 
+import dashboardRouter from './routes/dashboard.js';
 import authRouter from './routes/auth.js';
 import resourcesRouter from './routes/resources.js';
 import announcementsRouter from './routes/announcements.js';
@@ -14,9 +15,10 @@ import adminRouter from './routes/admin.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load dotenv relative to this file (both backend/.env and root .env)
-dotenv.config({ path: path.join(__dirname, '.env') });
-dotenv.config({ path: path.join(__dirname, '../.env') });
+if (!process.env.VERCEL) {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+}
 
 const app = express();
 
@@ -43,18 +45,20 @@ app.use('/api/auth', authRouter);
 app.use('/api/domains', resourcesRouter);
 app.use('/api/domains', announcementsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
+app.use('/api/leaderboards', leaderboardRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Serve static assets in production
 const distPath = path.join(__dirname, '../frontend/dist');
 app.use(express.static(distPath));
 
-// Fallback to React app index.html for client-side routing in production (ignoring /api)
+// Fallback to React app index.html for client-side routing (ignoring /api)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Global Error Handler to catch all unhandled route/middleware exceptions and return JSON
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global express error:", err);
   res.status(500).json({

@@ -21,6 +21,11 @@ const superAdmins = [
     id: '240911088',
     name: 'muizz',
     email: 'mmdmuizzahmed.09.a@gmail.com'
+  },
+  {
+    id: '240905400',
+    name: 'mitul',
+    email: 'Mitul141@gmail.com'
   }
 ];
 
@@ -47,8 +52,8 @@ const createSuperAdmin = async () => {
         user.email = admin.email;
         user.passwordHash = passwordHash;
         user.role = 'super_admin';
-        user.domains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
-        user.adminDomains = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+        user.domains = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
+        user.adminDomains = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
         user.isVerified = true;
         user.isFirstLogin = false;
 
@@ -63,9 +68,9 @@ const createSuperAdmin = async () => {
           name: admin.name,
           email: admin.email,
           passwordHash,
-          domains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
+          domains: ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'],
           role: 'super_admin',
-          adminDomains: ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'],
+          adminDomains: ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'],
           isVerified: true,
           isFirstLogin: false,
           createdAt: new Date().toISOString()

@@ -4,22 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   Award, 
-  Shield, 
   Check, 
   UserCheck, 
-  Plus, 
   AlertCircle, 
-  HelpCircle,
-  Database,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Sun,
+  Waves
 } from 'lucide-react';
 
-const VALID_DOMAINS = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+const VALID_DOMAINS = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
 
-const Sparkle = ({ className }) => (
-  <span className={`text-white/30 font-bold select-none pointer-events-none sparkle-pulse ${className}`}>
-    ✦
+const BeachDecoration = ({ icon: Icon, className }) => (
+  <span className={`text-beach-coral/25 pointer-events-none select-none absolute ${className}`}>
+    <Icon size={16} />
   </span>
 );
 
@@ -38,11 +36,17 @@ export default function AdminDashboard() {
   // Score management states
   const [selectedDomain, setSelectedDomain] = useState('');
   const [leaderboardList, setLeaderboardList] = useState([]);
-  const [scoreForm, setScoreForm] = useState({
-    userId: '',
-    taskName: '',
-    score: ''
-  });
+  
+  // CSV Upload states
+  const [uploadType, setUploadType] = useState('weekly');
+  const [weekNumber, setWeekNumber] = useState('1');
+  const [csvFile, setCsvFile] = useState(null);
+  const [skippedErrors, setSkippedErrors] = useState([]);
+
+  // Viewing states
+  const [viewType, setViewType] = useState('overall'); // 'overall' or 'weekly'
+  const [viewWeek, setViewWeek] = useState('');
+  const [availableWeeks, setAvailableWeeks] = useState([]);
 
   // User promotion states (Super Admin only)
   const [editingUserId, setEditingUserId] = useState(null);
@@ -68,7 +72,7 @@ export default function AdminDashboard() {
     }
 
     fetchInitialData();
-  }, [user, selectedDomain, activePanel]);
+  }, [user, selectedDomain, activePanel, viewType, viewWeek]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -86,10 +90,31 @@ export default function AdminDashboard() {
 
       // Fetch leaderboard for selected domain
       if (selectedDomain) {
-        const res = await fetch(`/api/leaderboard/${encodeURIComponent(selectedDomain)}`, { headers });
-        if (!res.ok) throw new Error(`Failed to load ${selectedDomain} leaderboard.`);
-        const data = await res.json();
-        setLeaderboardList(data);
+        // Fetch available weeks
+        const resWeeks = await fetch(`/api/leaderboards/${encodeURIComponent(selectedDomain)}/weeks`, { headers });
+        let weeksData = [];
+        if (resWeeks.ok) {
+          weeksData = await resWeeks.json();
+          setAvailableWeeks(weeksData);
+        }
+
+        // Set default viewWeek if not set or not in list
+        let currentWeek = viewWeek;
+        if (weeksData.length > 0 && (!currentWeek || !weeksData.includes(Number(currentWeek)))) {
+          currentWeek = String(weeksData[0]);
+          setViewWeek(currentWeek);
+        }
+
+        // Fetch standings based on viewType
+        let fetchUrl = `/api/leaderboards/${encodeURIComponent(selectedDomain)}/overall`;
+        if (viewType === 'weekly' && currentWeek) {
+          fetchUrl = `/api/leaderboards/${encodeURIComponent(selectedDomain)}/weekly/${currentWeek}`;
+        }
+
+        const resStandings = await fetch(fetchUrl, { headers });
+        if (!resStandings.ok) throw new Error(`Failed to load standings.`);
+        const standingsData = await resStandings.json();
+        setLeaderboardList(standingsData);
       }
     } catch (err) {
       setError(err.message);
@@ -153,36 +178,55 @@ export default function AdminDashboard() {
     }
   };
 
-  // Score Handlers (Admins / Super Admin)
-  const handleScoreSubmit = async (e) => {
+  // CSV Upload Handlers (Admins / Super Admin)
+  const handleUploadSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSkippedErrors([]);
 
-    if (!scoreForm.userId || !scoreForm.taskName || scoreForm.score === '') {
-      setError('Please fill in all score details.');
+    if (!selectedDomain) {
+      setError('Please select a domain.');
       return;
     }
 
+    if (!csvFile) {
+      setError('Please select a CSV file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('domain', selectedDomain);
+    formData.append('csvFile', csvFile);
+    if (uploadType === 'weekly') {
+      formData.append('weekNumber', weekNumber);
+    }
+
     try {
-      const res = await fetch(`/api/leaderboard/${encodeURIComponent(selectedDomain)}/scores`, {
+      const uploadUrl = uploadType === 'weekly' 
+        ? '/api/admin/leaderboards/weekly' 
+        : '/api/admin/leaderboards/overall';
+
+      const res = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          userId: scoreForm.userId,
-          taskName: scoreForm.taskName,
-          score: scoreForm.score
-        })
+        body: formData
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update score.');
+      if (!res.ok) throw new Error(data.message || 'Failed to upload leaderboard.');
 
-      setSuccess(`Updated score successfully for participant.`);
-      setScoreForm({ userId: '', taskName: '', score: '' });
+      setSuccess(`Uploaded successfully: ${data.uploaded} records inserted.`);
+      if (data.skipped > 0 && data.errors) {
+        setSkippedErrors(data.errors);
+      }
+
+      setCsvFile(null);
+      const fileInput = document.getElementById('csvFileInput');
+      if (fileInput) fileInput.value = '';
+
       await fetchInitialData();
     } catch (err) {
       setError(err.message);
@@ -190,21 +234,22 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 py-4">
-      {/* Page Header */}
-      <div className="relative glass p-8 sm:p-12 rounded-3xl border border-[#d4c1b6]/10 overflow-hidden bg-hero-gradient">
-        {/* Corner Sparkles */}
-        <Sparkle className="absolute top-4 left-4 text-base" />
-        <Sparkle className="absolute top-4 right-4 text-base" />
-        <Sparkle className="absolute bottom-4 left-4 text-base" />
-        <Sparkle className="absolute bottom-4 right-4 text-base" />
+    <div className="space-y-8 py-4 text-beach-teal-dark">
+      {/* Page Header - Beach Cove theme */}
+      <div className="relative glass p-8 sm:p-12 rounded-3xl border border-white/60 overflow-hidden bg-gradient-to-br from-beach-glass via-white/10 to-beach-seafoam/25 shadow-md">
+        
+        {/* Decorative elements */}
+        <BeachDecoration icon={Sun} className="top-4 left-4" />
+        <BeachDecoration icon={Waves} className="top-4 right-4" />
+        <BeachDecoration icon={Waves} className="bottom-4 left-4" />
+        <BeachDecoration icon={Sun} className="bottom-4 right-4" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(96,166,220,0.06)_0,transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(42,157,143,0.08)_0,transparent_55%)] pointer-events-none" />
         
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-[#60a6dc]">Admin Operations</span>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mt-2">Management Console</h1>
-          <p className="text-gray-300 text-sm sm:text-base max-w-2xl mt-4 leading-relaxed">
+          <span className="text-xs font-bold uppercase tracking-widest text-beach-coral font-bold">Admin Operations</span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-beach-teal-dark mt-2">Management Console</h1>
+          <p className="text-beach-teal/80 text-sm sm:text-base max-w-2xl mt-4 leading-relaxed font-semibold">
             {isSuperAdmin 
               ? 'Super Admin level access: Assign admin domains, manage roles, and review leaderboards.' 
               : 'Domain Head level access: Update participant grades and manage leaderboards for your assigned domains.'}
@@ -213,14 +258,14 @@ export default function AdminDashboard() {
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2 text-sm">
+        <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-4 rounded-xl flex items-center gap-2 text-sm font-semibold">
           <AlertCircle size={18} />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl flex items-center gap-2 text-sm">
+        <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-4 rounded-xl flex items-center gap-2 text-sm font-semibold">
           <Check size={18} />
           <span>{success}</span>
         </div>
@@ -228,13 +273,13 @@ export default function AdminDashboard() {
 
       {/* Tab Menu for Super Admin */}
       {isSuperAdmin && (
-        <div className="flex border-b border-white/10 gap-8">
+        <div className="flex border-b border-beach-teal/15 gap-8 overflow-x-auto pb-px">
           <button
             onClick={() => handlePanelChange('scores')}
-            className={`flex items-center gap-2 pb-4 text-sm font-semibold tracking-wide border-b-2 px-1 transition cursor-pointer ${
+            className={`flex items-center gap-2 pb-4 text-sm font-bold tracking-wide border-b-2 px-1 transition cursor-pointer ${
               activePanel === 'scores' 
-                ? 'border-[#60a6dc] text-[#60a6dc]' 
-                : 'border-transparent text-gray-400 hover:text-gray-200'
+                ? 'border-beach-coral text-beach-coral' 
+                : 'border-transparent text-beach-teal/60 hover:text-beach-teal'
             }`}
           >
             <Award size={16} />
@@ -243,10 +288,10 @@ export default function AdminDashboard() {
           
           <button
             onClick={() => handlePanelChange('users')}
-            className={`flex items-center gap-2 pb-4 text-sm font-semibold tracking-wide border-b-2 px-1 transition cursor-pointer ${
+            className={`flex items-center gap-2 pb-4 text-sm font-bold tracking-wide border-b-2 px-1 transition cursor-pointer ${
               activePanel === 'users' 
-                ? 'border-[#60a6dc] text-[#60a6dc]' 
-                : 'border-transparent text-gray-400 hover:text-gray-200'
+                ? 'border-beach-coral text-beach-coral' 
+                : 'border-transparent text-beach-teal/60 hover:text-beach-teal'
             }`}
           >
             <Users size={16} />
@@ -259,148 +304,209 @@ export default function AdminDashboard() {
       <div>
         {activePanel === 'scores' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Score Form Widget */}
-            <div className="relative glass p-6 rounded-2xl border border-[#d4c1b6]/10 space-y-6 self-start overflow-hidden">
-              <Sparkle className="absolute top-3 right-3 text-xs" />
-              <div className="flex items-center gap-2 text-[#60a6dc]">
+            {/* CSV Upload Widget */}
+            <div className="relative glass p-6 rounded-2xl border border-white/60 space-y-6 self-start overflow-hidden shadow-sm">
+              <BeachDecoration icon={Sun} className="top-3 right-3" />
+              <div className="flex items-center gap-2 text-beach-coral">
                 <TrendingUp size={18} />
-                <h3 className="font-bold text-base text-white">Enter Score Details</h3>
+                <h3 className="font-bold text-base text-beach-teal-dark">Leaderboard CSV Upload</h3>
               </div>
 
               {accessibleDomains.length === 0 ? (
-                <p className="text-xs text-gray-500 italic">No assigned domains to manage.</p>
+                <p className="text-xs text-beach-teal/40 italic font-semibold">No assigned domains to manage.</p>
               ) : (
-                <form onSubmit={handleScoreSubmit} className="space-y-4">
+                <form onSubmit={handleUploadSubmit} className="space-y-4">
                   {/* Select Domain */}
                   <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-gray-400 mb-2">Select Domain</label>
+                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Select Domain</label>
                     <select
                       value={selectedDomain}
                       onChange={(e) => {
                         setSelectedDomain(e.target.value);
-                        setScoreForm({ ...scoreForm, userId: '' });
+                        setSkippedErrors([]);
                       }}
-                      className="block w-full px-3 py-2.5 brand-input text-white text-xs cursor-pointer"
+                      className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
                     >
                       {accessibleDomains.map(d => (
-                        <option className="bg-[#02223e]" key={d} value={d}>{d}</option>
+                        <option className="bg-[#f7f5f0]" key={d} value={d}>{d}</option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Select Participant */}
+                  {/* Upload Type Selection */}
                   <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-gray-400 mb-2">Select Participant</label>
-                    <select
-                      required
-                      value={scoreForm.userId}
-                      onChange={(e) => setScoreForm({ ...scoreForm, userId: e.target.value })}
-                      className="block w-full px-3 py-2.5 brand-input text-white text-xs cursor-pointer"
-                    >
-                      <option className="bg-[#02223e]" value="">-- Choose Participant --</option>
-                      {leaderboardList.map(item => (
-                        <option className="bg-[#02223e]" key={item.userId} value={item.userId}>
-                          {item.userName}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Leaderboard Type</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setUploadType('weekly')}
+                        className={`py-2 text-xxs font-bold rounded-xl border transition cursor-pointer ${
+                          uploadType === 'weekly'
+                            ? 'bg-[#7c3aed] text-white border-transparent shadow-xs'
+                            : 'bg-white/40 text-[#7c3aed] border-[#7c3aed]/15 hover:bg-[#7c3aed]/5'
+                        }`}
+                      >
+                        Weekly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUploadType('overall')}
+                        className={`py-2 text-xxs font-bold rounded-xl border transition cursor-pointer ${
+                          uploadType === 'overall'
+                            ? 'bg-[#7c3aed] text-white border-transparent shadow-xs'
+                            : 'bg-white/40 text-[#7c3aed] border-[#7c3aed]/15 hover:bg-[#7c3aed]/5'
+                        }`}
+                      >
+                        Overall
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Task Name */}
-                  <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-gray-400 mb-2">Task Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={scoreForm.taskName}
-                      onChange={(e) => setScoreForm({ ...scoreForm, taskName: e.target.value })}
-                      placeholder="e.g. Week 1 Task, Quiz 2"
-                      className="block w-full px-3 py-2.5 brand-input text-white placeholder-gray-500 text-xs"
-                    />
-                  </div>
+                  {/* Week Selector (For Weekly Type Only) */}
+                  {uploadType === 'weekly' && (
+                    <div>
+                      <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Week Number</label>
+                      <select
+                        value={weekNumber}
+                        onChange={(e) => setWeekNumber(e.target.value)}
+                        className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(w => (
+                          <option className="bg-[#f7f5f0]" key={w} value={w}>Week {w}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
-                  {/* Score */}
+                  {/* File Input */}
                   <div>
-                    <label className="block text-xxs font-bold uppercase tracking-wider text-gray-400 mb-2">Score</label>
+                    <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Choose CSV File</label>
                     <input
-                      type="number"
+                      id="csvFileInput"
+                      type="file"
+                      accept=".csv"
                       required
-                      min="0"
-                      max="150"
-                      value={scoreForm.score}
-                      onChange={(e) => setScoreForm({ ...scoreForm, score: e.target.value })}
-                      placeholder="e.g. 95"
-                      className="block w-full px-3 py-2.5 brand-input text-white placeholder-gray-500 text-xs"
+                      onChange={(e) => setCsvFile(e.target.files[0])}
+                      className="block w-full text-xs text-beach-teal-dark font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-bold file:bg-beach-teal/10 file:text-beach-teal file:cursor-pointer hover:file:bg-beach-teal/20"
                     />
+                    <p className="text-[10px] text-beach-teal/60 font-semibold mt-1">
+                      {uploadType === 'weekly' 
+                        ? 'Expected headers: Rank, Reg no, Name, Points'
+                        : 'Expected headers: Rank, Reg no, Name, Points Week 1, Points Week 2, ..., Total'
+                      }
+                    </p>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-1.5 bg-[#60a6dc] hover:bg-[#60a6dc]/90 text-[#02223e] font-bold text-xs py-3 rounded-xl transition cursor-pointer"
+                    className="w-full flex items-center justify-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs py-3 rounded-xl transition shadow-md shadow-[#7c3aed]/20 cursor-pointer"
                   >
-                    <span>Update Rankings</span>
+                    <span>Upload Standings</span>
                     <ArrowRight size={14} />
                   </button>
                 </form>
               )}
+
+              {/* Skipped / Unregistered Student Errors Display */}
+              {skippedErrors.length > 0 && (
+                <div className="bg-beach-coral/10 border border-beach-coral/20 p-4 rounded-xl space-y-2 text-beach-coral text-xxs font-semibold max-h-48 overflow-y-auto">
+                  <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                    <AlertCircle size={14} />
+                    <span>Skipped Rows / Errors ({skippedErrors.length})</span>
+                  </div>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {skippedErrors.map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {/* Current Domain Leaderboard Table */}
+            {/* Current Domain Standings Table */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-base text-gray-200">
-                  Registered Participants on <span className="text-[#60a6dc]">{selectedDomain}</span>
+              <div className="flex justify-between items-center flex-wrap gap-2">
+                <h3 className="font-bold text-base text-beach-teal-dark">
+                  Standings for <span className="text-beach-coral">{selectedDomain}</span>
                 </h3>
+
+                {/* View Selection Controls */}
+                <div className="flex items-center gap-2 bg-white/40 border border-white/60 p-1.5 rounded-xl text-xxs font-bold shadow-xxs">
+                  <button
+                    onClick={() => setViewType('overall')}
+                    className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      viewType === 'overall'
+                        ? 'bg-[#7c3aed] text-white shadow-sm'
+                        : 'text-[#7c3aed] hover:bg-[#7c3aed]/5'
+                    }`}
+                  >
+                    Overall
+                  </button>
+                  <button
+                    onClick={() => setViewType('weekly')}
+                    className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      viewType === 'weekly'
+                        ? 'bg-[#7c3aed] text-white shadow-sm'
+                        : 'text-[#7c3aed] hover:bg-[#7c3aed]/5'
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                  {viewType === 'weekly' && availableWeeks.length > 0 && (
+                    <select
+                      value={viewWeek}
+                      onChange={(e) => setViewWeek(e.target.value)}
+                      className="ml-2 px-2 py-1 bg-white/70 border border-beach-teal/15 rounded-lg text-beach-teal-dark focus:outline-none cursor-pointer text-xxs"
+                    >
+                      {availableWeeks.map(w => (
+                        <option key={w} value={w}>Week {w}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
               </div>
 
               {loading && leaderboardList.length === 0 ? (
-                <div className="text-gray-500 text-xs italic">Loading participant list...</div>
+                <div className="text-beach-teal/40 text-xs italic font-semibold">Loading standings...</div>
               ) : leaderboardList.length === 0 ? (
-                <div className="glass p-8 text-center rounded-2xl border border-white/5 text-gray-500 italic">
-                  No participants registered for this domain yet.
+                <div className="glass p-8 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold shadow-sm">
+                  No standings records uploaded for this view yet.
                 </div>
               ) : (
-                <div className="glass rounded-2xl border border-[#d4c1b6]/10 overflow-hidden">
+                <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-[#06385d]/35 border-b border-[#d4c1b6]/10 text-xxs font-bold uppercase tracking-wider text-gray-300">
+                        <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
                           <th className="py-3 px-4 text-center w-12">Rank</th>
                           <th className="py-3 px-4">Name</th>
-                          <th className="py-3 px-4">Scores</th>
-                          <th className="py-3 px-4 text-right w-24">Total</th>
+                          {viewType === 'weekly' && <th className="py-3 px-4">Info</th>}
+                          <th className="py-3 px-4 text-right w-24">Score</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/5 text-xs">
-                        {leaderboardList.map((entry) => (
-                          <tr key={entry.id} className="hover:bg-white/2 transition">
+                      <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
+                        {leaderboardList.map((entry, index) => (
+                          <tr key={entry._id || index} className="hover:bg-white/40 transition">
                             <td className="py-3 px-4 text-center">
                               <span className={`w-5.5 h-5.5 rounded-full inline-flex items-center justify-center font-bold text-[10px] ${
-                                entry.rank === 1 ? 'bg-[#d4c1b6]/25 text-[#d4c1b6] border border-[#d4c1b6]/40' :
-                                entry.rank === 2 ? 'bg-[#60a6dc]/25 text-[#60a6dc] border border-[#60a6dc]/30' :
-                                entry.rank === 3 ? 'bg-[#06385d]/50 text-gray-400 border border-white/10' :
-                                'text-gray-500'
+                                entry.rank === 1 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/40' :
+                                entry.rank === 2 ? 'bg-beach-seafoam/35 text-beach-teal border border-beach-seafoam/30' :
+                                entry.rank === 3 ? 'bg-beach-sand-dark/35 text-beach-teal-dark border border-beach-sand-dark/20' :
+                                'text-beach-teal/40 border border-beach-teal/10'
                               }`}>
                                 {entry.rank}
                               </span>
                             </td>
-                            <td className="py-3 px-4 font-semibold text-white">
+                            <td className="py-3 px-4 font-bold">
                               {entry.userName}
                             </td>
-                            <td className="py-3 px-4 text-gray-400">
-                              <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(entry.scores).map(([task, score]) => (
-                                  <span key={task} className="bg-white/3 text-[9px] px-2 py-0.5 rounded border border-white/5">
-                                    {task}: <strong className="text-gray-300">{score}</strong>
-                                  </span>
-                                ))}
-                                {Object.keys(entry.scores).length === 0 && (
-                                  <span className="text-xxs text-gray-500 italic">No task grades</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-right font-extrabold text-[#60a6dc]">
-                              {entry.totalScore}
+                            {viewType === 'weekly' && (
+                              <td className="py-3 px-4 text-beach-teal/80">
+                                <span className="text-xxs text-beach-teal/50 italic">Weekly Standings (Week {entry.weekNumber})</span>
+                              </td>
+                            )}
+                            <td className="py-3 px-4 text-right font-extrabold text-beach-coral">
+                              {entry.score}
                             </td>
                           </tr>
                         ))}
@@ -416,13 +522,13 @@ export default function AdminDashboard() {
         {/* Users Panel (Super Admin only) */}
         {activePanel === 'users' && isSuperAdmin && (
           <div className="space-y-4">
-            <h3 className="font-bold text-base text-gray-200">Registered Student Directory</h3>
+            <h3 className="font-bold text-base text-beach-teal-dark">Registered Student Directory</h3>
             
-            <div className="glass rounded-2xl border border-[#d4c1b6]/10 overflow-hidden">
+            <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-[#06385d]/35 border-b border-[#d4c1b6]/10 text-xxs font-bold uppercase tracking-wider text-gray-300">
+                    <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
                       <th className="py-4 px-6">User</th>
                       <th className="py-4 px-6">Email</th>
                       <th className="py-4 px-6">Selected Tracks</th>
@@ -430,19 +536,19 @@ export default function AdminDashboard() {
                       <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-xs">
+                  <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
                     {allUsers.map((usr) => {
                       const isEditing = editingUserId === usr.id;
                       
                       return (
-                        <tr key={usr.id} className="hover:bg-white/2 transition">
+                        <tr key={usr.id} className="hover:bg-white/40 transition">
                           {/* Name */}
-                          <td className="py-4 px-6 font-semibold text-white">
+                          <td className="py-4 px-6 font-bold">
                             {usr.name}
                           </td>
                           
                           {/* Email */}
-                          <td className="py-4 px-6 text-gray-400 font-mono">
+                          <td className="py-4 px-6 text-beach-teal/80 font-mono">
                             {usr.email}
                           </td>
                           
@@ -450,7 +556,7 @@ export default function AdminDashboard() {
                           <td className="py-4 px-6">
                             <div className="flex flex-wrap gap-1.5">
                               {usr.domains.map(d => (
-                                <span key={d} className="bg-[#60a6dc]/10 text-[#60a6dc] border border-[#60a6dc]/20 px-2 py-0.5 rounded-full text-xxs font-semibold">
+                                <span key={d} className="bg-beach-teal/10 text-beach-teal border border-beach-teal/20 px-2 py-0.5 rounded-full text-xxs font-bold">
                                   {d}
                                 </span>
                               ))}
@@ -464,23 +570,23 @@ export default function AdminDashboard() {
                                 <select
                                   value={promotionForm.role}
                                   onChange={(e) => setPromotionForm({ ...promotionForm, role: e.target.value })}
-                                  className="px-2.5 py-1.5 brand-input text-white text-xs focus:outline-none cursor-pointer"
+                                  className="px-2.5 py-1.5 brand-input text-beach-teal-dark text-xs focus:outline-none cursor-pointer font-bold bg-white/70"
                                 >
-                                  <option className="bg-[#02223e]" value="user">Participant</option>
-                                  <option className="bg-[#02223e]" value="admin">Domain Head</option>
-                                  <option className="bg-[#02223e]" value="super_admin">Super Admin</option>
+                                  <option className="bg-[#f7f5f0]" value="user">Participant</option>
+                                  <option className="bg-[#f7f5f0]" value="admin">Domain Head</option>
+                                  <option className="bg-[#f7f5f0]" value="super_admin">Super Admin</option>
                                 </select>
                                 
                                 {promotionForm.role === 'admin' && (
-                                  <div className="space-y-1 bg-[#02223e]/50 p-2.5 rounded border border-[#d4c1b6]/10 mt-1">
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Select Assigned Tracks:</p>
+                                  <div className="space-y-1 bg-white/60 p-2.5 rounded border border-beach-teal/15 mt-1 shadow-xxs">
+                                    <p className="text-[10px] text-beach-teal/70 font-bold uppercase tracking-wider">Select Assigned Tracks:</p>
                                     {VALID_DOMAINS.map(d => (
-                                      <label key={d} className="flex items-center gap-1.5 text-xxs font-medium text-gray-300 cursor-pointer">
+                                      <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
                                         <input
                                           type="checkbox"
                                           checked={promotionForm.adminDomains.includes(d)}
                                           onChange={() => handleDomainCheckboxChange(d)}
-                                          className="accent-[#60a6dc]"
+                                          className="accent-beach-coral"
                                         />
                                         <span>{d}</span>
                                       </label>
@@ -490,15 +596,15 @@ export default function AdminDashboard() {
                               </div>
                             ) : (
                               <div className="flex flex-col gap-1">
-                                <span className={`self-start uppercase tracking-wider text-[10px] font-extrabold px-2.5 py-1 rounded-lg border ${
-                                  usr.role === 'super_admin' ? 'bg-[#d4c1b6]/15 text-[#d4c1b6] border-[#d4c1b6]/25' :
-                                  usr.role === 'admin' ? 'bg-[#60a6dc]/15 text-[#60a6dc] border-[#60a6dc]/25' :
-                                  'bg-white/5 text-gray-400 border-white/10'
+                                <span className={`self-start uppercase tracking-wider text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
+                                  usr.role === 'super_admin' ? 'bg-beach-coral/15 text-beach-coral border-beach-coral/25' :
+                                  usr.role === 'admin' ? 'bg-beach-teal/15 text-beach-teal border-beach-teal/25' :
+                                  'bg-white/50 text-beach-teal/50 border-beach-teal/10'
                                 }`}>
                                   {usr.role.replace('_', ' ')}
                                 </span>
                                 {usr.role === 'admin' && usr.adminDomains && (
-                                  <span className="text-[10px] text-gray-500">
+                                  <span className="text-[10px] text-beach-teal/50 font-bold">
                                     Heads: {usr.adminDomains.join(', ')}
                                   </span>
                                 )}
@@ -512,14 +618,14 @@ export default function AdminDashboard() {
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   onClick={() => handleSaveRole(usr.id)}
-                                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer shadow-sm shadow-emerald-600/10"
                                 >
                                   <Check size={12} />
                                   <span>Save</span>
                                 </button>
-                                <button
+                                  <button
                                   onClick={() => setEditingUserId(null)}
-                                  className="text-gray-400 hover:text-white font-semibold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                  className="text-beach-teal hover:text-beach-coral font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer border border-beach-teal/10 bg-white/40"
                                 >
                                   Cancel
                                 </button>
@@ -527,9 +633,9 @@ export default function AdminDashboard() {
                             ) : (
                               <button
                                 onClick={() => startPromotion(usr)}
-                                className="flex items-center gap-1 ml-auto bg-white/5 hover:bg-white/10 border border-white/5 text-gray-300 hover:text-white font-semibold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                className="flex items-center gap-1 ml-auto bg-white/50 hover:bg-white/80 border border-beach-teal/10 text-beach-teal hover:text-beach-coral font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer shadow-xxs"
                               >
-                                <UserCheck size={12} className="text-[#60a6dc]" />
+                                <UserCheck size={12} className="text-beach-coral" />
                                 <span>Adjust Access</span>
                               </button>
                             )}

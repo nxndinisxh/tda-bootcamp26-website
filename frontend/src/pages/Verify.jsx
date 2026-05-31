@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, ShieldCheck, AlertCircle, ArrowRight, RefreshCw, Loader2 } from 'lucide-react';
+import { Mail, ShieldCheck, AlertCircle, ArrowRight, RefreshCw, Loader2, Sun, Waves } from 'lucide-react';
+
+const BeachDecoration = ({ icon: Icon, className }) => (
+  <span className={`text-beach-coral/25 pointer-events-none select-none absolute ${className}`}>
+    <Icon size={16} />
+  </span>
+);
 
 export default function Verify() {
   const [searchParams] = useSearchParams();
@@ -15,7 +21,7 @@ export default function Verify() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   // Resend Timer State
   const [resendTimer, setResendTimer] = useState(30);
   const [resendLoading, setResendLoading] = useState(false);
@@ -121,18 +127,18 @@ export default function Verify() {
   // Resend OTP handler
   const handleResend = async () => {
     if (resendTimer > 0) return;
-    
+
     setResendLoading(true);
     setError('');
     setSuccess('');
-    
+
     try {
       const res = await resendOtp(emailParam);
-      
+
       if (!res.success) {
         throw new Error(res.error || 'Failed to resend verification code.');
       }
-      
+
       setSuccess('A new verification code has been sent to your email.');
       setResendTimer(30);
       setOtp(['', '', '', '', '', '']);
@@ -148,39 +154,39 @@ export default function Verify() {
   if (tokenParam) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-[#d4c1b6]/15 text-center relative">
-          <span className="absolute top-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute top-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
+        <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-white/60 text-center relative shadow-md text-beach-teal-dark">
+          <BeachDecoration icon={Sun} className="top-4 left-4" />
+          <BeachDecoration icon={Waves} className="top-4 right-4" />
 
           {loading && (
             <div className="space-y-6 py-6">
-              <Loader2 className="h-16 w-16 text-[#60a6dc] animate-spin mx-auto" />
-              <h3 className="text-xl font-bold text-white">Verifying Link</h3>
-              <p className="text-gray-400 text-sm">Please wait while we confirm your registration details...</p>
+              <Loader2 className="h-16 w-16 text-beach-teal animate-spin mx-auto" />
+              <h3 className="text-xl font-extrabold text-beach-teal-dark">Verifying Link</h3>
+              <p className="text-beach-teal/70 text-sm font-semibold">Please wait while we confirm your registration details...</p>
             </div>
           )}
 
           {success && (
             <div className="space-y-6 py-6">
-              <div className="h-16 w-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
+              <div className="h-16 w-16 bg-emerald-600/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-600/20">
                 <ShieldCheck size={36} />
               </div>
-              <h3 className="text-xl font-bold text-white">Verification Successful</h3>
-              <p className="text-emerald-400 text-sm font-semibold">{success}</p>
+              <h3 className="text-xl font-extrabold text-beach-teal-dark">Verification Successful</h3>
+              <p className="text-emerald-600 text-sm font-bold">{success}</p>
             </div>
           )}
 
           {error && (
             <div className="space-y-6 py-6">
-              <div className="h-16 w-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
+              <div className="h-16 w-16 bg-beach-coral/10 text-beach-coral rounded-full flex items-center justify-center mx-auto border border-beach-coral/20">
                 <AlertCircle size={36} />
               </div>
-              <h3 className="text-xl font-bold text-white">Verification Failed</h3>
-              <p className="text-red-400 text-sm">{error}</p>
+              <h3 className="text-xl font-extrabold text-beach-teal-dark">Verification Failed</h3>
+              <p className="text-beach-coral text-sm font-bold">{error}</p>
               <div className="pt-4">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-beach-teal hover:text-beach-coral transition"
                 >
                   Return to Login <ArrowRight size={16} />
                 </Link>
@@ -195,20 +201,22 @@ export default function Verify() {
   // Render OTP verification status
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-[#d4c1b6]/15 relative">
-        <span className="absolute top-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute top-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute bottom-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-        <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
+      <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-white/60 relative shadow-md text-beach-teal-dark">
+
+        {/* Decorative elements */}
+        <BeachDecoration icon={Sun} className="top-4 left-4" />
+        <BeachDecoration icon={Waves} className="top-4 right-4" />
+        <BeachDecoration icon={Waves} className="bottom-4 left-4" />
+        <BeachDecoration icon={Sun} className="bottom-4 right-4" />
 
         <div className="text-center">
-          <div className="h-12 w-12 bg-[#60a6dc]/10 text-[#60a6dc] rounded-full flex items-center justify-center mx-auto border border-[#60a6dc]/20 mb-4">
+          <div className="h-12 w-12 bg-beach-teal/10 text-beach-teal rounded-full flex items-center justify-center mx-auto border border-beach-teal/20 mb-4 shadow-xxs">
             <Mail size={24} />
           </div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Verify Your Email</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <h2 className="text-3xl font-extrabold text-beach-teal-dark tracking-tight">Verify Your Email</h2>
+          <p className="mt-2 text-sm text-beach-teal/70 font-semibold">
             {emailParam ? (
-              <span>We sent a verification code to <strong className="text-white">{emailParam}</strong></span>
+              <span>We sent a verification code to <strong className="text-beach-coral font-bold">{emailParam}</strong></span>
             ) : (
               <span>Please enter the code sent to your student email</span>
             )}
@@ -216,14 +224,14 @@ export default function Verify() {
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-start gap-2 text-sm animate-pulse">
+          <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-4 rounded-xl flex items-start gap-2 text-sm font-bold animate-pulse">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl flex items-start gap-2 text-sm">
+          <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-4 rounded-xl flex items-start gap-2 text-sm font-bold">
             <ShieldCheck size={18} className="shrink-0 mt-0.5" />
             <span>{success}</span>
           </div>
@@ -232,10 +240,10 @@ export default function Verify() {
         {emailParam ? (
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
-              <label className="block text-center text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <label className="block text-center text-xs font-bold uppercase tracking-wider text-beach-teal/70">
                 Enter 6-Digit OTP Code
               </label>
-              
+
               {/* Digit Input Matrix */}
               <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
                 {otp.map((digit, idx) => (
@@ -247,7 +255,7 @@ export default function Verify() {
                     value={digit}
                     onChange={(e) => handleOtpChange(e, idx)}
                     onKeyDown={(e) => handleKeyDown(e, idx)}
-                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold bg-brand-bg/65 border border-[#d4c1b6]/25 rounded-xl text-white focus:outline-none focus:border-[#60a6dc] focus:ring-1 focus:ring-[#60a6dc] transition"
+                    className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl font-bold bg-white/55 border border-beach-teal/20 rounded-xl text-beach-teal-dark focus:outline-none focus:border-beach-teal-light focus:ring-1 focus:ring-beach-teal-light transition shadow-xxs"
                   />
                 ))}
               </div>
@@ -257,28 +265,28 @@ export default function Verify() {
               <button
                 type="submit"
                 disabled={loading || otp.join('').length !== 6}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-[#7c3aed] hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#7c3aed]/20"
               >
                 {loading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-brand-bg" />
+                  <Loader2 className="h-5 w-5 animate-spin text-white" />
                 ) : (
                   <span className="flex items-center gap-2">Activate Account <ArrowRight size={16} /></span>
                 )}
               </button>
             </div>
-            
+
             {/* Resend Action Footer */}
             <div className="text-center pt-2">
               {resendTimer > 0 ? (
-                <p className="text-xs text-gray-500">
-                  Resend verification code in <span className="font-semibold text-gray-400">{resendTimer}s</span>
+                <p className="text-xs text-beach-teal/50 font-bold">
+                  Resend verification code in <span className="font-extrabold text-beach-teal/70">{resendTimer}s</span>
                 </p>
               ) : (
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={resendLoading}
-                  className="text-xs font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  className="text-xs font-bold text-beach-coral hover:text-beach-teal transition inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                 >
                   {resendLoading ? (
                     <>Sending...</>
@@ -291,13 +299,13 @@ export default function Verify() {
           </form>
         ) : (
           <div className="text-center py-4 space-y-4">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-beach-teal/60 font-semibold">
               No email was provided. Please return to the login screen to sign in.
             </p>
             <div className="pt-2">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#60a6dc] hover:text-[#d4c1b6] transition"
+                className="inline-flex items-center gap-2 text-sm font-bold text-beach-teal hover:text-beach-coral transition"
               >
                 Go to Login <ArrowRight size={16} />
               </Link>

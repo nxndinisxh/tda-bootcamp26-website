@@ -226,67 +226,54 @@ class Database {
       console.log('Seeding initial leaderboard...');
       const sampleLeaderboard = [
         {
-          id: 'lb_1',
           userId: 'user_1',
           userName: 'Aditya Sen',
           domain: 'DSA',
-          scores: { 'Week 1 Task': 85, 'Week 2 Task': 90 },
-          totalScore: 175,
-          rank: 1
+          leaderboardType: 'overall',
+          score: 175,
+          weeklyBreakdown: { week1: 85, week2: 90 },
+          rank: 1,
+          uploadedAt: new Date().toISOString()
         },
         {
-          id: 'lb_2',
           userId: 'user_1',
           userName: 'Aditya Sen',
-          domain: 'WebDev',
-          scores: { 'Project Proposal': 95 },
-          totalScore: 95,
-          rank: 2
+          domain: 'DSA',
+          leaderboardType: 'weekly',
+          weekNumber: 1,
+          score: 85,
+          rank: 1,
+          uploadedAt: new Date().toISOString()
         },
         {
-          id: 'lb_3',
           userId: 'user_1',
           userName: 'Aditya Sen',
-          domain: 'Machine Learning',
-          scores: { 'Classification Task': 80 },
-          totalScore: 80,
-          rank: 2
+          domain: 'DSA',
+          leaderboardType: 'weekly',
+          weekNumber: 2,
+          score: 90,
+          rank: 1,
+          uploadedAt: new Date().toISOString()
         },
         {
-          id: 'lb_4',
-          userId: 'user_2',
-          userName: 'Neha Gupta',
-          domain: 'Machine Learning',
-          scores: { 'Classification Task': 95 },
-          totalScore: 95,
-          rank: 1
-        },
-        {
-          id: 'lb_5',
-          userId: 'user_2',
-          userName: 'Neha Gupta',
-          domain: 'Deep Learning',
-          scores: { 'CNN Implementation': 90 },
-          totalScore: 90,
-          rank: 1
-        },
-        {
-          id: 'lb_6',
           userId: 'user_3',
           userName: 'Kabir Mehta',
           domain: 'WebDev',
-          scores: { 'Project Proposal': 100 },
-          totalScore: 100,
-          rank: 1
+          leaderboardType: 'overall',
+          score: 100,
+          weeklyBreakdown: { week1: 100 },
+          rank: 1,
+          uploadedAt: new Date().toISOString()
         },
         {
-          id: 'lb_7',
           userId: 'user_3',
           userName: 'Kabir Mehta',
-          domain: 'DAV',
-          scores: { 'Visualization Task': 88 },
-          totalScore: 88,
-          rank: 1
+          domain: 'WebDev',
+          leaderboardType: 'weekly',
+          weekNumber: 1,
+          score: 100,
+          rank: 1,
+          uploadedAt: new Date().toISOString()
         }
       ];
       this.data.leaderboard = sampleLeaderboard;

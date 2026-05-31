@@ -6,7 +6,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import User from '../models/User.js';
-import Leaderboard from '../models/Leaderboard.js';
 import { VALID_DOMAINS } from '../config/constants.js';
 import { authenticateToken } from '../middleware/auth.js';
 import authLimiter from '../middleware/authLimiter.js';
@@ -119,45 +118,9 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     user.isFirstLogin = false;
     await user.save();
 
-    // Log the new real password into a new CSV file
-    try {
-      const csvFilePath = path.join(__dirname, '../updated_passwords.csv');
-      if (!fs.existsSync(csvFilePath)) {
-        fs.writeFileSync(csvFilePath, 'Reg No,Name,Email,New Password,Reset At\n', 'utf8');
-      }
-      
-      const escapedName = `"${user.name.replace(/"/g, '""')}"`;
-      const escapedEmail = `"${user.email.replace(/"/g, '""')}"`;
-      const escapedPassword = `"${newPassword.replace(/"/g, '""')}"`;
-      const row = `${user.id},${escapedName},${escapedEmail},${escapedPassword},${new Date().toISOString()}\n`;
-      fs.appendFileSync(csvFilePath, row, 'utf8');
-      console.log(`Password reset logged for user ${user.id} to updated_passwords.csv`);
-    } catch (csvErr) {
-      console.error('Failed to log updated password to CSV file:', csvErr);
-    }
+    // For security reasons, we no longer store plain text passwords in updated_passwords.csv
 
-    // Automatically initialize leaderboard entries for their domains if they don't exist yet (except for admins)
-    if (user.role !== 'admin' && user.role !== 'super_admin') {
-      const leaderboardEntries = [];
-      for (const domain of user.domains) {
-        const exists = await Leaderboard.findOne({ userId: user.id, domain });
-        if (!exists) {
-          const domainCount = await Leaderboard.countDocuments({ domain });
-          leaderboardEntries.push({
-            id: `lb_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            userId: user.id,
-            userName: user.name,
-            domain,
-            scores: {},
-            totalScore: 0,
-            rank: domainCount + 1
-          });
-        }
-      }
-      if (leaderboardEntries.length > 0) {
-        await Leaderboard.insertMany(leaderboardEntries);
-      }
-    }
+
 
     // Send a welcome mail confirming activation (includes username, email, domains)
     try {
@@ -234,28 +197,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     user.tempPassword = undefined;
     await user.save();
 
-    // Create leaderboard entries for selected domains (except for admins)
-    if (user.role !== 'admin' && user.role !== 'super_admin') {
-      const leaderboardEntries = [];
-      for (const domain of user.domains) {
-        const exists = await Leaderboard.findOne({ userId: user.id, domain });
-        if (!exists) {
-          const domainCount = await Leaderboard.countDocuments({ domain });
-          leaderboardEntries.push({
-            id: `lb_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            userId: user.id,
-            userName: user.name,
-            domain,
-            scores: {},
-            totalScore: 0,
-            rank: domainCount + 1
-          });
-        }
-      }
-      if (leaderboardEntries.length > 0) {
-        await Leaderboard.insertMany(leaderboardEntries);
-      }
-    }
+
 
     // Send welcome email
     try {
@@ -328,28 +270,7 @@ router.post('/verify-link', authLimiter, async (req, res) => {
     user.tempPassword = undefined;
     await user.save();
 
-    // Create leaderboard entries for selected domains (except for admins)
-    if (user.role !== 'admin' && user.role !== 'super_admin') {
-      const leaderboardEntries = [];
-      for (const domain of user.domains) {
-        const exists = await Leaderboard.findOne({ userId: user.id, domain });
-        if (!exists) {
-          const domainCount = await Leaderboard.countDocuments({ domain });
-          leaderboardEntries.push({
-            id: `lb_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            userId: user.id,
-            userName: user.name,
-            domain,
-            scores: {},
-            totalScore: 0,
-            rank: domainCount + 1
-          });
-        }
-      }
-      if (leaderboardEntries.length > 0) {
-        await Leaderboard.insertMany(leaderboardEntries);
-      }
-    }
+
 
     // Send welcome email
     try {
