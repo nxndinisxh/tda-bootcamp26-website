@@ -32,6 +32,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
   const { user, logout } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -45,6 +46,12 @@ const Navbar = ({ darkMode, toggleTheme }) => {
         if (res.ok) {
           const data = await res.json();
           setAnnouncements(data || []);
+          if (data && data.length > 0) {
+            const seenCount = Number(localStorage.getItem('tda_seen_announcements_count') || 0);
+            if (data.length > seenCount) {
+              setHasUnread(true);
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching announcements:', err);
@@ -64,6 +71,14 @@ const Navbar = ({ darkMode, toggleTheme }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleBellClick = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setHasUnread(false);
+      localStorage.setItem('tda_seen_announcements_count', announcements.length.toString());
+    }
+  };
 
   return (
     <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/40">
@@ -106,12 +121,12 @@ const Navbar = ({ darkMode, toggleTheme }) => {
         {user && (
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={handleBellClick}
               className="bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10 relative"
               title="Recent Announcements"
             >
               <Bell size={18} className="text-beach-teal dark:text-slate-300" />
-              {announcements.length > 0 && (
+              {hasUnread && (
                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7c3aed] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-[#7c3aed]"></span>

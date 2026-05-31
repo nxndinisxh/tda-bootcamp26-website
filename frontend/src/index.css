@@ -200,20 +200,20 @@ html.dark body {
 html.dark .glass,
 html.dark .notched-card {
   background: rgba(12, 25, 33, 0.75);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
 }
 
 html.dark .glass-teal {
   background: rgba(15,76,92,0.18);
-  border: 1px solid rgba(42,157,143,0.18);
+  border: 1px solid rgba(255,255,255,0.16);
 }
 
 /* Inputs */
 
 html.dark .brand-input {
   background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
   color: #f8fafc;
 }
 
@@ -273,7 +273,19 @@ html.dark [class*="bg-white"] {
 }
 
 html.dark [class*="border-white"] {
-  border-color: rgba(255,255,255,0.08) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+html.dark [class*="border-beach-teal"] {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+html.dark [class*="bg-beach-teal/10"] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html.dark [class*="bg-beach-teal/5"] {
+  background-color: rgba(255, 255, 255, 0.06) !important;
 }
 /* ==========================================
    DARK MODE TEXT FIXES
