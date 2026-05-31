@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, Mail, UserPlus, AlertCircle, Sun, Waves } from 'lucide-react';
 
-const AVAILABLE_DOMAINS = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+const AVAILABLE_DOMAINS = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
 
 const BeachDecoration = ({ icon: Icon, className }) => (
   <div className={`absolute text-beach-teal/15 w-8 h-8 pointer-events-none select-none ${className} hover:scale-110 transition duration-300`}>

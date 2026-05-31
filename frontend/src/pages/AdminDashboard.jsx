@@ -13,7 +13,7 @@ import {
   Waves
 } from 'lucide-react';
 
-const VALID_DOMAINS = ['DSA', 'DAV', 'AI ML', 'Gen Ai', 'WebDev'];
+const VALID_DOMAINS = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
 
 const BeachDecoration = ({ icon: Icon, className }) => (
   <span className={`text-beach-coral/25 pointer-events-none select-none absolute ${className}`}>

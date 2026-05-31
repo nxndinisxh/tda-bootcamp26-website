@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
@@ -5,7 +6,7 @@ import Login from './pages/Login';
 import DomainPage from './pages/DomainPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Verify from './pages/Verify';
-import { LogOut, LayoutDashboard } from 'lucide-react';
+import { LogOut, LayoutDashboard, Sun, Moon } from 'lucide-react';
 
 // Protected Route Guard for general logged-in users
 const ProtectedRoute = ({ children }) => {
@@ -27,7 +28,7 @@ const AdminRoute = ({ children }) => {
 };
 
 // Navigation Header Component
-const Navbar = () => {
+const Navbar = ({ darkMode, toggleTheme }) => {
   const { user, logout } = useAuth();
 
   return (
@@ -37,7 +38,9 @@ const Navbar = () => {
       </Link>
 
       <div className="flex items-center gap-6">
-        <Link to="/" className="text-beach-teal hover:text-beach-coral transition font-bold">Home</Link>
+        <Link to="/" className="text-beach-teal hover:text-beach-coral transition font-bold">
+          {user ? 'Dashboard' : 'Home'}
+        </Link>
 
         {user && (
           <>
@@ -62,24 +65,33 @@ const Navbar = () => {
                 <span>Dashboard</span>
               </Link>
             )}
-
-            <div className="flex items-center gap-4 pl-4 border-l border-beach-teal/15">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-beach-teal-dark">{user.name}</p>
-                <p className="text-[10px] text-beach-teal/70 capitalize font-medium">{user.role.replace('_', ' ')}</p>
-              </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-1.5 bg-beach-coral/10 text-beach-coral hover:bg-beach-coral/20 px-3 py-1.5 rounded-lg border border-beach-coral/20 transition cursor-pointer text-sm font-bold"
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </button>
-            </div>
           </>
         )}
 
-        {!user && (
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="bg-white/80 dark:bg-black/25 backdrop-blur border border-beach-teal/10 dark:border-white/10 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer text-beach-teal dark:text-beach-gold flex items-center justify-center"
+          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        {user ? (
+          <div className="flex items-center gap-4 pl-4 border-l border-beach-teal/15">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-bold text-beach-teal-dark">{user.name}</p>
+              <p className="text-[10px] text-beach-teal/70 capitalize font-medium">{user.role.replace('_', ' ')}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 bg-beach-coral/10 text-beach-coral hover:bg-beach-coral/20 px-3 py-1.5 rounded-lg border border-beach-coral/20 transition cursor-pointer text-sm font-bold"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        ) : (
           <div className="flex items-center gap-3">
             <Link
               to="/login"
@@ -95,11 +107,20 @@ const Navbar = () => {
 };
 
 function App() {
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem('theme') === 'dark'
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
   return (
     <Router>
       <AuthProvider>
         <div className="min-h-screen text-beach-teal-dark flex flex-col pt-20">
-          <Navbar />
+          <Navbar darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} />
           <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <Routes>
               <Route path="/" element={<Landing />} />

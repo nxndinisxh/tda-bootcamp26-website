@@ -104,104 +104,9 @@ export default function Login() {
             <p className="mt-2 text-sm text-gray-400">
               This is your first login. Please choose a secure password to activate your account.
             </p>
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-start gap-2 text-sm">
-              <AlertCircle size={18} className="shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={handleResetSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                  New Password
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                    <Lock size={18} />
-                  </span>
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition cursor-pointer"
-                  >
-                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-                  Confirm New Password
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
-                    <KeyRound size={18} />
-                  </span>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition cursor-pointer"
-                  >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
-              >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <LogIn className="h-5 w-5 text-brand-bg/70 group-hover:text-brand-bg transition" aria-hidden="true" />
-                </span>
-                {loading ? 'Setting Password...' : 'Save & Log In'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  if (isFirstLoginState) {
-    return (
-      <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-[#d4c1b6]/15 relative">
-          {/* Corner Sparkles */}
-          <span className="absolute top-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute top-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute bottom-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
-
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.06)_0,transparent_50%)] pointer-events-none" />
-
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Set New Password</h2>
-            <p className="mt-2 text-sm text-gray-400">
-              This is your first login. Please choose a secure password to activate your account.
+            <p className="mt-2.5 text-xs text-beach-coral font-bold bg-beach-coral/5 border border-beach-coral/15 px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 animate-pulse">
+              <span>⚠️</span>
+              <span>For security reasons, we do not store your updated password in plain text. Please make sure you remember it.</span>
             </p>
           </div>
 
@@ -284,6 +189,7 @@ export default function Login() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

@@ -84,8 +84,8 @@ const onboardUsers = async () => {
       if (record['DSA'] === 'Yes') domains.push('DSA');
       if (record['DAV'] === 'Yes') domains.push('DAV');
       if (record['Webdev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
-      if (record['AI ML'] === 'Yes') domains.push('AI ML');
-      if (record['Gen Ai'] === 'Yes') domains.push('Gen Ai');
+      if (record['AI ML'] === 'Yes') domains.push('ML/DL');
+      if (record['Gen Ai'] === 'Yes') domains.push('Gen & Agentic AI');
 
       if (domains.length === 0) {
         console.warn(`User ${name} has no selected domains, skipping.`);

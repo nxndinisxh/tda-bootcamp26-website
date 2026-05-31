@@ -20,10 +20,58 @@ import {
 
 const DOMAIN_DESCRIPTIONS = {
   'DSA': 'Master advanced concepts of algorithms, data structures, complexity analysis, and competitive programming techniques.',
-  'AI ML': 'Explore supervised learning, classification, clustering, regression models, and optimization strategies.',
-  'Gen Ai': 'Understand artificial neural networks, convolution neural networks, sequence modeling, and deep generative architectures.',
+  'ML/DL': 'Explore supervised & unsupervised learning, classification, clustering, boosting, neural networks, and computer vision models.',
+  'Gen & Agentic AI': 'Dive into LLMs, prompt engineering, custom chatbots, image generation, RAG databases, and agentic workflows.',
   'WebDev': 'Build fast, interactive, and beautiful frontends combined with scalable APIs, databases, and hosting pipelines.',
-  'DAV': 'Gain command over data engineering, cleaning, exploratory statistics, and visual graphing tools.'
+  'DAV': 'Gain command over data engineering, statistics, visual graphing, and Power BI dashboards.'
+};
+
+const WEEK_TITLES = {
+  'DSA': {
+    'Week 1': 'Introduction & Basics',
+    'Week 2': 'Basic Data Structures (Maps, Sets, Stacks, Queues)',
+    'Week 3': 'Recursion, Memorisation, Backtracking, Binary Search & Sorting',
+    'Week 4': 'Graphs, DFS, BFS & Dijkstra\'s Algorithm',
+    'Week 5': 'Trees, Traversals, Binary Search Trees & Merge Sort',
+    'Week 6': 'Basic Math, Sliding Window, Prefix Sum & Disjoint Set Union (DSU)',
+    'Week 7': 'Conclusion & Coding Contest'
+  },
+  'DAV': {
+    'Week 1': 'Python Basics & DAV Revision',
+    'Week 2': 'Statistics (Part 1)',
+    'Week 3': 'Statistics (Part 2)',
+    'Week 4': 'Usage of Graphs',
+    'Week 5': 'Power BI Dashboards',
+    'Week 6': 'SQL, PostgreSQL & Django Integration',
+    'Week 7': 'Telemetry Presentation'
+  },
+  'Gen & Agentic AI': {
+    'Week 1': 'LLMs and APIs',
+    'Week 2': 'Fundamentals of Prompting',
+    'Week 3': 'Building a Chatbot',
+    'Week 4': 'Image Generation & Diffusion Models',
+    'Week 5': 'Agentic AI',
+    'Week 6': 'RAG (Retrieval-Augmented Generation)',
+    'Week 7': 'Final Test'
+  },
+  'WebDev': {
+    'Week 1': 'React Fundamentals (Part 1)',
+    'Week 2': 'React Fundamentals (Part 2)',
+    'Week 3': 'Core Logic & TypeScript',
+    'Week 4': 'Databases & Canvas',
+    'Week 5': 'Data Implementation',
+    'Week 6': 'Advanced Version Control & DevOps',
+    'Week 7': 'Deployment Strategies'
+  },
+  'ML/DL': {
+    'Week 1': 'Linear & Logistic Regression, Loss Functions & Gradient Descent',
+    'Week 2': 'K-Means Clustering, Centroid Initialization, KNN & Decision Trees',
+    'Week 3': 'Random Forest, AdaBoost, XGBoost & Ensembling Techniques',
+    'Week 4': 'Neurons, Activation Functions & Artificial Neural Networks (ANN)',
+    'Week 5': 'TensorFlow, PyTorch & Convolutional Neural Networks (CNN) Basics',
+    'Week 6': 'Advanced CNNs, Object Detection, Classification & YOLO Basics',
+    'Week 7': 'Capstone Project Submission & Evaluation'
+  }
 };
 
 const BeachDecoration = ({ icon: Icon, className }) => (
@@ -38,7 +86,15 @@ export default function DomainPage() {
   const navigate = useNavigate();
   const { user, token } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('resources');
+  const [expandedWeeks, setExpandedWeeks] = useState({ 'Week 1': true });
+
+  const toggleWeek = (weekName) => {
+    setExpandedWeeks(prev => ({
+      ...prev,
+      [weekName]: !prev[weekName]
+    }));
+  };
   
   // Data states
   const [resources, setResources] = useState([]);
@@ -370,29 +426,27 @@ export default function DomainPage() {
     resourcesByWeek[r.week].push(r);
   });
 
-  return (
-    <div className="space-y-8 py-4">
-      {/* Domain Header - Beach Cove Styling */}
-      <div className="relative glass p-8 sm:p-12 rounded-3xl border border-white/60 overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-gradient-to-br from-beach-glass via-white/10 to-beach-seafoam/25 shadow-md">
-        
-        {/* Decorative elements */}
-        <BeachDecoration icon={Sun} className="top-4 left-4" />
-        <BeachDecoration icon={Waves} className="top-4 right-4" />
-        <BeachDecoration icon={Waves} className="bottom-4 left-4" />
-        <BeachDecoration icon={Sun} className="bottom-4 right-4" />
+  // Calculate leaderboard states for the side panel
+  const top10 = leaderboard.slice(0, 10);
+  const userRankIndex = leaderboard.findIndex(entry => entry.userId === user?.id);
+  const isUserInTop10 = userRankIndex !== -1 && userRankIndex < 10;
+  const showUserRowAtBottom = user && userRankIndex !== -1 && !isUserInTop10;
+  const userLeaderboardEntry = showUserRowAtBottom ? leaderboard[userRankIndex] : null;
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,rgba(42,157,143,0.08)_0,transparent_55%)] pointer-events-none" />
-        
+  return (
+    <div className="space-y-6 py-4">
+      {/* Clean minimal title header replacing hero */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-beach-teal/15 gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-widest text-beach-teal">Domain Hub</span>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-beach-teal-dark mt-2">{decodedDomain}</h1>
-          <p className="text-beach-teal/80 text-xs sm:text-sm max-w-2xl mt-4 leading-relaxed font-semibold">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-beach-teal">Domain Hub</span>
+          <h1 className="text-3xl font-black tracking-tight text-beach-teal-dark mt-1">{decodedDomain}</h1>
+          <p className="text-beach-teal/70 text-xs mt-1 font-semibold">
             {DOMAIN_DESCRIPTIONS[decodedDomain] || 'Access domain learning paths, projects, and weekly announcements.'}
           </p>
         </div>
 
         {isAdmin && (
-          <span className="shrink-0 self-start sm:self-auto bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider">
+          <span className="bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-wider shrink-0 self-start sm:self-auto">
             Domain Head Control Active
           </span>
         )}
@@ -405,487 +459,420 @@ export default function DomainPage() {
         </div>
       )}
 
-      {/* Tabs Menu styled as beach indicators */}
-      <div className="flex border-b border-beach-teal/15 gap-8 overflow-x-auto pb-px">
-        {[
-          { id: 'overview', label: 'Overview', icon: BookOpen },
-          { id: 'resources', label: 'Resources', count: resources.length },
-          { id: 'announcements', label: 'Announcements', count: announcements.length },
-          { id: 'leaderboard', label: 'Leaderboard', count: leaderboard.length }
-        ].map(t => {
-          const Icon = t.icon;
-          const isActive = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-2 pb-4 text-sm font-bold tracking-wide border-b-2 px-1 transition whitespace-nowrap cursor-pointer ${
-                isActive 
-                  ? 'border-beach-coral text-beach-coral' 
-                  : 'border-transparent text-beach-teal/60 hover:text-beach-teal'
-              }`}
-            >
-              {Icon && <Icon size={16} />}
-              <span>{t.label}</span>
-              {t.count !== undefined && (
-                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-beach-coral/10 text-beach-coral' : 'bg-beach-teal/5 text-beach-teal/60'}`}>
-                  {t.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {/* Main layout with two columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left Column: Resources and Announcements tabs */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Tabs Menu */}
+          <div className="flex border-b border-beach-teal/15 gap-8 overflow-x-auto pb-px">
+            {[
+              { id: 'resources', label: 'Resources', count: resources.length },
+              { id: 'announcements', label: 'Announcements', count: announcements.length }
+            ].map(t => {
+              const isActive = activeTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  className={`flex items-center gap-2 pb-3.5 text-xs font-bold tracking-wider border-b-2 px-1 transition whitespace-nowrap cursor-pointer uppercase ${
+                    isActive 
+                      ? 'border-beach-coral text-beach-coral' 
+                      : 'border-transparent text-beach-teal/60 hover:text-beach-teal'
+                  }`}
+                >
+                  <span>{t.label}</span>
+                  {t.count !== undefined && (
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${isActive ? 'bg-beach-coral/10 text-beach-coral' : 'bg-beach-teal/5 text-beach-teal/60'}`}>
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Tab Panels */}
-      <div className="min-h-[40vh]">
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 relative overflow-hidden shadow-sm">
-                <BeachDecoration icon={Sun} className="top-3 right-3" />
-                <h3 className="text-lg font-bold text-beach-teal-dark">Welcome to the {decodedDomain} Track</h3>
-                <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
-                  This track is designed to take you from foundational logic directly to real-world applications. 
-                  Make sure to check the <strong className="text-beach-coral font-bold">Resources</strong> tab weekly for curated documentation, video tutorials, and reference code.
-                </p>
-                <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
-                  Important deadlines, live sessions, and assignment releases will be posted in the <strong className="text-beach-coral font-bold">Announcements</strong> tab.
-                </p>
-              </div>
-
-              {/* Timeline represented as a seaweed/pathway line */}
-              <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 shadow-sm">
-                <h3 className="text-base font-bold text-beach-teal-dark">Curriculum Timeline</h3>
-                <div className="space-y-6 timeline-path ml-2">
-                  {[
-                    { title: 'Week 1: Foundations & Fundamentals', desc: 'Basic terminology, structural framework, and sandbox setup.' },
-                    { title: 'Week 2: Mid-level Architectures & Design', desc: 'Advanced techniques, styling schemes, and computational optimization.' },
-                    { title: 'Week 3: Project Phase & Final Assessment', desc: 'Integrate your learnings into a production-grade bootcamp project.' }
-                  ].map((w, index) => (
-                    <div key={index} className="relative pl-7 space-y-1">
-                      <div className="absolute left-0 top-1 w-[19px] h-[19px] rounded-full bg-beach-teal-light border-4 border-beach-sand flex items-center justify-center shadow-sm" />
-                      <h4 className="font-bold text-xs text-beach-teal-dark">{w.title}</h4>
-                      <p className="text-[11px] text-beach-teal/70 font-semibold">{w.desc}</p>
-                    </div>
-                  ))}
+          <div className="min-h-[40vh] space-y-6">
+            
+            {/* Resources Tab */}
+            {activeTab === 'resources' && (
+              <div className="space-y-6">
+                
+                {/* 1. Introduction Card at the top */}
+                <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 relative overflow-hidden shadow-sm">
+                  <BeachDecoration icon={Sun} className="top-3 right-3" />
+                  <h3 className="text-base font-black text-beach-teal-dark">Welcome to the {decodedDomain} Track</h3>
+                  <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
+                    This track is designed to take you from foundational logic directly to real-world applications. 
+                    Make sure to check the weekly reading lists, video tutorials, and references listed under each active week.
+                  </p>
+                  <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
+                    Important deadlines, live sessions, and assignment releases will be posted in the <strong className="text-beach-coral font-bold">Announcements</strong> tab.
+                  </p>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-6">
-              {/* Domain Stats widget */}
-              <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 shadow-sm">
-                <h4 className="font-bold text-xs text-beach-teal/70 uppercase tracking-wider">Your Progress Overview</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-beach-teal-light/10 border border-beach-teal-light/20 p-4 rounded-xl text-center">
-                    <p className="text-xl font-extrabold text-beach-teal">{resources.length}</p>
-                    <p className="text-[9px] text-beach-teal/60 font-bold uppercase tracking-widest mt-1">Resources</p>
-                  </div>
-                  <div className="bg-beach-coral/10 border border-beach-coral/20 p-4 rounded-xl text-center">
-                    <p className="text-xl font-extrabold text-beach-coral">{announcements.length}</p>
-                    <p className="text-[9px] text-beach-coral/70 font-bold uppercase tracking-widest mt-1">Updates</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Top Leaderboard Snippet */}
-              <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 shadow-sm">
+                {/* 2. Collapsible Week Curriculum */}
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-xs text-beach-teal/70 uppercase tracking-wider">Top Performers</h4>
-                  <button onClick={() => setActiveTab('leaderboard')} className="text-xxs font-bold text-beach-coral hover:underline cursor-pointer">View All</button>
-                </div>
-                <div className="space-y-3">
-                  {leaderboard.slice(0, 3).map((player, idx) => (
-                    <div key={player.userId || idx} className="flex items-center justify-between bg-white/40 p-3 rounded-xl border border-white/60 text-xs shadow-xxs">
-                      <div className="flex items-center gap-3">
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                          idx === 0 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/45' :
-                          idx === 1 ? 'bg-beach-seafoam/20 text-beach-teal border border-beach-seafoam/35' :
-                          'bg-beach-sand-dark/25 text-beach-teal-dark border border-beach-sand-dark/20'
-                        }`}>
-                          {idx + 1}
-                        </span>
-                        <span className="font-bold text-beach-teal-dark">{player.userName}</span>
-                      </div>
-                      <span className="font-extrabold text-beach-teal">{player.score} pts</span>
-                    </div>
-                  ))}
-                  {leaderboard.length === 0 && (
-                    <p className="text-xs text-beach-teal/40 italic font-semibold">No scores posted yet</p>
+                  <h3 className="text-base font-black text-beach-teal-dark">Curriculum Resources</h3>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: resources.length + 1 });
+                        setShowResModal(true);
+                      }}
+                      className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-xs cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      <span>Add Resource</span>
+                    </button>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Resources Tab */}
-        {activeTab === 'resources' && (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-beach-teal-dark">Curated Syllabus Resources</h3>
-                <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Study lists recommended by mentors and domain heads</p>
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: resources.length + 1 });
-                    setShowResModal(true);
-                  }}
-                  className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
-                >
-                  <Plus size={16} />
-                  <span>Add Resource</span>
-                </button>
-              )}
-            </div>
+                {Object.keys(resourcesByWeek).length === 0 ? (
+                  <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold text-xs">
+                    No learning resources have been added to this domain yet. Check back soon!
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {Object.keys(resourcesByWeek).sort().map(weekName => {
+                      const weekLocked = isWeekLocked(weekName);
+                      const weekResources = resourcesByWeek[weekName] || [];
+                      const totalCount = weekResources.length;
+                      const completedCount = weekResources.filter(r => r.completed).length;
+                      const isExpanded = !!expandedWeeks[weekName];
+                      const weekTitle = WEEK_TITLES[decodedDomain]?.[weekName] || '';
 
-            {Object.keys(resourcesByWeek).length === 0 ? (
-              <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold">
-                No learning resources have been added to this domain yet. Check back soon!
-              </div>
-            ) : (
-              <div className="space-y-10">
-                {Object.keys(resourcesByWeek).sort().map(weekName => {
-                  const weekLocked = isWeekLocked(weekName);
-                  const weekResources = resourcesByWeek[weekName] || [];
-                  const totalCount = weekResources.length;
-                  const completedCount = weekResources.filter(r => r.completed).length;
-                  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
-                  return (
-                    <div key={weekName} className="space-y-4">
-                      {/* Week Header */}
-                      <h4 className="text-sm font-bold text-beach-teal border-b border-beach-teal/10 pb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Clock size={14} />
-                          <span>{weekName}</span>
-                          {weekLocked ? (
-                            <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                              <Lock size={10} />
-                              <span>Locked</span>
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                              <Unlock size={10} />
-                              <span>Active</span>
-                            </span>
-                          )}
-                        </div>
-
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleWeekLockToggle(weekName, weekLocked)}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-xl text-xxs font-bold transition border shadow-sm cursor-pointer ${
-                              weekLocked
-                                ? 'bg-beach-teal hover:bg-beach-teal/95 text-white border-beach-teal/15'
-                                : 'bg-beach-coral hover:bg-beach-coral/95 text-white border-beach-coral/15'
-                            }`}
-                          >
-                            {weekLocked ? <Unlock size={12} /> : <Lock size={12} />}
-                            <span>{weekLocked ? 'Unlock Week' : 'Lock Week'}</span>
-                          </button>
-                        )}
-                      </h4>
-
-                      {/* Progress Tracker Bar */}
-                      <div className="glass-teal p-4 rounded-xl border border-beach-seafoam/25 space-y-2">
-                        <div className="flex items-center justify-between text-xxs font-bold">
-                          <span className="text-beach-teal/70">Week Progress Tracker</span>
-                          <span className={progressPercent === 100 ? 'text-beach-teal-light font-extrabold' : 'text-beach-coral'}>
-                            {progressPercent}% Complete ({completedCount}/{totalCount})
-                          </span>
-                        </div>
-                        <div className="h-3 w-full bg-white/40 rounded-full overflow-hidden border border-white/60 relative">
-                          <div
-                            className={`h-full bg-gradient-to-r transition-all duration-700 ease-out rounded-full ${
-                              progressPercent === 100 ? 'from-beach-teal-light to-beach-seafoam' : 'from-beach-gold to-beach-coral'
-                            }`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                          {progressPercent === 100 && (
-                            <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Resources Cards Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {weekResources.map(res => (
+                      return (
+                        <div key={weekName} className="glass rounded-2xl border border-white/60 overflow-hidden shadow-xs">
+                          
+                          {/* Collapsible Header */}
                           <div 
-                            key={res.id} 
-                            className={`glass p-5 rounded-xl border transition-all duration-300 flex flex-col justify-between ${
-                              res.isLocked 
-                                ? 'opacity-65 border-beach-teal/5 bg-white/20 select-none' 
-                                : 'border-white/60 hover:border-beach-teal-light/35 shadow-sm'
-                            }`}
+                            onClick={() => toggleWeek(weekName)}
+                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/40 transition select-none bg-white/20 border-b border-beach-teal/5"
                           >
-                            <div>
-                              <div className="flex items-start justify-between gap-4">
-                                <h5 className="font-bold text-beach-teal-dark text-sm leading-snug">{res.title}</h5>
-                                {res.isLocked && (
-                                  <span className="text-beach-coral/60 self-start">
-                                    <Lock size={14} />
-                                  </span>
-                                )}
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-beach-teal/10 flex items-center justify-center text-beach-teal shrink-0">
+                                <Clock size={16} />
                               </div>
-                              <p className={`text-xs mt-2 leading-relaxed font-semibold ${res.isLocked ? 'text-beach-teal/40 italic' : 'text-beach-teal/70'}`}>
-                                {res.description}
-                              </p>
-                              {res.order > 0 && !res.isLocked && (
-                                <span className="inline-block mt-2 bg-beach-teal/5 text-beach-teal border border-beach-teal/10 px-2 py-0.5 rounded text-[9px] font-bold">
-                                  Step {res.order}
-                                </span>
-                              )}
+                              <div className="min-w-0">
+                                <h4 className="font-black text-beach-teal-dark text-sm flex flex-wrap items-center gap-x-2 leading-tight">
+                                  <span>{weekName}</span>
+                                  {weekTitle && <span className="text-beach-teal/50 font-medium">| {weekTitle}</span>}
+                                </h4>
+                                <p className="text-[10px] text-beach-teal/50 font-bold uppercase tracking-wider mt-0.5">
+                                  {completedCount}/{totalCount} Completed
+                                </p>
+                              </div>
                             </div>
 
-                            <div className="mt-4 pt-4 border-t border-beach-teal/10 flex items-center justify-between gap-2">
-                              {!res.isLocked ? (
-                                <button
-                                  onClick={() => handleProgressToggle(res.id, res.completed)}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
-                                    res.completed
-                                      ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
-                                      : 'bg-white/50 text-beach-teal/75 border-white/80 hover:bg-white/80 hover:text-beach-teal-dark'
-                                  }`}
-                                >
-                                  <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all duration-300 ${
-                                    res.completed
-                                      ? 'bg-beach-teal-light border-beach-teal-light text-white'
-                                      : 'border-beach-teal/20 bg-white/80'
-                                  }`}>
-                                    {res.completed && (
-                                      <svg className="w-2 h-2 fill-current" viewBox="0 0 20 20">
-                                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-                                      </svg>
-                                    )}
-                                  </span>
-                                  <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
-                                </button>
-                              ) : (
-                                <span className="flex items-center gap-1.5 text-beach-teal/40 font-bold text-xxs bg-beach-sand-dark/15 border border-beach-sand-dark/10 px-2.5 py-1 rounded-xl">
-                                  <Lock size={11} />
+                            <div className="flex items-center gap-3 shrink-0">
+                              {weekLocked ? (
+                                <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                  <Lock size={10} />
                                   <span>Locked</span>
                                 </span>
+                              ) : (
+                                <span className="flex items-center gap-1 bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                  <Unlock size={10} />
+                                  <span>Active</span>
+                                </span>
                               )}
 
-                              <div className="flex items-center gap-3">
-                                <a
-                                  href={res.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`text-xs font-bold flex items-center gap-1 hover:underline ${
-                                    res.isLocked
-                                      ? 'text-beach-teal/30 pointer-events-none cursor-not-allowed'
-                                      : 'text-beach-coral hover:text-beach-coral/80'
+                              {isAdmin && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleWeekLockToggle(weekName, weekLocked);
+                                  }}
+                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold transition border shadow-xs cursor-pointer ${
+                                    weekLocked
+                                      ? 'bg-beach-teal text-white border-beach-teal/15'
+                                      : 'bg-beach-coral text-white border-beach-coral/15'
                                   }`}
                                 >
-                                  <span>Reference</span>
-                                  <ExternalLink size={12} />
-                                </a>
+                                  {weekLocked ? 'Unlock' : 'Lock'}
+                                </button>
+                              )}
 
-                                {isAdmin && (
-                                  <div className="flex items-center gap-1.5 border-l border-beach-teal/15 pl-3">
-                                    <button
-                                      onClick={() => {
-                                        setResForm(res);
-                                        setShowResModal(true);
-                                      }}
-                                      className="text-beach-teal/60 hover:text-beach-teal-dark p-1 rounded transition cursor-pointer"
-                                    >
-                                      <Edit size={14} />
-                                    </button>
-                                    <button
-                                      onClick={() => handleResourceDelete(res.id)}
-                                      className="text-beach-coral hover:text-beach-coral/80 p-1 rounded transition cursor-pointer"
-                                    >
-                                      <Trash2 size={14} />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              <span className="text-beach-teal/40 font-bold text-xs">
+                                {isExpanded ? '▼' : '▶'}
+                              </span>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Announcements Tab */}
-        {activeTab === 'announcements' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-bold text-beach-teal-dark">Broadcast Announcements</h3>
-                <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Official updates from the organizers and domain head</p>
-              </div>
-              {isAdmin && (
-                <button
-                  onClick={() => setShowAnnModal(true)}
-                  className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
-                >
-                  <Plus size={16} />
-                  <span>Post Announcement</span>
-                </button>
-              )}
-            </div>
+                          {/* Collapsible Resources List */}
+                          {isExpanded && (
+                            <div className="p-4 bg-white/10">
+                              {totalCount === 0 ? (
+                                <p className="text-xs text-beach-teal/40 italic font-semibold py-2 pl-2">No resources added yet.</p>
+                              ) : (
+                                <ol className="list-decimal pl-5 space-y-3">
+                                  {weekResources.map((res) => (
+                                    <li key={res.id} className={`pl-2 py-2 border-b border-beach-teal/5 last:border-b-0 ${res.isLocked ? 'opacity-60' : ''}`}>
+                                      <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-bold text-beach-teal-dark text-sm">
+                                              {res.title}
+                                            </span>
+                                            {res.isLocked ? (
+                                              <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                                <Lock size={8} />
+                                                <span>Locked</span>
+                                              </span>
+                                            ) : (
+                                              res.completed && (
+                                                <span className="bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                                  Completed
+                                                </span>
+                                              )
+                                            )}
+                                          </div>
+                                          <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed">
+                                            {res.description}
+                                          </p>
+                                          {!res.isLocked && (
+                                            <a
+                                              href={res.link}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold mt-2 transition"
+                                            >
+                                              <span>Access Resource</span>
+                                              <ExternalLink size={12} />
+                                            </a>
+                                          )}
+                                        </div>
 
-            {announcements.length === 0 ? (
-              <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold">
-                No announcements posted in this domain yet.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {announcements.map((ann) => (
-                  <div key={ann.id} className="glass p-6 rounded-2xl border border-white/60 relative overflow-hidden shadow-sm text-beach-teal-dark">
-                    <BeachDecoration icon={Sun} className="top-3 right-3" />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="p-2 rounded-lg bg-beach-coral/10 text-beach-coral">
-                          <Megaphone size={16} />
-                        </span>
-                        <div>
-                          <h4 className="font-bold text-beach-teal text-sm">{ann.title}</h4>
-                          <p className="text-[10px] text-beach-teal/60 font-semibold mt-0.5">
-                            By {ann.author} • {new Date(ann.date).toLocaleDateString()} at {new Date(ann.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </p>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          {!res.isLocked ? (
+                                            <button
+                                              onClick={() => handleProgressToggle(res.id, res.completed)}
+                                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
+                                                res.completed
+                                                  ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
+                                                  : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
+                                              }`}
+                                            >
+                                              <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                                                res.completed
+                                                  ? 'bg-beach-teal-light border-beach-teal-light text-white'
+                                                  : 'border-beach-teal/20 bg-white'
+                                              }`}>
+                                                {res.completed && (
+                                                  <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
+                                                    <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                  </svg>
+                                                )}
+                                              </span>
+                                              <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
+                                            </button>
+                                          ) : (
+                                            <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
+                                              <Lock size={10} />
+                                              <span>Locked</span>
+                                            </span>
+                                          )}
+
+                                          {isAdmin && (
+                                            <div className="flex items-center gap-1 border-l border-beach-teal/15 pl-2">
+                                              <button
+                                                onClick={() => {
+                                                  setResForm(res);
+                                                  setShowResModal(true);
+                                                }}
+                                                className="text-beach-teal hover:text-beach-teal/80 p-1 rounded transition cursor-pointer"
+                                              >
+                                                <Edit size={13} />
+                                              </button>
+                                              <button
+                                                onClick={() => handleResourceDelete(res.id)}
+                                                className="text-beach-coral hover:text-beach-coral/85 p-1 rounded transition cursor-pointer"
+                                              >
+                                                <Trash2 size={13} />
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ol>
+                              )}
+                            </div>
+                          )}
+
                         </div>
-                      </div>
-
-                      {isAdmin && (
-                        <button
-                          onClick={() => handleAnnouncementDelete(ann.id)}
-                          className="text-beach-coral hover:text-beach-coral/80 p-1.5 rounded-lg hover:bg-beach-coral/5 transition cursor-pointer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-xs text-beach-teal/80 mt-4 leading-relaxed font-semibold whitespace-pre-wrap">{ann.content}</p>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
+
               </div>
             )}
-          </div>
-        )}
 
-        {/* Leaderboard Tab */}
-        {activeTab === 'leaderboard' && (() => {
-          const top10 = leaderboard.slice(0, 10);
-          const userRankIndex = leaderboard.findIndex(entry => entry.userId === user?.id);
-          const isUserInTop10 = userRankIndex !== -1 && userRankIndex < 10;
-          const showUserRowAtBottom = user && userRankIndex !== -1 && !isUserInTop10;
-          const userLeaderboardEntry = showUserRowAtBottom ? leaderboard[userRankIndex] : null;
-
-          return (
-            <div className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-4 border-b border-beach-teal/10 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-beach-teal-dark">Domain Rankings</h3>
-                <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Standings and performance tracking</p>
-              </div>
-              
-              {isAdmin && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setUploadModalType('weekly');
-                      setShowUploadModal(true);
-                      setUploadModalError('');
-                      setUploadModalSuccess('');
-                      setUploadModalSkipped([]);
-                    }}
-                    className="bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xxs px-3 py-2 rounded-xl transition shadow-sm cursor-pointer"
-                  >
-                    Upload Weekly CSV
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUploadModalType('overall');
-                      setShowUploadModal(true);
-                      setUploadModalError('');
-                      setUploadModalSuccess('');
-                      setUploadModalSkipped([]);
-                    }}
-                    className="bg-beach-coral hover:bg-beach-coral/90 text-white font-bold text-xxs px-3 py-2 rounded-xl transition shadow-sm cursor-pointer"
-                  >
-                    Upload Overall CSV
-                  </button>
+            {/* Announcements Tab */}
+            {activeTab === 'announcements' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-beach-teal-dark">Broadcast Announcements</h3>
+                    <p className="text-xxs text-beach-teal/70 font-semibold mt-1">Official updates from the organizers and domain head</p>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setShowAnnModal(true)}
+                      className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
+                    >
+                      <Plus size={16} />
+                      <span>Post Announcement</span>
+                    </button>
+                  )}
                 </div>
-              )}
-              
-              <div className="flex items-center gap-2">
-                <label className="text-xxs font-bold text-beach-teal/70 uppercase">View:</label>
-                <select
-                  value={leaderboardView === 'overall' ? 'overall' : `weekly:${leaderboardWeek}`}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'overall') {
-                      setLeaderboardView('overall');
-                    } else {
-                      const wk = val.split(':')[1];
-                      setLeaderboardView('weekly');
-                      setLeaderboardWeek(wk);
-                    }
-                  }}
-                  className="px-3 py-2 bg-white/70 border border-beach-teal/15 rounded-xl text-xs font-bold text-beach-teal-dark focus:outline-none cursor-pointer shadow-sm"
-                >
-                  <option value="overall">Overall Standing</option>
-                  {availableWeeks.map(w => (
-                    <option key={w} value={`weekly:${w}`}>Week {w}</option>
-                  ))}
-                </select>
+
+                {announcements.length === 0 ? (
+                  <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold text-xs">
+                    No announcements posted in this domain yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {announcements.map((ann) => (
+                      <div key={ann.id} className="glass p-6 rounded-2xl border border-white/60 relative overflow-hidden shadow-sm text-beach-teal-dark">
+                        <BeachDecoration icon={Sun} className="top-3 right-3" />
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="p-2 rounded-lg bg-beach-coral/10 text-beach-coral">
+                              <Megaphone size={16} />
+                            </span>
+                            <div>
+                              <h4 className="font-bold text-beach-teal text-sm">{ann.title}</h4>
+                              <p className="text-[10px] text-beach-teal/60 font-semibold mt-0.5">
+                                By {ann.author} • {new Date(ann.date).toLocaleDateString()} at {new Date(ann.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </p>
+                            </div>
+                          </div>
+
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleAnnouncementDelete(ann.id)}
+                              className="text-beach-coral hover:text-beach-coral/80 p-1.5 rounded-lg hover:bg-beach-coral/5 transition cursor-pointer shrink-0"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-beach-teal/80 mt-4 leading-relaxed font-semibold whitespace-pre-wrap">{ann.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            )}
+
+          </div>
+
+        </div>
+
+        {/* Right Column: Leaderboard Panel (Always Visible) */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-5 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b border-beach-teal/10 pb-3 gap-2">
+              <div>
+                <h3 className="text-sm font-black text-beach-teal-dark">Domain Rankings</h3>
+                <p className="text-[9px] text-beach-teal/65 font-bold uppercase tracking-wider mt-0.5">Leaderboard</p>
+              </div>
+              
+              <select
+                value={leaderboardView === 'overall' ? 'overall' : `weekly:${leaderboardWeek}`}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'overall') {
+                    setLeaderboardView('overall');
+                  } else {
+                    const wk = val.split(':')[1];
+                    setLeaderboardView('weekly');
+                    setLeaderboardWeek(wk);
+                  }
+                }}
+                className="px-2 py-1.5 bg-white/70 border border-beach-teal/15 rounded-lg text-[10px] font-bold text-beach-teal-dark focus:outline-none cursor-pointer shadow-xs"
+              >
+                <option value="overall">Overall</option>
+                {availableWeeks.map(w => (
+                  <option key={w} value={`weekly:${w}`}>Week {w}</option>
+                ))}
+              </select>
             </div>
+
+            {isAdmin && (
+              <div className="grid grid-cols-2 gap-2 border-b border-beach-teal/5 pb-3">
+                <button
+                  onClick={() => {
+                    setUploadModalType('weekly');
+                    setShowUploadModal(true);
+                    setUploadModalError('');
+                    setUploadModalSuccess('');
+                    setUploadModalSkipped([]);
+                  }}
+                  className="bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
+                >
+                  Upload Weekly
+                </button>
+                <button
+                  onClick={() => {
+                    setUploadModalType('overall');
+                    setShowUploadModal(true);
+                    setUploadModalError('');
+                    setUploadModalSuccess('');
+                    setUploadModalSkipped([]);
+                  }}
+                  className="bg-beach-coral hover:bg-beach-coral/90 text-white font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
+                >
+                  Upload Overall
+                </button>
+              </div>
+            )}
 
             {leaderboardLoading ? (
-              <div className="text-beach-teal/40 text-xs italic font-semibold text-center py-12">Loading standings...</div>
+              <div className="text-beach-teal/40 text-[11px] italic font-semibold text-center py-8">Loading standings...</div>
             ) : leaderboard.length === 0 ? (
-              <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold">
-                No standings records posted for this view yet.
+              <div className="text-center py-8 text-beach-teal/40 italic font-semibold text-xs bg-white/20 border border-beach-teal/5 rounded-xl">
+                No standings posted yet.
               </div>
             ) : (
-              <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
+              <div className="overflow-hidden border border-beach-teal/5 rounded-xl bg-white/20">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
-                        <th className="py-4 px-6 text-center w-16">Rank</th>
-                        <th className="py-4 px-6">Participant</th>
-                        <th className="py-4 px-6 text-right w-32">Score</th>
+                      <tr className="bg-beach-teal-light/5 border-b border-beach-teal/10 text-[9px] font-bold uppercase tracking-wider text-beach-teal-dark">
+                        <th className="py-2.5 px-3 text-center w-12">Rank</th>
+                        <th className="py-2.5 px-3">Participant</th>
+                        <th className="py-2.5 px-3 text-right">Score</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
+                    <tbody className="divide-y divide-beach-teal/5 text-[11px] font-semibold text-beach-teal-dark bg-white/10">
                       {top10.map((entry, idx) => {
                         const isCurrentUser = entry.userId === user?.id;
                         return (
-                          <tr key={entry._id || idx} className={`transition ${isCurrentUser ? 'bg-beach-teal/10 hover:bg-beach-teal/15 font-bold border-l-4 border-beach-teal' : 'hover:bg-white/40'}`}>
-                            <td className="py-4 px-6 text-center">
-                              <span className={`w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-[10px] ${
-                                entry.rank === 1 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/40' :
-                                entry.rank === 2 ? 'bg-beach-seafoam/35 text-beach-teal border border-beach-seafoam/30' :
-                                entry.rank === 3 ? 'bg-beach-sand-dark/35 text-beach-teal-dark border border-beach-sand-dark/20' :
-                                isCurrentUser ? 'bg-beach-teal/20 text-beach-teal border border-beach-teal/40' :
-                                'text-beach-teal/40 border border-beach-teal/10'
+                          <tr key={entry._id || idx} className={`transition ${isCurrentUser ? 'bg-beach-teal/10 font-bold border-l-2 border-beach-teal' : 'hover:bg-white/40'}`}>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className={`w-5 h-5 rounded-full inline-flex items-center justify-center font-bold text-[9px] ${
+                                entry.rank === 1 ? 'bg-beach-gold/20 text-beach-coral border border-beach-gold/30' :
+                                entry.rank === 2 ? 'bg-beach-seafoam/25 text-beach-teal border border-beach-seafoam/20' :
+                                entry.rank === 3 ? 'bg-beach-sand-dark/25 text-beach-teal-dark border border-beach-sand-dark/15' :
+                                isCurrentUser ? 'bg-beach-teal/20 text-beach-teal border border-beach-teal/30' :
+                                'text-beach-teal/40 border border-beach-teal/5'
                               }`}>
                                 {entry.rank}
                               </span>
                             </td>
-                            <td className="py-4 px-6 font-bold flex items-center gap-2">
-                              <User size={14} className={isCurrentUser ? 'text-beach-teal' : 'text-beach-teal/50'} />
-                              <span>{entry.userName} {isCurrentUser && <span className="text-[10px] text-beach-teal font-extrabold">(You)</span>}</span>
+                            <td className="py-2.5 px-3 font-bold truncate max-w-[110px] flex items-center gap-1.5">
+                              <User size={12} className={isCurrentUser ? 'text-beach-teal' : 'text-beach-teal/50'} />
+                              <span>{entry.userName}</span>
                             </td>
-                            <td className="py-4 px-6 text-right font-extrabold text-beach-teal-dark">
-                              <span className={entry.rank <= 3 || isCurrentUser ? 'text-beach-coral' : ''}>{entry.score} pts</span>
+                            <td className="py-2.5 px-3 text-right font-extrabold text-beach-teal-dark">
+                              <span className={entry.rank <= 3 || isCurrentUser ? 'text-beach-coral' : ''}>{entry.score}</span>
                             </td>
                           </tr>
                         );
@@ -893,22 +880,22 @@ export default function DomainPage() {
                       {showUserRowAtBottom && (
                         <>
                           <tr className="bg-beach-teal-light/5 border-b border-beach-teal/10">
-                            <td colSpan={3} className="py-2 px-6 text-center text-beach-teal/45 font-bold italic select-none">
+                            <td colSpan={3} className="py-1 px-3 text-center text-beach-teal/45 font-bold italic select-none">
                               •••
                             </td>
                           </tr>
-                          <tr key={userLeaderboardEntry._id || 'user-row'} className="bg-beach-teal/10 hover:bg-beach-teal/15 transition border-l-4 border-beach-teal font-bold text-beach-teal-dark">
-                            <td className="py-4 px-6 text-center">
-                              <span className="w-6 h-6 rounded-full inline-flex items-center justify-center font-bold text-[10px] bg-beach-teal/20 text-beach-teal border border-beach-teal/40">
+                          <tr key={userLeaderboardEntry._id || 'user-row'} className="bg-beach-teal/10 transition border-l-2 border-beach-teal font-bold text-beach-teal-dark">
+                            <td className="py-2.5 px-3 text-center">
+                              <span className="w-5 h-5 rounded-full inline-flex items-center justify-center font-bold text-[9px] bg-beach-teal/20 text-beach-teal border border-beach-teal/35">
                                 {userLeaderboardEntry.rank}
                               </span>
                             </td>
-                            <td className="py-4 px-6 flex items-center gap-2">
-                              <User size={14} className="text-beach-teal" />
-                              <span>{userLeaderboardEntry.userName} <span className="text-[10px] text-beach-teal font-extrabold">(You)</span></span>
+                            <td className="py-2.5 px-3 font-bold truncate max-w-[110px] flex items-center gap-1.5">
+                              <User size={12} className="text-beach-teal" />
+                              <span>{userLeaderboardEntry.userName}</span>
                             </td>
-                            <td className="py-4 px-6 text-right font-extrabold text-beach-coral">
-                              {userLeaderboardEntry.score} pts
+                            <td className="py-2.5 px-3 text-right font-extrabold text-beach-coral">
+                              {userLeaderboardEntry.score}
                             </td>
                           </tr>
                         </>
@@ -918,10 +905,12 @@ export default function DomainPage() {
                 </div>
               </div>
             )}
-            </div>
-          );
-        })()}
+
+          </div>
+        </div>
+
       </div>
+
 
       {/* --- RESOURCE MODAL --- */}
       {showResModal && (
@@ -941,6 +930,10 @@ export default function DomainPage() {
                   <option className="bg-[#f7f5f0]" value="Week 1">Week 1</option>
                   <option className="bg-[#f7f5f0]" value="Week 2">Week 2</option>
                   <option className="bg-[#f7f5f0]" value="Week 3">Week 3</option>
+                  <option className="bg-[#f7f5f0]" value="Week 4">Week 4</option>
+                  <option className="bg-[#f7f5f0]" value="Week 5">Week 5</option>
+                  <option className="bg-[#f7f5f0]" value="Week 6">Week 6</option>
+                  <option className="bg-[#f7f5f0]" value="Week 7">Week 7</option>
                 </select>
               </div>
 
