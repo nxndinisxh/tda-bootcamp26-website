@@ -181,3 +181,135 @@ body {
 .animate-marquee {
   animation: marquee 15s linear infinite;
 }
+
+/* ==========================================
+   DARK MODE
+========================================== */
+
+html.dark body {
+  background-color: #07141a;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(42,157,143,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(231,111,81,0.08) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(15,76,92,0.25) 0%, transparent 80%);
+  color: #f8fafc;
+}
+
+/* General cards */
+
+html.dark .glass,
+html.dark .notched-card {
+  background: rgba(12, 25, 33, 0.75);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+html.dark .glass-teal {
+  background: rgba(15,76,92,0.18);
+  border: 1px solid rgba(42,157,143,0.18);
+}
+
+/* Inputs */
+
+html.dark .brand-input {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.08);
+  color: #f8fafc;
+}
+
+html.dark .brand-input:focus {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Scrollbar */
+
+html.dark ::-webkit-scrollbar-track {
+  background: #07141a;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2a9d8f;
+  border-color: #07141a;
+}
+
+html.dark .text-beach-teal-dark {
+  color: #f8fafc !important;
+}
+
+html.dark .text-beach-teal {
+  color: #dbeafe !important;
+}
+
+html.dark .text-beach-teal\/65 {
+  color: rgba(241,245,249,0.65) !important;
+}
+
+html.dark .text-beach-teal\/60 {
+  color: rgba(241,245,249,0.60) !important;
+}
+
+html.dark .text-beach-teal\/55 {
+  color: rgba(241,245,249,0.55) !important;
+}
+
+html.dark .text-beach-teal\/50 {
+  color: rgba(241,245,249,0.50) !important;
+}
+
+html.dark .text-beach-teal\/40 {
+  color: rgba(241,245,249,0.40) !important;
+}
+
+html.dark .text-beach-teal\/35 {
+  color: rgba(241,245,249,0.35) !important;
+}
+
+html.dark .text-beach-teal\/25 {
+  color: rgba(241,245,249,0.25) !important;
+}
+
+html.dark [class*="bg-white"] {
+  background-color: rgba(20, 35, 45, 0.92) !important;
+}
+
+html.dark [class*="border-white"] {
+  border-color: rgba(255,255,255,0.08) !important;
+}
+/* ==========================================
+   DARK MODE TEXT FIXES
+========================================== */
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #ffffff !important;
+}
+
+html.dark p {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+html.dark span {
+  color: rgba(255,255,255,0.85);
+}
+
+html.dark li {
+  color: rgba(255,255,255,0.85);
+}
+
+html.dark .text-beach-teal,
+html.dark .text-beach-teal-dark {
+  color: #ffffff !important;
+}
+
+html.dark [class*="text-beach-teal"] {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+html.dark .timeline-path p,
+html.dark .timeline-path span {
+  color: rgba(255,255,255,0.75) !important;
+}
