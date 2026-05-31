@@ -363,7 +363,7 @@ useEffect(() => {
             </h2>
           </div>
           <p className="text-beach-teal/55 text-sm font-medium max-w-xs text-right hidden sm:block">
-            {user ? 'Access exclusive resources & track your rank.' : 'Up to 3 tracks. Curated resources + live leaderboards.'}
+            {user ? 'Access exclusive resources & track your rank.' : 'Curated resources + live leaderboards.'}
           </p>
         </div>
 
@@ -439,22 +439,12 @@ useEffect(() => {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <h3 className="text-[15px] font-black text-beach-teal-dark tracking-tight">{domain.name}</h3>
-                        <span className={`text-[9px] font-bold tracking-wider uppercase border px-2 py-0.5 rounded-full shrink-0 ${domain.pill}`}>
-                          Track
-                        </span>
                       </div>
                       <p className="text-beach-teal/60 text-[12px] font-medium truncate">{domain.desc}</p>
                     </div>
                   </div>
 
                   {/* Right: CTA */}
-                  <Link
-                    to="/login"
-                    className="shrink-0 flex items-center gap-1.5 bg-white/90 hover:bg-beach-coral hover:text-white text-beach-coral border border-beach-teal/15 font-bold text-[11px] px-4 py-2 rounded-xl transition-all duration-250 shadow-sm group-hover:shadow-md"
-                  >
-                    Join
-                    <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
                 </div>
               );
             })}
