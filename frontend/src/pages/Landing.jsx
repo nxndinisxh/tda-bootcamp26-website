@@ -85,7 +85,6 @@ function StatPill({ value, label, suffix = '', duration = 1400 }) {
 export default function Landing() {
   const { user } = useAuth();
   const [standings, setStandings] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
   const [progress, setProgress] = useState([]);
 
   useEffect(() => {
@@ -102,11 +101,6 @@ export default function Landing() {
           { headers }
         );
 
-        const announcementsRes = await fetch(
-          '/api/dashboard/announcements',
-          { headers }
-        );
-
         const progressRes = await fetch(
           '/api/dashboard/progress',
           { headers }
@@ -115,11 +109,6 @@ export default function Landing() {
         if (standingsRes.ok) {
           const standingsData = await standingsRes.json();
           setStandings(standingsData.standings || []);
-        }
-
-        if (announcementsRes.ok) {
-          const announcementsData = await announcementsRes.json();
-          setAnnouncements(announcementsData || []);
         }
 
         if (progressRes.ok) {
@@ -336,47 +325,7 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* RECENT UPDATES (Announcements) */}
-              <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6 shadow-sm">
-                <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
-                  Recent Updates
-                </p>
-
-                <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                  {announcements.length === 0 ? (
-                    <p className="text-beach-teal/50 text-xs italic font-semibold">
-                      No announcements yet.
-                    </p>
-                  ) : (
-                    announcements.map((announcement) => (
-                      <div
-                        key={announcement.id}
-                        className="border border-beach-teal/10 rounded-2xl p-4 bg-white/40 shadow-xxs"
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="text-xxs font-bold text-beach-coral">
-                            {announcement.domain}
-                          </span>
-
-                          <span className="text-[10px] text-beach-teal/40 font-semibold">
-                            {new Date(
-                              announcement.date
-                            ).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <h4 className="font-bold text-xs text-beach-teal-dark mt-1.5">
-                          {announcement.title}
-                        </h4>
-
-                        <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed font-semibold">
-                          {announcement.content}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              {/* MY STANDINGS ONLY (RECENT UPDATES REMOVED) */}
 
             </div>
 

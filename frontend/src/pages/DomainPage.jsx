@@ -634,7 +634,7 @@ export default function DomainPage() {
                                           </div>
 
                                           <div className="flex items-center gap-2 shrink-0">
-                                            {!res.isLocked ? (
+                                            {!res.isLocked && !isAdmin && (
                                               <button
                                                 onClick={() => handleProgressToggle(res.id, res.completed)}
                                                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
@@ -656,7 +656,8 @@ export default function DomainPage() {
                                                 </span>
                                                 <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
                                               </button>
-                                            ) : (
+                                            )}
+                                            {res.isLocked && (
                                               <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
                                                 <Lock size={10} />
                                                 <span>Locked</span>

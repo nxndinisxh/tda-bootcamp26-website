@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import DomainPage from './pages/DomainPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Verify from './pages/Verify';
-import { LogOut, LayoutDashboard, Sun, Moon } from 'lucide-react';
+import { LogOut, LayoutDashboard, Sun, Moon, Bell } from 'lucide-react';
 
 // Protected Route Guard for general logged-in users
 const ProtectedRoute = ({ children }) => {
@@ -30,6 +30,37 @@ const AdminRoute = ({ children }) => {
 // Navigation Header Component
 const Navbar = ({ darkMode, toggleTheme }) => {
   const { user, logout } = useAuth();
+  const [announcements, setAnnouncements] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchAnnouncements = async () => {
+      try {
+        const token = localStorage.getItem('tda_token');
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await fetch('/api/dashboard/announcements', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          setAnnouncements(data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchAnnouncements();
+  }, [user]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/40">
@@ -66,6 +97,61 @@ const Navbar = ({ darkMode, toggleTheme }) => {
               </Link>
             )}
           </>
+        )}
+
+        {/* Notification Bell Toggler */}
+        {user && (
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10"
+              title="Recent Updates"
+            >
+              <Bell size={18} className="text-beach-teal dark:text-white" />
+              {announcements.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white dark:border-[#07141a] animate-pulse" />
+              )}
+            </button>
+
+            {/* Notification Dropdown (Solid background, no glassmorphism) */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2.5 w-80 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden text-left flex flex-col max-h-96">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-slate-800 bg-gray-50/70 dark:bg-slate-800/45 flex justify-between items-center">
+                  <span className="text-xs font-bold text-beach-teal-dark dark:text-white uppercase tracking-wider">Recent Updates</span>
+                  <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">
+                    {announcements.length} New
+                  </span>
+                </div>
+
+                <div className="overflow-y-auto divide-y divide-gray-100 dark:divide-slate-800/60 max-h-80">
+                  {announcements.length === 0 ? (
+                    <div className="px-4 py-8 text-center text-xs text-gray-400 dark:text-slate-500 italic font-semibold">
+                      No recent updates.
+                    </div>
+                  ) : (
+                    announcements.map((ann) => (
+                      <div key={ann.id} className="p-4 hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition duration-150">
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <span className="text-[10px] font-bold text-purple-600 dark:text-violet-400 uppercase tracking-wide">
+                            {ann.domain}
+                          </span>
+                          <span className="text-[9px] text-gray-400 dark:text-slate-500 font-semibold shrink-0">
+                            {new Date(ann.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-gray-900 dark:text-white leading-snug">
+                          {ann.title}
+                        </h4>
+                        <p className="text-[11px] text-gray-600 dark:text-slate-350 mt-1 leading-relaxed whitespace-pre-wrap">
+                          {ann.content}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <button
