@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Code, Brain, Globe, BarChart2, Shield, ArrowRight } from 'lucide-react';
+import {Code,Brain,Globe,BarChart2,Shield,ArrowRight,Moon,Sun} from 'lucide-react';
 
 const DOMAIN_DETAILS = [
   {
@@ -84,6 +84,61 @@ function StatPill({ value, label, suffix = '', duration = 1400 }) {
 
 export default function Landing() {
   const { user } = useAuth();
+  const [standings, setStandings] = useState([]);
+const [announcements, setAnnouncements] = useState([]);
+
+const [darkMode, setDarkMode] = useState(
+  localStorage.getItem('theme') === 'dark'
+);
+
+useEffect(() => {
+  document.documentElement.classList.toggle('dark', darkMode);
+
+  localStorage.setItem(
+    'theme',
+    darkMode ? 'dark' : 'light'
+  );
+}, [darkMode]);
+
+useEffect(() => {
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('tda_token');
+
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      const standingsRes = await fetch(
+        '/api/dashboard/standings',
+        { headers }
+      );
+
+      const announcementsRes = await fetch(
+        '/api/dashboard/announcements',
+        { headers }
+      );
+
+      if (standingsRes.ok) {
+        const standingsData = await standingsRes.json();
+        setStandings(standingsData.standings || []);
+      }
+
+      if (announcementsRes.ok) {
+        const announcementsData =
+          await announcementsRes.json();
+
+        setAnnouncements(announcementsData || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (user) {
+    fetchDashboardData();
+  }
+}, [user]);
   const displayedDomains = DOMAIN_DETAILS.filter((d) =>
     !user ? true : user.domains?.includes(d.name)
   );
@@ -102,14 +157,25 @@ export default function Landing() {
               'radial-gradient(ellipse 70% 55% at 50% 10%, rgba(20,184,166,0.10) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, rgba(249,115,22,0.07) 0%, transparent 70%)',
           }}
         />
-
+        <div className="absolute top-6 right-6">
+  <button
+    onClick={() => setDarkMode(!darkMode)}
+    className="bg-white/80 backdrop-blur border border-beach-teal/10 rounded-xl p-2 shadow-sm hover:shadow-md transition"
+  >
+    {darkMode ? (
+      <Sun size={18} />
+    ) : (
+      <Moon size={18} />
+    )}
+  </button>
+</div>
         {/* Eyebrow */}
         <span
           className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.18em] uppercase text-beach-teal border border-beach-teal/25 bg-beach-teal/5 px-4 py-1.5 rounded-full mb-6"
           style={{ animation: 'fadeUp 0.5s ease both' }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-beach-coral animate-pulse" />
-          TDA Bootcamp '26 · Summer Edition
+          TDA Bootcamp '26
         </span>
 
         {/* Headline — tight & impactful */}
@@ -178,11 +244,110 @@ export default function Landing() {
         >
           <StatPill value={5} label="Tracks" />
           <div className="w-px h-8 bg-beach-teal/15" />
-          <StatPill value={200} suffix="+" label="Students" duration={1600} />
+          <StatPill value={400} suffix="+" label="Students" duration={1600} />
           <div className="w-px h-8 bg-beach-teal/15" />
-          <StatPill value={8} label="Weeks" />
+          <StatPill value={7} label="Weeks" />
         </div>
       </section>
+      {user && (
+  <section className="max-w-6xl mx-auto w-full px-4 py-8">
+    <div className="grid lg:grid-cols-2 gap-6">
+
+      {/* MY STANDINGS */}
+
+      <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6">
+        <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
+          My Standings
+        </p>
+
+        <div className="space-y-4">
+          {standings.length === 0 ? (
+            <p className="text-beach-teal/50">
+              No standings available.
+            </p>
+          ) : (
+            standings.map((item) => (
+              <div
+                key={item.domain}
+                className="border border-beach-teal/10 rounded-2xl p-4"
+              >
+                <h3 className="font-black text-beach-teal-dark">
+                  {item.domain}
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <p className="text-xs text-beach-teal/50">
+                      Weekly Rank
+                    </p>
+
+                    <p className="text-xl font-black">
+                      #{item.weeklyRank ?? '-'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-beach-teal/50">
+                      Overall Rank
+                    </p>
+
+                    <p className="text-xl font-black">
+                      #{item.overallRank ?? '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* RECENT UPDATES */}
+
+      <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6">
+        <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
+          Recent Updates
+        </p>
+
+        <div className="space-y-3 max-h-[420px] overflow-y-auto">
+          {announcements.length === 0 ? (
+            <p className="text-beach-teal/50">
+              No announcements yet.
+            </p>
+          ) : (
+            announcements.map((announcement) => (
+              <div
+                key={announcement.id}
+                className="border border-beach-teal/10 rounded-2xl p-4"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-beach-coral">
+                    {announcement.domain}
+                  </span>
+
+                  <span className="text-xs text-beach-teal/40">
+                    {new Date(
+                      announcement.date
+                    ).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <h4 className="font-bold mt-2">
+                  {announcement.title}
+                </h4>
+
+                <p className="text-sm text-beach-teal/70 mt-1">
+                  {announcement.content}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+    </div>
+  </section>
+)}
 
       {/* ── THIN DIVIDER ─────────────────────────────────────── */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-beach-teal/15 to-transparent my-2" />
