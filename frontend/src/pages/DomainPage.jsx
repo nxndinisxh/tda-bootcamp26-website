@@ -125,7 +125,7 @@ export default function DomainPage() {
   
   // Resource Form modal state
   const [showResModal, setShowResModal] = useState(false);
-  const [resForm, setResForm] = useState({ id: null, title: '', description: '', link: '', week: 'Week 1', order: 0 });
+  const [resForm, setResForm] = useState({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
   
   // Announcement Form state
   const [showAnnModal, setShowAnnModal] = useState(false);
@@ -226,7 +226,8 @@ export default function DomainPage() {
         body: JSON.stringify({
           title: resForm.title,
           description: resForm.description,
-          link: resForm.link,
+          link: resForm.links[0]?.url || '',
+          links: resForm.links.filter(l => l.title.trim() !== '' && l.url.trim() !== ''),
           week: resForm.week,
           order: Number(resForm.order) || 0
         })
@@ -235,7 +236,7 @@ export default function DomainPage() {
       if (!res.ok) throw new Error('Failed to save resource.');
       
       setShowResModal(false);
-      setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: 0 });
+      setResForm({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
       await fetchDomainData();
     } catch (err) {
       alert(err.message);
@@ -510,7 +511,7 @@ export default function DomainPage() {
                   {isAdmin && (
                     <button
                       onClick={() => {
-                        setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: resources.length + 1 });
+                        setResForm({ id: null, title: '', description: '', week: 'Week 1', order: resources.length + 1, links: [{ title: '', url: '' }] });
                         setShowResModal(true);
                       }}
                       className="flex items-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md shadow-[#7c3aed]/10 cursor-pointer"
@@ -628,15 +629,20 @@ export default function DomainPage() {
                                               {res.description}
                                             </p>
                                             {!res.isLocked && (
-                                              <a
-                                                href={res.link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold mt-2 transition"
-                                              >
-                                                <span>Access Resource</span>
-                                                <ExternalLink size={12} />
-                                              </a>
+                                              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
+                                                {(res.links && res.links.length > 0 ? res.links : [{ title: 'Access Resource', url: res.link }]).map((lnk, idx) => (
+                                                  <a
+                                                    key={idx}
+                                                    href={lnk.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold transition"
+                                                  >
+                                                    <span>{lnk.title}</span>
+                                                    <ExternalLink size={12} />
+                                                  </a>
+                                                ))}
+                                              </div>
                                             )}
                                           </div>
 
@@ -676,7 +682,17 @@ export default function DomainPage() {
                                               <div className="flex items-center gap-1 border-l border-beach-teal/15 pl-2">
                                                 <button
                                                   onClick={() => {
-                                                    setResForm(res);
+                                                    const initialLinks = res.links && res.links.length > 0
+                                                      ? res.links
+                                                      : [{ title: 'Access Resource', url: res.link || '' }];
+                                                    setResForm({
+                                                      id: res.id,
+                                                      title: res.title,
+                                                      description: res.description,
+                                                      week: res.week,
+                                                      order: res.order,
+                                                      links: initialLinks
+                                                    });
                                                     setShowResModal(true);
                                                   }}
                                                   className="text-beach-teal hover:text-beach-teal/80 p-1 rounded transition cursor-pointer"
@@ -946,16 +962,61 @@ export default function DomainPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Reference Link</label>
-                <input
-                  type="url"
-                  required
-                  value={resForm.link}
-                  onChange={(e) => setResForm({ ...resForm, link: e.target.value })}
-                  placeholder="https://..."
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                />
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Resource Links</label>
+                </div>
+                {(resForm.links || []).map((lnk, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      required
+                      value={lnk.title}
+                      onChange={(e) => {
+                        const newLinks = [...resForm.links];
+                        newLinks[idx] = { ...newLinks[idx], title: e.target.value };
+                        setResForm({ ...resForm, links: newLinks });
+                      }}
+                      placeholder="Label (e.g. Slides)"
+                      className="block w-1/3 px-3 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
+                    />
+                    <input
+                      type="url"
+                      required
+                      value={lnk.url}
+                      onChange={(e) => {
+                        const newLinks = [...resForm.links];
+                        newLinks[idx] = { ...newLinks[idx], url: e.target.value };
+                        setResForm({ ...resForm, links: newLinks });
+                      }}
+                      placeholder="https://..."
+                      className="block flex-1 px-3 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
+                    />
+                    {resForm.links.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newLinks = resForm.links.filter((_, i) => i !== idx);
+                          setResForm({ ...resForm, links: newLinks });
+                        }}
+                        className="text-beach-coral hover:text-beach-coral/85 p-1 rounded transition cursor-pointer"
+                        title="Remove link"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResForm({ ...resForm, links: [...(resForm.links || []), { title: '', url: '' }] });
+                  }}
+                  className="mt-1 flex items-center gap-1 text-[11px] font-bold text-[#7c3aed] hover:text-[#6d28d9] transition cursor-pointer"
+                >
+                  <Plus size={12} />
+                  <span>Add another link</span>
+                </button>
               </div>
 
               <div>
@@ -986,7 +1047,7 @@ export default function DomainPage() {
                   type="button"
                   onClick={() => {
                     setShowResModal(false);
-                    setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: 0 });
+                    setResForm({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
                   }}
                   className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer"
                 >

@@ -43,9 +43,16 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
       if (isWeekLocked && !isUserAdmin) {
         resObj.isLocked = true;
         resObj.link = '#';
+        if (resObj.links && resObj.links.length > 0) {
+          resObj.links = resObj.links.map(l => ({ ...l, url: '#' }));
+        }
         resObj.description = 'This resource is locked. Wait for the domain head to unlock this week.';
       } else {
         resObj.isLocked = false;
+        // Make sure links array has at least one entry even for legacy resources
+        if (!resObj.links || resObj.links.length === 0) {
+          resObj.links = [{ title: 'Access Resource', url: resObj.link }];
+        }
       }
 
       return resObj;
@@ -64,19 +71,28 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
 // Add resource
 router.post('/:domain/resources', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
-  const { title, description, link, week, order } = req.body;
+  const { title, description, link, week, order, links } = req.body;
 
-  if (!title || !link || !week) {
-    return res.status(400).json({ message: 'Title, link, and week are required.' });
+  let finalLinks = [];
+  if (links && Array.isArray(links) && links.length > 0) {
+    finalLinks = links.filter(l => l.title && l.url);
+  } else if (link) {
+    finalLinks = [{ title: 'Access Resource', url: link }];
+  }
+
+  if (!title || finalLinks.length === 0 || !week) {
+    return res.status(400).json({ message: 'Title, week, and at least one link are required.' });
   }
 
   try {
+    const firstLink = finalLinks[0]?.url || '';
     const newResource = await Resource.create({
       id: `res_${Date.now()}`,
       domain,
       title,
       description: description || '',
-      link,
+      link: firstLink,
+      links: finalLinks,
       week,
       order: Number(order) || 0,
       createdAt: new Date().toISOString()
@@ -90,16 +106,25 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 
 // Update resource
 router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
-  const { id } = req.params;
-  const { title, description, link, week, order } = req.body;
+  const { title, description, link, week, order, links } = req.body;
 
   try {
     const updateData = {};
     if (title) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (link) updateData.link = link;
     if (week) updateData.week = week;
     if (order !== undefined) updateData.order = Number(order) || 0;
+
+    if (links && Array.isArray(links)) {
+      const finalLinks = links.filter(l => l.title && l.url);
+      if (finalLinks.length > 0) {
+        updateData.links = finalLinks;
+        updateData.link = finalLinks[0].url;
+      }
+    } else if (link) {
+      updateData.link = link;
+      updateData.links = [{ title: 'Access Resource', url: link }];
+    }
 
     const updated = await Resource.findOneAndUpdate(
       { id },
