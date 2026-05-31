@@ -217,7 +217,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || selectedDomains.length === 0}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-beach-coral to-beach-gold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-beach-coral transition cursor-pointer disabled:opacity-50 shadow-md shadow-beach-coral/15"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-[#7c3aed] hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition cursor-pointer disabled:opacity-50 shadow-md shadow-[#7c3aed]/20"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <UserPlus className="h-5 w-5 text-white/80 group-hover:text-white transition" aria-hidden="true" />

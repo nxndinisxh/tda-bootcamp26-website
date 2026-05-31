@@ -418,7 +418,15 @@ export default function DomainPage() {
   }
 
   // Group resources by Week
-  const resourcesByWeek = {};
+  const resourcesByWeek = {
+    'Week 1': [],
+    'Week 2': [],
+    'Week 3': [],
+    'Week 4': [],
+    'Week 5': [],
+    'Week 6': [],
+    'Week 7': []
+  };
   resources.forEach(r => {
     if (!resourcesByWeek[r.week]) {
       resourcesByWeek[r.week] = [];
@@ -440,9 +448,6 @@ export default function DomainPage() {
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-beach-teal">Domain Hub</span>
           <h1 className="text-3xl font-black tracking-tight text-beach-teal-dark mt-1">{decodedDomain}</h1>
-          <p className="text-beach-teal/70 text-xs mt-1 font-semibold">
-            {DOMAIN_DESCRIPTIONS[decodedDomain] || 'Access domain learning paths, projects, and weekly announcements.'}
-          </p>
         </div>
 
         {isAdmin && (
@@ -499,20 +504,7 @@ export default function DomainPage() {
             {activeTab === 'resources' && (
               <div className="space-y-6">
                 
-                {/* 1. Introduction Card at the top */}
-                <div className="glass p-6 rounded-2xl border border-white/60 space-y-4 relative overflow-hidden shadow-sm">
-                  <BeachDecoration icon={Sun} className="top-3 right-3" />
-                  <h3 className="text-base font-black text-beach-teal-dark">Welcome to the {decodedDomain} Track</h3>
-                  <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
-                    This track is designed to take you from foundational logic directly to real-world applications. 
-                    Make sure to check the weekly reading lists, video tutorials, and references listed under each active week.
-                  </p>
-                  <p className="text-beach-teal/80 text-xs leading-relaxed font-semibold">
-                    Important deadlines, live sessions, and assignment releases will be posted in the <strong className="text-beach-coral font-bold">Announcements</strong> tab.
-                  </p>
-                </div>
-
-                {/* 2. Collapsible Week Curriculum */}
+                {/* Collapsible Week Curriculum */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-beach-teal-dark">Curriculum Resources</h3>
                   {isAdmin && (
@@ -521,7 +513,7 @@ export default function DomainPage() {
                         setResForm({ id: null, title: '', description: '', link: '', week: 'Week 1', order: resources.length + 1 });
                         setShowResModal(true);
                       }}
-                      className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-xs cursor-pointer"
+                      className="flex items-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md shadow-[#7c3aed]/10 cursor-pointer"
                     >
                       <Plus size={14} />
                       <span>Add Resource</span>
@@ -529,12 +521,7 @@ export default function DomainPage() {
                   )}
                 </div>
 
-                {Object.keys(resourcesByWeek).length === 0 ? (
-                  <div className="glass p-12 text-center rounded-2xl border border-white/60 text-beach-teal/40 italic font-semibold text-xs">
-                    No learning resources have been added to this domain yet. Check back soon!
-                  </div>
-                ) : (
-                  <div className="space-y-4">
+                <div className="space-y-4">
                     {Object.keys(resourcesByWeek).sort().map(weekName => {
                       const weekLocked = isWeekLocked(weekName);
                       const weekResources = resourcesByWeek[weekName] || [];
@@ -587,8 +574,8 @@ export default function DomainPage() {
                                   }}
                                   className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold transition border shadow-xs cursor-pointer ${
                                     weekLocked
-                                      ? 'bg-beach-teal text-white border-beach-teal/15'
-                                      : 'bg-beach-coral text-white border-beach-coral/15'
+                                      ? 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white border-transparent shadow-xs'
+                                      : 'bg-transparent border border-[#7c3aed] hover:bg-[#7c3aed]/5 text-[#7c3aed] dark:text-[#a78bfa] dark:border-[#a78bfa]'
                                   }`}
                                 >
                                   {weekLocked ? 'Unlock' : 'Lock'}
@@ -602,112 +589,113 @@ export default function DomainPage() {
                           </div>
 
                           {/* Collapsible Resources List */}
-                          {isExpanded && (
-                            <div className="p-4 bg-white/10">
-                              {totalCount === 0 ? (
-                                <p className="text-xs text-beach-teal/40 italic font-semibold py-2 pl-2">No resources added yet.</p>
-                              ) : (
-                                <ol className="list-decimal pl-5 space-y-3">
-                                  {weekResources.map((res) => (
-                                    <li key={res.id} className={`pl-2 py-2 border-b border-beach-teal/5 last:border-b-0 ${res.isLocked ? 'opacity-60' : ''}`}>
-                                      <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-bold text-beach-teal-dark text-sm">
-                                              {res.title}
-                                            </span>
-                                            {res.isLocked ? (
-                                              <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral px-1.5 py-0.5 rounded text-[9px] font-bold">
-                                                <Lock size={8} />
-                                                <span>Locked</span>
+                          <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                            <div className="overflow-hidden">
+                              <div className="p-4 bg-white/10">
+                                {totalCount === 0 ? (
+                                  <p className="text-xs text-beach-teal/40 italic font-semibold py-2 pl-2">No resources added yet.</p>
+                                ) : (
+                                  <ol className="list-decimal pl-5 space-y-3">
+                                    {weekResources.map((res) => (
+                                      <li key={res.id} className={`pl-2 py-2 border-b border-beach-teal/5 last:border-b-0 ${res.isLocked ? 'opacity-60' : ''}`}>
+                                        <div className="flex items-start justify-between gap-4">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <span className="font-bold text-beach-teal-dark text-sm">
+                                                {res.title}
                                               </span>
-                                            ) : (
-                                              res.completed && (
-                                                <span className="bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
-                                                  Completed
+                                              {res.isLocked ? (
+                                                <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                                  <Lock size={8} />
+                                                  <span>Locked</span>
                                                 </span>
-                                              )
+                                              ) : (
+                                                res.completed && (
+                                                  <span className="bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                                    Completed
+                                                  </span>
+                                                )
+                                              )}
+                                            </div>
+                                            <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed">
+                                              {res.description}
+                                            </p>
+                                            {!res.isLocked && (
+                                              <a
+                                                href={res.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold mt-2 transition"
+                                              >
+                                                <span>Access Resource</span>
+                                                <ExternalLink size={12} />
+                                              </a>
                                             )}
                                           </div>
-                                          <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed">
-                                            {res.description}
-                                          </p>
-                                          {!res.isLocked && (
-                                            <a
-                                              href={res.link}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold mt-2 transition"
-                                            >
-                                              <span>Access Resource</span>
-                                              <ExternalLink size={12} />
-                                            </a>
-                                          )}
-                                        </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
-                                          {!res.isLocked ? (
-                                            <button
-                                              onClick={() => handleProgressToggle(res.id, res.completed)}
-                                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
-                                                res.completed
-                                                  ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
-                                                  : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
-                                              }`}
-                                            >
-                                              <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
-                                                res.completed
-                                                  ? 'bg-beach-teal-light border-beach-teal-light text-white'
-                                                  : 'border-beach-teal/20 bg-white'
-                                              }`}>
-                                                {res.completed && (
-                                                  <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
-                                                    <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-                                                  </svg>
-                                                )}
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            {!res.isLocked ? (
+                                              <button
+                                                onClick={() => handleProgressToggle(res.id, res.completed)}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
+                                                  res.completed
+                                                    ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
+                                                    : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
+                                                }`}
+                                              >
+                                                <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                                                  res.completed
+                                                    ? 'bg-beach-teal-light border-beach-teal-light text-white'
+                                                    : 'border-beach-teal/20 bg-white'
+                                                }`}>
+                                                  {res.completed && (
+                                                    <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
+                                                      <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                    </svg>
+                                                  )}
+                                                </span>
+                                                <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
+                                              </button>
+                                            ) : (
+                                              <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
+                                                <Lock size={10} />
+                                                <span>Locked</span>
                                               </span>
-                                              <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
-                                            </button>
-                                          ) : (
-                                            <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
-                                              <Lock size={10} />
-                                              <span>Locked</span>
-                                            </span>
-                                          )}
+                                            )}
 
-                                          {isAdmin && (
-                                            <div className="flex items-center gap-1 border-l border-beach-teal/15 pl-2">
-                                              <button
-                                                onClick={() => {
-                                                  setResForm(res);
-                                                  setShowResModal(true);
-                                                }}
-                                                className="text-beach-teal hover:text-beach-teal/80 p-1 rounded transition cursor-pointer"
-                                              >
-                                                <Edit size={13} />
-                                              </button>
-                                              <button
-                                                onClick={() => handleResourceDelete(res.id)}
-                                                className="text-beach-coral hover:text-beach-coral/85 p-1 rounded transition cursor-pointer"
-                                              >
-                                                <Trash2 size={13} />
-                                              </button>
-                                            </div>
-                                          )}
+                                            {isAdmin && (
+                                              <div className="flex items-center gap-1 border-l border-beach-teal/15 pl-2">
+                                                <button
+                                                  onClick={() => {
+                                                    setResForm(res);
+                                                    setShowResModal(true);
+                                                  }}
+                                                  className="text-beach-teal hover:text-beach-teal/80 p-1 rounded transition cursor-pointer"
+                                                >
+                                                  <Edit size={13} />
+                                                </button>
+                                                <button
+                                                  onClick={() => handleResourceDelete(res.id)}
+                                                  className="text-beach-coral hover:text-beach-coral/85 p-1 rounded transition cursor-pointer"
+                                                >
+                                                  <Trash2 size={13} />
+                                                </button>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ol>
-                              )}
+                                      </li>
+                                    ))}
+                                  </ol>
+                                )}
+                              </div>
                             </div>
-                          )}
+                          </div>
 
                         </div>
                       );
                     })}
                   </div>
-                )}
 
               </div>
             )}
@@ -723,7 +711,7 @@ export default function DomainPage() {
                   {isAdmin && (
                     <button
                       onClick={() => setShowAnnModal(true)}
-                      className="flex items-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
+                      className="flex items-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-[#7c3aed]/10 cursor-pointer"
                     >
                       <Plus size={16} />
                       <span>Post Announcement</span>
@@ -815,7 +803,7 @@ export default function DomainPage() {
                     setUploadModalSuccess('');
                     setUploadModalSkipped([]);
                   }}
-                  className="bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
+                  className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
                 >
                   Upload Weekly
                 </button>
@@ -827,7 +815,7 @@ export default function DomainPage() {
                     setUploadModalSuccess('');
                     setUploadModalSkipped([]);
                   }}
-                  className="bg-beach-coral hover:bg-beach-coral/90 text-white font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
+                  className="bg-transparent border border-[#7c3aed] hover:bg-[#7c3aed]/5 text-[#7c3aed] dark:text-[#a78bfa] dark:border-[#a78bfa] font-bold text-[9px] py-1.5 rounded-lg transition shadow-xs cursor-pointer text-center"
                 >
                   Upload Overall
                 </button>
@@ -997,7 +985,7 @@ export default function DomainPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-beach-teal hover:bg-beach-teal/90 text-white cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
                 >
                   Save
                 </button>
@@ -1049,7 +1037,7 @@ export default function DomainPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-beach-teal hover:bg-beach-teal/90 text-white cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
                 >
                   Post
                 </button>
@@ -1140,7 +1128,7 @@ export default function DomainPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-beach-teal hover:bg-beach-teal/90 text-white cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
                   disabled={uploadModalLoading}
                 >
                   {uploadModalLoading ? 'Uploading...' : 'Upload'}

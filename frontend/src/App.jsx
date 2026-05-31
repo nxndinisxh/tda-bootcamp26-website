@@ -68,13 +68,16 @@ const Navbar = ({ darkMode, toggleTheme }) => {
           </>
         )}
 
-        {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className="bg-white/80 dark:bg-black/25 backdrop-blur border border-beach-teal/10 dark:border-white/10 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer text-beach-teal dark:text-beach-gold flex items-center justify-center"
+          className="bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10"
           title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          {darkMode ? (
+            <Moon size={18} className="text-violet-400 fill-violet-400/35" />
+          ) : (
+            <Sun size={18} className="text-amber-500 fill-amber-500/35" />
+          )}
         </button>
 
         {user ? (
@@ -85,7 +88,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
             </div>
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 bg-beach-coral/10 text-beach-coral hover:bg-beach-coral/20 px-3 py-1.5 rounded-lg border border-beach-coral/20 transition cursor-pointer text-sm font-bold"
+              className="flex items-center gap-1.5 bg-transparent text-[#7c3aed] dark:text-[#a78bfa] hover:bg-[#7c3aed]/5 px-3 py-1.5 rounded-xl border border-[#7c3aed] dark:border-[#a78bfa] transition cursor-pointer text-sm font-bold"
             >
               <LogOut size={16} />
               <span>Logout</span>
@@ -95,7 +98,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="text-beach-teal hover:text-beach-coral transition px-4 py-2 text-sm font-bold"
+              className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white px-4 py-2 rounded-xl text-sm font-bold transition duration-200 cursor-pointer shadow-sm shadow-[#7c3aed]/10"
             >
               Login
             </Link>

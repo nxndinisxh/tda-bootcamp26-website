@@ -90,18 +90,18 @@ export default function Login() {
   if (isFirstLoginState) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-[#d4c1b6]/15 relative">
+        <div className="max-w-md w-full space-y-8 glass p-8 sm:p-10 rounded-3xl border border-white/60 relative shadow-md">
           {/* Corner Sparkles */}
-          <span className="absolute top-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute top-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute bottom-4 left-4 text-xs text-white/30 sparkle-pulse">✦</span>
-          <span className="absolute bottom-4 right-4 text-xs text-white/30 sparkle-pulse">✦</span>
+          <span className="absolute top-4 left-4 text-xs text-beach-teal/20 sparkle-pulse">✦</span>
+          <span className="absolute top-4 right-4 text-xs text-beach-teal/20 sparkle-pulse">✦</span>
+          <span className="absolute bottom-4 left-4 text-xs text-beach-teal/20 sparkle-pulse">✦</span>
+          <span className="absolute bottom-4 right-4 text-xs text-beach-teal/20 sparkle-pulse">✦</span>
 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.06)_0,transparent_50%)] pointer-events-none" />
 
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-white tracking-tight">Set New Password</h2>
-            <p className="mt-2 text-sm text-gray-400">
+            <h2 className="text-3xl font-extrabold text-beach-teal-dark tracking-tight">Set New Password</h2>
+            <p className="mt-2 text-sm text-beach-teal/70 font-semibold">
               This is your first login. Please choose a secure password to activate your account.
             </p>
             <p className="mt-2.5 text-xs text-beach-coral font-bold bg-beach-coral/5 border border-beach-coral/15 px-3 py-2 rounded-xl flex items-center justify-center gap-1.5 animate-pulse">
@@ -120,11 +120,11 @@ export default function Login() {
           <form className="space-y-6" onSubmit={handleResetSubmit}>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                   New Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                     <Lock size={18} />
                   </span>
                   <input
@@ -133,12 +133,12 @@ export default function Login() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm"
+                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm font-semibold"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition cursor-pointer"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-beach-teal/40 hover:text-beach-teal transition cursor-pointer"
                   >
                     {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -146,11 +146,11 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                   Confirm New Password
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                     <KeyRound size={18} />
                   </span>
                   <input
@@ -159,12 +159,12 @@ export default function Login() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm"
+                    className="block w-full pl-10 pr-10 py-3 brand-input transition text-sm font-semibold"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition cursor-pointer"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-beach-teal/40 hover:text-beach-teal transition cursor-pointer"
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -176,7 +176,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-brand-bg bg-[#60a6dc] hover:bg-[#60a6dc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#60a6dc] transition cursor-pointer disabled:opacity-50"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-[#7c3aed] hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition cursor-pointer disabled:opacity-50 shadow-md shadow-[#7c3aed]/20"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                   <LogIn className="h-5 w-5 text-brand-bg/70 group-hover:text-brand-bg transition" aria-hidden="true" />
@@ -204,8 +204,8 @@ export default function Login() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,166,220,0.06)_0,transparent_50%)] pointer-events-none" />
 
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h2>
-          <p className="mt-2 text-sm text-gray-400">
+          <h2 className="text-3xl font-extrabold text-beach-teal-dark tracking-tight">Welcome Back</h2>
+          <p className="mt-2 text-sm text-beach-teal/70 font-semibold">
             Sign in with your Registration Number to continue
           </p>
         </div>
@@ -220,11 +220,11 @@ export default function Login() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">
                 Registration Number
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 pointer-events-none">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-beach-teal/40 pointer-events-none">
                   <User size={18} />
                 </span>
                 <input
@@ -233,7 +233,7 @@ export default function Login() {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   placeholder="e.g. 2409XXXXX"
-                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm"
+                  className="block w-full pl-10 pr-4 py-3 brand-input transition text-sm font-semibold"
                 />
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-beach-teal/40 hover:text-beach-teal transition cursor-pointer"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -269,7 +269,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-beach-coral to-beach-gold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-beach-coral transition cursor-pointer disabled:opacity-50 shadow-md shadow-beach-coral/15"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-[#7c3aed] hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition cursor-pointer disabled:opacity-50 shadow-md shadow-[#7c3aed]/20"
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <LogIn className="h-5 w-5 text-white/80 group-hover:text-white transition" aria-hidden="true" />

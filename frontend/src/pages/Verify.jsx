@@ -265,7 +265,7 @@ export default function Verify() {
               <button
                 type="submit"
                 disabled={loading || otp.join('').length !== 6}
-                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-gradient-to-r from-beach-coral to-beach-gold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-beach-coral transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-beach-coral/15"
+                className="group relative w-full flex justify-center py-3 px-4 text-sm font-bold rounded-xl text-white bg-[#7c3aed] hover:bg-[#6d28d9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-[#7c3aed]/20"
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin text-white" />

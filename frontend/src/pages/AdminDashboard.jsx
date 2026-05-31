@@ -340,10 +340,10 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         onClick={() => setUploadType('weekly')}
-                        className={`py-2 text-xxs font-bold rounded-xl border transition ${
+                        className={`py-2 text-xxs font-bold rounded-xl border transition cursor-pointer ${
                           uploadType === 'weekly'
-                            ? 'bg-beach-teal text-white border-beach-teal'
-                            : 'bg-white/40 text-beach-teal border-beach-teal/15 hover:bg-white/70'
+                            ? 'bg-[#7c3aed] text-white border-transparent shadow-xs'
+                            : 'bg-white/40 text-[#7c3aed] border-[#7c3aed]/15 hover:bg-[#7c3aed]/5'
                         }`}
                       >
                         Weekly
@@ -351,10 +351,10 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         onClick={() => setUploadType('overall')}
-                        className={`py-2 text-xxs font-bold rounded-xl border transition ${
+                        className={`py-2 text-xxs font-bold rounded-xl border transition cursor-pointer ${
                           uploadType === 'overall'
-                            ? 'bg-beach-teal text-white border-beach-teal'
-                            : 'bg-white/40 text-beach-teal border-beach-teal/15 hover:bg-white/70'
+                            ? 'bg-[#7c3aed] text-white border-transparent shadow-xs'
+                            : 'bg-white/40 text-[#7c3aed] border-[#7c3aed]/15 hover:bg-[#7c3aed]/5'
                         }`}
                       >
                         Overall
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
 
                   <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-1.5 bg-beach-teal hover:bg-beach-teal/90 text-white font-bold text-xs py-3 rounded-xl transition shadow-md shadow-beach-teal/15 cursor-pointer"
+                    className="w-full flex items-center justify-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs py-3 rounded-xl transition shadow-md shadow-[#7c3aed]/20 cursor-pointer"
                   >
                     <span>Upload Standings</span>
                     <ArrowRight size={14} />
@@ -436,8 +436,8 @@ export default function AdminDashboard() {
                     onClick={() => setViewType('overall')}
                     className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                       viewType === 'overall'
-                        ? 'bg-beach-teal text-white shadow-sm'
-                        : 'text-beach-teal/70 hover:text-beach-teal'
+                        ? 'bg-[#7c3aed] text-white shadow-sm'
+                        : 'text-[#7c3aed] hover:bg-[#7c3aed]/5'
                     }`}
                   >
                     Overall
@@ -446,8 +446,8 @@ export default function AdminDashboard() {
                     onClick={() => setViewType('weekly')}
                     className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
                       viewType === 'weekly'
-                        ? 'bg-beach-teal text-white shadow-sm'
-                        : 'text-beach-teal/70 hover:text-beach-teal'
+                        ? 'bg-[#7c3aed] text-white shadow-sm'
+                        : 'text-[#7c3aed] hover:bg-[#7c3aed]/5'
                     }`}
                   >
                     Weekly

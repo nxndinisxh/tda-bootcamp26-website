@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-beach-sand: #ebdcc9;
-  --color-beach-sand-dark: #dec8b1;
-  --color-beach-seafoam: #bcd4cf;
-  --color-beach-teal: #0f4c5c;
-  --color-beach-teal-dark: #072b35;
-  --color-beach-teal-light: #2a9d8f;
-  --color-beach-coral: #e76f51;
-  --color-beach-gold: #f4a261;
-  --color-beach-glass: rgba(248, 245, 240, 0.65);
-  --color-beach-glass-dark: rgba(15, 76, 92, 0.08);
-  --color-beach-glass-border: rgba(255, 255, 255, 0.7);
+  --color-beach-sand: #f8fafc;
+  --color-beach-sand-dark: #f1f5f9;
+  --color-beach-seafoam: #e2e8f0;
+  --color-beach-teal: #1e293b;
+  --color-beach-teal-dark: #0f172a;
+  --color-beach-teal-light: #7c3aed;
+  --color-beach-coral: #6d28d9;
+  --color-beach-gold: #a78bfa;
+  --color-beach-glass: rgba(255, 255, 255, 0.7);
+  --color-beach-glass-dark: rgba(124, 58, 237, 0.03);
+  --color-beach-glass-border: rgba(255, 255, 255, 0.8);
 }
 
 body {
   background-color: var(--color-beach-sand);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(42, 157, 143, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 90% 80%, rgba(231, 111, 81, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 50% 50%, rgba(188, 212, 207, 0.4) 0%, transparent 80%);
+    radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(167, 139, 250, 0.04) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(188, 212, 207, 0.2) 0%, transparent 80%);
   color: var(--color-beach-teal-dark);
   font-family: 'Quicksand', 'Outfit', sans-serif;
   overflow-x: hidden;
@@ -28,25 +28,25 @@ body {
 
 /* Glassmorphism for summer theme - represents Frosted Sea-Glass */
 .glass {
-  background: rgba(250, 247, 242, 0.65);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px 0 rgba(15, 76, 92, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.04);
 }
 
 /* Glass card that is slightly darker for secondary/dashboard elements */
 .glass-teal {
-  background: rgba(42, 157, 143, 0.08);
+  background: rgba(124, 58, 237, 0.04);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(42, 157, 143, 0.15);
+  border: 1px solid rgba(124, 58, 237, 0.15);
 }
 
 /* Notched organic card redesigned as a surfboard or driftwood structure */
 .notched-card {
-  background: rgba(250, 247, 242, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   border-top-left-radius: 32px;
   border-bottom-right-radius: 32px;
@@ -54,7 +54,7 @@ body {
   border-bottom-left-radius: 8px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px -10px rgba(15, 76, 92, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.05);
 }
 
 /* Custom summer beach scrollbar */
@@ -103,8 +103,8 @@ body {
 
 /* Custom beach input styling */
 .brand-input {
-  background-color: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(15, 76, 92, 0.2);
+  background-color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(124, 58, 237, 0.15);
   border-radius: 12px;
   color: var(--color-beach-teal-dark);
   transition: all 0.3s ease;
@@ -112,8 +112,8 @@ body {
 
 .brand-input:focus {
   border-color: var(--color-beach-teal-light);
-  background-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.15);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
   outline: none;
 }
 

@@ -143,7 +143,8 @@ export default function Landing() {
     <div className="flex flex-col gap-0 relative overflow-x-hidden">
 
       {/* ── HERO ────────────────────────────────────────────── */}
-      {user && (
+      {/* ── HERO ────────────────────────────────────────────── */}
+      {!user && (
         <section className="relative flex flex-col items-center justify-center text-center pt-20 pb-16 px-6 min-h-[52vh]">
           {/* Subtle radial bloom */}
           <div
@@ -195,18 +196,13 @@ export default function Landing() {
             className="mt-8 flex flex-wrap gap-3 justify-center"
             style={{ animation: 'fadeUp 0.6s 0.28s ease both' }}
           >
-            <div className="flex flex-wrap gap-2 justify-center">
-              {user.domains.map((d) => (
-                <Link
-                  key={d}
-                  to={`/domains/${encodeURIComponent(d)}`}
-                  className="group flex items-center gap-2 bg-gradient-to-r from-beach-coral to-beach-gold text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-md shadow-beach-coral/20 hover:shadow-beach-coral/35 hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  {d}
-                  <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              ))}
-            </div>
+            <Link
+              to="/login"
+              className="group flex items-center gap-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg shadow-[#7c3aed]/25 hover:shadow-[#7c3aed]/40 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
+            >
+              <span>Access Portal</span>
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
 
           {/* Stat row */}
@@ -242,7 +238,11 @@ export default function Landing() {
                     const Icon = details.icon || Code;
                     const gradient = details.gradient || 'from-beach-teal to-beach-teal-light';
                     return (
-                      <div key={item.domain} className="border border-beach-teal/10 rounded-2xl p-4 bg-white/40 shadow-xxs">
+                      <Link
+                        key={item.domain}
+                        to={`/domains/${encodeURIComponent(item.domain)}`}
+                        className="block border border-beach-teal/10 rounded-2xl p-4 bg-white/40 hover:bg-white/60 hover:border-beach-teal/20 transition-all duration-200 shadow-xxs cursor-pointer"
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white shrink-0`}>
@@ -266,7 +266,7 @@ export default function Landing() {
                           <span className="text-[9px] text-beach-teal/40 font-semibold uppercase tracking-wider">Completion</span>
                           <span className="text-xs font-extrabold text-beach-teal-dark">{item.percentage}%</span>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })
                 )}
@@ -385,75 +385,26 @@ export default function Landing() {
       )}
 
       {/* ── THIN DIVIDER ─────────────────────────────────────── */}
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-beach-teal/15 to-transparent my-2" />
+      {!user && (
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-beach-teal/15 to-transparent my-2" />
+      )}
 
       {/* ── DOMAINS ──────────────────────────────────────────── */}
-      <section className="py-16 px-4 max-w-6xl mx-auto w-full">
+      {!user && (
+        <section className="py-16 px-4 max-w-6xl mx-auto w-full">
 
-        <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-1">Learning Tracks</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-beach-teal-dark tracking-tight">
-              {user ? 'Your Active Tracks' : 'Choose Your Path'}
-            </h2>
+          <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-1">Learning Tracks</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-beach-teal-dark tracking-tight">
+                Choose Your Path
+              </h2>
+            </div>
+            <p className="text-beach-teal/55 text-sm font-medium max-w-xs text-right hidden sm:block">
+              Curated resources + live leaderboards.
+            </p>
           </div>
-          <p className="text-beach-teal/55 text-sm font-medium max-w-xs text-right hidden sm:block">
-            {user ? 'Access exclusive resources & track your rank.' : 'Curated resources + live leaderboards.'}
-          </p>
-        </div>
 
-        {user ? (
-          /* ── REGISTERED: single row, max 5, no wrapping ── */
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${Math.min(displayedDomains.length, 5)}, minmax(0, 1fr))`,
-              gap: '12px',
-            }}
-          >
-            {displayedDomains.slice(0, 5).map((domain, i) => {
-              const Icon = domain.icon;
-              return (
-                <div
-                  key={domain.name}
-                  className="group relative bg-white/60 backdrop-blur-sm border border-white/80 hover:border-beach-teal/20 rounded-2xl p-4 flex flex-col gap-3 hover:shadow-xl hover:shadow-beach-teal/5 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
-                  style={{ animation: `fadeUp 0.5s ${i * 70}ms ease both` }}
-                >
-                  {/* Hover gradient wash */}
-                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${domain.gradient} opacity-0 group-hover:opacity-[0.05] transition-opacity duration-300 pointer-events-none`} />
-
-                  {/* Icon */}
-                  <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-300 shrink-0`}>
-                    <Icon size={16} />
-                  </div>
-
-                  {/* Name — single line, no wrap */}
-                  <h3 className="text-[13px] font-black text-beach-teal-dark tracking-tight truncate leading-tight">
-                    {domain.name}
-                  </h3>
-
-                  {/* Description — 2 lines max */}
-                  <p className="text-beach-teal/60 text-[11px] leading-relaxed font-medium line-clamp-2 flex-1">
-                    {domain.desc}
-                  </p>
-
-                  {/* Footer */}
-                  <div className="pt-2 border-t border-beach-teal/8 flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${domain.dot}`} />
-                    <Link
-                      to={`/domains/${encodeURIComponent(domain.name)}`}
-                      className="text-beach-coral hover:text-beach-gold font-bold text-xs flex items-center gap-1.5 transition"
-                    >
-                      <span>Access Domain</span>
-                      <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          /* ── UNREGISTERED: animated slide-in list ── */
           <div className="flex flex-col gap-3 max-w-3xl">
             {DOMAIN_DETAILS.map((domain, i) => {
               const Icon = domain.icon;
@@ -478,14 +429,12 @@ export default function Landing() {
                       <p className="text-beach-teal/60 text-[12px] font-medium truncate">{domain.desc}</p>
                     </div>
                   </div>
-
-                  {/* Right: CTA */}
                 </div>
               );
             })}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ── FOOTER ───────────────────────────────────────────── */}
       <footer className="mt-8 py-6 px-4 border-t border-beach-teal/10 flex flex-col sm:flex-row items-center justify-between text-beach-teal/35 text-[11px] font-semibold tracking-wide max-w-6xl mx-auto w-full">
