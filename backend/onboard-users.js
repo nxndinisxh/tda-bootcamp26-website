@@ -19,9 +19,9 @@ const onboardUsers = async () => {
   }
 
   // Find CSV file path
-  let csvPath = path.join(__dirname, '../TDA Bootcamp \'26.xlsx - Sheet1.csv');
+  let csvPath = path.join(__dirname, "../TDA Bootcamp '26 (5).xlsx - Sheet1 (1) (1).csv");
   if (!fs.existsSync(csvPath)) {
-    csvPath = path.join(__dirname, 'TDA Bootcamp \'26.xlsx - Sheet1.csv');
+    csvPath = path.join(__dirname, "TDA Bootcamp '26 (5).xlsx - Sheet1 (1) (1).csv");
   }
   if (!fs.existsSync(csvPath)) {
     // Check if there is any other CSV file in the root directory
