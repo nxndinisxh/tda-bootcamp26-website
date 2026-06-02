@@ -14,14 +14,14 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 // Dummy users with access to ALL domains
 const dummyUsers = [
   {
-    id: '240968178',
-    name: 'Umar Siddique',
-    email: 'umarsiddique2601@gmail.com'
+    id: '230911366',
+    name: 'Dummy1',
+    email: 'aditya1nigam8@gmail.com'
   },
   {
-    id: '240968508',
-    name: 'Adi Shree',
-    email: 'adi.mitmpl2024@learner.manipal.edu'
+    id: '240968202',
+    name: 'Dummy2',
+    email: '9a.anveshasingh@gmail.com'
   }
 ];
 
@@ -36,6 +36,10 @@ const createDummyUsers = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB.');
+
+    // Clean up previous dummy users
+    console.log('Cleaning up old dummy users...');
+    await User.deleteMany({ id: { $in: ['240968178', '240968508'] } });
 
     const salt = await bcrypt.genSalt(10);
 

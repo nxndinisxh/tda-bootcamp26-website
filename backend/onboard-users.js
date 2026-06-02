@@ -19,9 +19,9 @@ const onboardUsers = async () => {
   }
 
   // Find CSV file path
-  let csvPath = path.join(__dirname, '../TDA Bootcamp \'26.xlsx - Sheet1.csv');
+  let csvPath = path.join(__dirname, "../TDA Bootcamp '26 (5).xlsx - Sheet1 (1) (1).csv");
   if (!fs.existsSync(csvPath)) {
-    csvPath = path.join(__dirname, 'TDA Bootcamp \'26.xlsx - Sheet1.csv');
+    csvPath = path.join(__dirname, "TDA Bootcamp '26 (5).xlsx - Sheet1 (1) (1).csv");
   }
   if (!fs.existsSync(csvPath)) {
     // Check if there is any other CSV file in the root directory
@@ -58,69 +58,75 @@ const onboardUsers = async () => {
     const headers = lines[0].split(',').map(h => h.trim());
     console.log('CSV Headers:', headers);
 
-    let onboardedCount = 0;
+      let createdCount = 0;
+      let updatedCount = 0;
 
-    for (let i = 1; i < lines.length; i++) {
-      const row = lines[i].split(',').map(val => val.trim());
-      if (row.length < headers.length) continue;
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',').map(val => val.trim());
+        if (row.length < headers.length) continue;
 
-      const record = {};
-      headers.forEach((header, idx) => {
-        record[header] = row[idx];
-      });
+        const record = {};
+        headers.forEach((header, idx) => {
+          record[header] = row[idx];
+        });
 
-      const email = record['Email']?.toLowerCase();
-      const name = record['Full Name'];
-      const regNo = record['Registration Number'];
-      const tempPassword = record['Password'];
+        const email = record['Email']?.toLowerCase();
+        const name = record['Full Name'];
+        const regNo = record['Registration Number'];
+        const tempPassword = record['Password'];
 
-      if (!email || !name || !regNo || !tempPassword) {
-        console.warn(`Row ${i} is missing required fields, skipping.`);
-        continue;
+        if (!email || !name || !regNo || !tempPassword) {
+          console.warn(`Row ${i} is missing required fields, skipping.`);
+          continue;
+        }
+
+        // Map domains to valid database constants
+        const domains = [];
+        if (record['DSA'] === 'Yes') domains.push('DSA');
+        if (record['DAV'] === 'Yes') domains.push('DAV');
+        if (record['WebDev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
+        if (record['AIML'] === 'Yes') domains.push('ML/DL');
+        if (record['GEN AI'] === 'Yes') domains.push('Gen & Agentic AI');
+
+        if (domains.length === 0) {
+          console.warn(`User ${name} has no selected domains, skipping.`);
+          continue;
+        }
+
+        // Check if user already exists in database
+        const existingUser = await User.findOne({ id: regNo });
+        if (existingUser) {
+          console.log(`User ${regNo} (${name}) already exists. Updating enrolled domains and profile details...`);
+          existingUser.domains = domains;
+          existingUser.name = name;
+          existingUser.email = email;
+          await existingUser.save();
+          updatedCount++;
+          continue;
+        }
+
+        // Hash password using bcrypt
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(tempPassword, salt);
+
+        console.log(`Creating new user: ${regNo} (${name})...`);
+        await User.create({
+          id: regNo,
+          name,
+          email,
+          passwordHash,
+          domains,
+          isVerified: true,
+          isFirstLogin: true,
+          role: 'user',
+          adminDomains: [],
+          createdAt: new Date().toISOString()
+        });
+        createdCount++;
       }
 
-      // Map domains to valid database constants
-      const domains = [];
-      if (record['DSA'] === 'Yes') domains.push('DSA');
-      if (record['DAV'] === 'Yes') domains.push('DAV');
-      if (record['WebDev'] === 'Yes') domains.push('WebDev'); // Mapped to WebDev
-      if (record['AIML'] === 'Yes') domains.push('ML/DL');
-      if (record['GEN AI'] === 'Yes') domains.push('Gen & Agentic AI');
-
-      if (domains.length === 0) {
-        console.warn(`User ${name} has no selected domains, skipping.`);
-        continue;
-      }
-
-      // Check if user already exists in database
-      const userExists = await User.findOne({ id: regNo });
-      if (userExists) {
-        console.log(`User ${regNo} (${name}) already exists. Skipping.`);
-        continue;
-      }
-
-      // Hash password using bcrypt
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(tempPassword, salt);
-
-      console.log(`Creating new user: ${regNo} (${name})...`);
-      await User.create({
-        id: regNo,
-        name,
-        email,
-        passwordHash,
-        domains,
-        isVerified: true,
-        isFirstLogin: true,
-        role: 'user',
-        adminDomains: [],
-        createdAt: new Date().toISOString()
-      });
-      onboardedCount++;
-    }
-
-    console.log(`Successfully onboarded ${onboardedCount} users.`);
-  } catch (err) {
+      console.log(`Successfully completed onboarding task: Created ${createdCount} new users, Updated ${updatedCount} existing users.`);
+    } catch (err) {
     console.error('Error during onboarding:', err);
   } finally {
     await mongoose.disconnect();
