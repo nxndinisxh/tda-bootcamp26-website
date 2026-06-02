@@ -89,7 +89,18 @@ export default function DomainPage() {
   const [activeTab, setActiveTab] = useState('resources');
   const [expandedWeeks, setExpandedWeeks] = useState({ 'Week 1': true });
 
+  const isSuperAdmin = user && user.role === 'super_admin';
+  const isAdmin = user && (user.role === 'super_admin' || (user.role === 'admin' && user.adminDomains.includes(decodedDomain)));
+
+  const canExpandWeek = (weekLocked) => {
+    if (!weekLocked) return true;          // unlocked — anyone can expand
+    if (isSuperAdmin) return true;         // locked but super_admin can still peek
+    return false;                          // locked & normal user — no access
+  };
+
   const toggleWeek = (weekName) => {
+    const weekLocked = isWeekLocked(weekName);
+    if (!canExpandWeek(weekLocked)) return;
     setExpandedWeeks(prev => ({
       ...prev,
       [weekName]: !prev[weekName]
@@ -105,39 +116,34 @@ export default function DomainPage() {
   const [error, setError] = useState('');
 
   // Leaderboard filter states
-  const [leaderboardView, setLeaderboardView] = useState('overall'); // 'overall' or 'weekly'
+  const [leaderboardView, setLeaderboardView] = useState('overall');
   const [leaderboardWeek, setLeaderboardWeek] = useState('');
   const [availableWeeks, setAvailableWeeks] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   // Leaderboard Upload Modal states
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [uploadModalType, setUploadModalType] = useState('weekly'); // 'weekly' or 'overall'
+  const [uploadModalType, setUploadModalType] = useState('weekly');
   const [uploadModalWeek, setUploadModalWeek] = useState('1');
   const [uploadModalFile, setUploadModalFile] = useState(null);
   const [uploadModalError, setUploadModalError] = useState('');
   const [uploadModalSuccess, setUploadModalSuccess] = useState('');
   const [uploadModalSkipped, setUploadModalSkipped] = useState([]);
   const [uploadModalLoading, setUploadModalLoading] = useState(false);
-
-  // Admin controls
-  const isAdmin = user && (user.role === 'super_admin' || (user.role === 'admin' && user.adminDomains.includes(decodedDomain)));
   
   // Resource Form modal state
   const [showResModal, setShowResModal] = useState(false);
-  const [resForm, setResForm] = useState({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
+  const [resForm, setResForm] = useState({ id: null, title: '', description: '', links: [{ label: '', url: '' }], week: 'Week 1', order: 0 });
   
   // Announcement Form state
   const [showAnnModal, setShowAnnModal] = useState(false);
   const [annForm, setAnnForm] = useState({ title: '', content: '' });
 
   useEffect(() => {
-    // Validate domain access
     if (user && user.role === 'user' && !user.domains.includes(decodedDomain)) {
       navigate('/', { replace: true });
       return;
     }
-
     fetchDomainData();
   }, [decodedDomain, user]);
 
@@ -166,7 +172,6 @@ export default function DomainPage() {
       setAnnouncements(announcementsData);
       setAvailableWeeks(weeksData);
 
-      // Default week selection if available
       if (weeksData.length > 0) {
         setLeaderboardWeek(String(weeksData[0]));
       }
@@ -177,7 +182,6 @@ export default function DomainPage() {
     }
   };
 
-  // Fetch leaderboard standings separately
   useEffect(() => {
     const fetchLeaderboardData = async () => {
       if (!user) return;
@@ -205,7 +209,6 @@ export default function DomainPage() {
     fetchLeaderboardData();
   }, [decodedDomain, leaderboardView, leaderboardWeek, token, user]);
 
-  // Resources Operations
   const handleResourceSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -226,8 +229,7 @@ export default function DomainPage() {
         body: JSON.stringify({
           title: resForm.title,
           description: resForm.description,
-          link: resForm.links[0]?.url || '',
-          links: resForm.links.filter(l => l.title.trim() !== '' && l.url.trim() !== ''),
+          links: resForm.links,
           week: resForm.week,
           order: Number(resForm.order) || 0
         })
@@ -236,7 +238,7 @@ export default function DomainPage() {
       if (!res.ok) throw new Error('Failed to save resource.');
       
       setShowResModal(false);
-      setResForm({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
+      setResForm({ id: null, title: '', description: '', links: [{ label: '', url: '' }], week: 'Week 1', order: 0 });
       await fetchDomainData();
     } catch (err) {
       alert(err.message);
@@ -259,7 +261,7 @@ export default function DomainPage() {
 
   const isWeekLocked = (weekName) => {
     const lockObj = weekLocks.find(l => l.week === weekName);
-    return lockObj ? lockObj.isLocked : true; // Default to locked
+    return lockObj ? lockObj.isLocked : true;
   };
 
   const handleWeekLockToggle = async (weekName, currentLockStatus) => {
@@ -296,7 +298,6 @@ export default function DomainPage() {
     }
   };
 
-  // Announcements Operations
   const handleAnnouncementSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -346,9 +347,7 @@ export default function DomainPage() {
 
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
@@ -362,7 +361,6 @@ export default function DomainPage() {
 
       setUploadModalFile(null);
       
-      // Refresh weeks and standings list
       const resWeeks = await fetch(`/api/leaderboards/${encodeURIComponent(decodedDomain)}/weeks`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -418,24 +416,15 @@ export default function DomainPage() {
     );
   }
 
-  // Group resources by Week
   const resourcesByWeek = {
-    'Week 1': [],
-    'Week 2': [],
-    'Week 3': [],
-    'Week 4': [],
-    'Week 5': [],
-    'Week 6': [],
-    'Week 7': []
+    'Week 1': [], 'Week 2': [], 'Week 3': [], 'Week 4': [],
+    'Week 5': [], 'Week 6': [], 'Week 7': []
   };
   resources.forEach(r => {
-    if (!resourcesByWeek[r.week]) {
-      resourcesByWeek[r.week] = [];
-    }
+    if (!resourcesByWeek[r.week]) resourcesByWeek[r.week] = [];
     resourcesByWeek[r.week].push(r);
   });
 
-  // Calculate leaderboard states for the side panel
   const top10 = leaderboard.slice(0, 10);
   const userRankIndex = leaderboard.findIndex(entry => entry.userId === user?.id);
   const isUserInTop10 = userRankIndex !== -1 && userRankIndex < 10;
@@ -444,13 +433,12 @@ export default function DomainPage() {
 
   return (
     <div className="space-y-6 py-4">
-      {/* Clean minimal title header replacing hero */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-beach-teal/15 gap-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-beach-teal">Domain Hub</span>
           <h1 className="text-3xl font-black tracking-tight text-beach-teal-dark mt-1">{decodedDomain}</h1>
         </div>
-
         {isAdmin && (
           <span className="bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-wider shrink-0 self-start sm:self-auto">
             Domain Head Control Active
@@ -465,13 +453,12 @@ export default function DomainPage() {
         </div>
       )}
 
-      {/* Main layout with two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column: Resources and Announcements tabs */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           
-          {/* Tabs Menu */}
+          {/* Tabs */}
           <div className="flex border-b border-beach-teal/15 gap-8 overflow-x-auto pb-px">
             {[
               { id: 'resources', label: 'Resources', count: resources.length },
@@ -504,14 +491,12 @@ export default function DomainPage() {
             {/* Resources Tab */}
             {activeTab === 'resources' && (
               <div className="space-y-6">
-                
-                {/* Collapsible Week Curriculum */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-beach-teal-dark">Curriculum Resources</h3>
                   {isAdmin && (
                     <button
                       onClick={() => {
-                        setResForm({ id: null, title: '', description: '', week: 'Week 1', order: resources.length + 1, links: [{ title: '', url: '' }] });
+                        setResForm({ id: null, title: '', description: '', links: [{ label: '', url: '' }], week: 'Week 1', order: resources.length + 1 });
                         setShowResModal(true);
                       }}
                       className="flex items-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-md shadow-[#7c3aed]/10 cursor-pointer"
@@ -523,80 +508,80 @@ export default function DomainPage() {
                 </div>
 
                 <div className="space-y-4">
-                    {Object.keys(resourcesByWeek).sort().map(weekName => {
-                      const weekLocked = isWeekLocked(weekName);
-                      const weekResources = resourcesByWeek[weekName] || [];
-                      const totalCount = weekResources.length;
-                      const completedCount = weekResources.filter(r => r.completed).length;
-                      const isExpanded = !!expandedWeeks[weekName];
-                      const weekTitle = WEEK_TITLES[decodedDomain]?.[weekName] || '';
+                  {Object.keys(resourcesByWeek).sort().map(weekName => {
+                    const weekLocked = isWeekLocked(weekName);
+                    const weekResources = resourcesByWeek[weekName] || [];
+                    const totalCount = weekResources.length;
+                    const completedCount = weekResources.filter(r => r.completed).length;
+                    const isExpanded = !!expandedWeeks[weekName];
+                    const weekTitle = WEEK_TITLES[decodedDomain]?.[weekName] || '';
+                    const expandable = canExpandWeek(weekLocked);
 
-                      return (
-                        <div key={weekName} className="glass rounded-2xl border border-white/60 overflow-hidden shadow-xs">
-                          
-                          {/* Collapsible Header */}
-                          <div 
-                            onClick={() => {
-                              if (weekLocked && !isAdmin) return;
-                              toggleWeek(weekName);
-                            }}
-                            className={`flex items-center justify-between p-4 transition select-none bg-white/20 border-b border-beach-teal/5 ${
-                              weekLocked && !isAdmin
-                                ? 'cursor-not-allowed opacity-80'
-                                : 'cursor-pointer hover:bg-white/40'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-beach-teal/10 flex items-center justify-center text-beach-teal shrink-0">
-                                <Clock size={16} />
-                              </div>
-                              <div className="min-w-0">
-                                <h4 className="font-black text-beach-teal-dark text-sm flex flex-wrap items-center gap-x-2 leading-tight">
-                                  <span>{weekName}</span>
-                                  {weekTitle && <span className="text-beach-teal/50 font-medium">| {weekTitle}</span>}
-                                </h4>
-                                <p className="text-[10px] text-beach-teal/50 font-bold uppercase tracking-wider mt-0.5">
-                                  {completedCount}/{totalCount} Completed
-                                </p>
-                              </div>
+                    return (
+                      <div key={weekName} className="glass rounded-2xl border border-white/60 overflow-hidden shadow-xs">
+                        
+                        {/* Collapsible Header */}
+                        <div 
+                          onClick={() => toggleWeek(weekName)}
+                          className={`flex items-center justify-between p-4 transition select-none bg-white/20 border-b border-beach-teal/5 ${
+                            expandable ? 'cursor-pointer hover:bg-white/40' : 'cursor-not-allowed opacity-70'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-beach-teal/10 flex items-center justify-center text-beach-teal shrink-0">
+                              <Clock size={16} />
                             </div>
-
-                            <div className="flex items-center gap-3 shrink-0">
-                              {weekLocked ? (
-                                <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                  <Lock size={10} />
-                                  <span>Locked</span>
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1 bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                  <Unlock size={10} />
-                                  <span>Active</span>
-                                </span>
-                              )}
-
-                              {isAdmin && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleWeekLockToggle(weekName, weekLocked);
-                                  }}
-                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold transition border shadow-xs cursor-pointer ${
-                                    weekLocked
-                                      ? 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white border-transparent shadow-xs'
-                                      : 'bg-transparent border border-[#7c3aed] hover:bg-[#7c3aed]/5 text-[#7c3aed] dark:text-[#a78bfa] dark:border-[#a78bfa]'
-                                  }`}
-                                >
-                                  {weekLocked ? 'Unlock' : 'Lock'}
-                                </button>
-                              )}
-
-                              <span className="text-beach-teal/40 font-bold text-xs">
-                                {isExpanded ? '▼' : '▶'}
-                              </span>
+                            <div className="min-w-0">
+                              <h4 className="font-black text-beach-teal-dark text-sm flex flex-wrap items-center gap-x-2 leading-tight">
+                                <span>{weekName}</span>
+                                {weekTitle && <span className="text-beach-teal/50 font-medium">| {weekTitle}</span>}
+                              </h4>
+                              <p className="text-[10px] text-beach-teal/50 font-bold uppercase tracking-wider mt-0.5">
+                                {completedCount}/{totalCount} Completed
+                              </p>
                             </div>
                           </div>
 
-                          {/* Collapsible Resources List */}
+                          <div className="flex items-center gap-3 shrink-0">
+                            {weekLocked ? (
+                              <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral border border-beach-coral/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                <Lock size={10} />
+                                <span>Locked</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 bg-beach-teal-light/10 text-beach-teal-light border border-beach-teal-light/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                <Unlock size={10} />
+                                <span>Active</span>
+                              </span>
+                            )}
+
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleWeekLockToggle(weekName, weekLocked);
+                                }}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-bold transition border shadow-xs cursor-pointer ${
+                                  weekLocked
+                                    ? 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white border-transparent shadow-xs'
+                                    : 'bg-transparent border border-[#7c3aed] hover:bg-[#7c3aed]/5 text-[#7c3aed] dark:text-[#a78bfa] dark:border-[#a78bfa]'
+                                }`}
+                              >
+                                {weekLocked ? 'Unlock' : 'Lock'}
+                              </button>
+                            )}
+
+                            {/* Arrow — hidden for locked weeks that the user can't expand */}
+                            {expandable && (
+                              <span className="text-beach-teal/40 font-bold text-xs">
+                                {isExpanded ? '▼' : '▶'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Resources List — only renders if expandable */}
+                        {expandable && (
                           <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                             <div className="overflow-hidden">
                               <div className="p-4 bg-white/10">
@@ -609,9 +594,7 @@ export default function DomainPage() {
                                         <div className="flex items-start justify-between gap-4">
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              <span className="font-bold text-beach-teal-dark text-sm">
-                                                {res.title}
-                                              </span>
+                                              <span className="font-bold text-beach-teal-dark text-sm">{res.title}</span>
                                               {res.isLocked ? (
                                                 <span className="flex items-center gap-1 bg-beach-coral/10 text-beach-coral px-1.5 py-0.5 rounded text-[9px] font-bold">
                                                   <Lock size={8} />
@@ -625,21 +608,22 @@ export default function DomainPage() {
                                                 )
                                               )}
                                             </div>
-                                            <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed">
-                                              {res.description}
-                                            </p>
+                                            <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed">{res.description}</p>
                                             {!res.isLocked && (
-                                              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
-                                                {(res.links && res.links.length > 0 ? res.links : [{ title: 'Access Resource', url: res.link }]).map((lnk, idx) => (
+                                              <div className="flex flex-wrap gap-2 mt-2">
+                                                {(Array.isArray(res.links) && res.links.length > 0
+                                                  ? res.links
+                                                  : res.link ? [{ label: 'Access Resource', url: res.link }] : []
+                                                ).map((lnk, li) => (
                                                   <a
-                                                    key={idx}
+                                                    key={li}
                                                     href={lnk.url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold transition"
+                                                    className="inline-flex items-center gap-1.5 text-xs text-beach-coral hover:text-beach-gold font-bold transition border border-beach-coral/20 hover:border-beach-gold/30 bg-beach-coral/5 hover:bg-beach-gold/5 px-2.5 py-1 rounded-lg"
                                                   >
-                                                    <span>{lnk.title}</span>
-                                                    <ExternalLink size={12} />
+                                                    <span>{lnk.label || `Link ${li + 1}`}</span>
+                                                    <ExternalLink size={11} />
                                                   </a>
                                                 ))}
                                               </div>
@@ -647,51 +631,46 @@ export default function DomainPage() {
                                           </div>
 
                                           <div className="flex items-center gap-2 shrink-0">
-                                            {res.isLocked ? (
+                                            {!res.isLocked ? (
+                                              <button
+                                                onClick={() => handleProgressToggle(res.id, res.completed)}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
+                                                  res.completed
+                                                    ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
+                                                    : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
+                                                }`}
+                                              >
+                                                <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                                                  res.completed
+                                                    ? 'bg-beach-teal-light border-beach-teal-light text-white'
+                                                    : 'border-beach-teal/20 bg-white'
+                                                }`}>
+                                                  {res.completed && (
+                                                    <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
+                                                      <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                                                    </svg>
+                                                  )}
+                                                </span>
+                                                <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
+                                              </button>
+                                            ) : (
                                               <span className="flex items-center gap-1 text-beach-teal/40 font-bold text-[10px] bg-beach-sand-dark/10 border border-beach-sand-dark/5 px-2 py-1 rounded-xl">
                                                 <Lock size={10} />
                                                 <span>Locked</span>
                                               </span>
-                                            ) : (
-                                              !isAdmin && (
-                                                <button
-                                                  onClick={() => handleProgressToggle(res.id, res.completed)}
-                                                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xxs font-bold transition border cursor-pointer ${
-                                                    res.completed
-                                                      ? 'bg-beach-teal-light/10 text-beach-teal-light border-beach-teal-light/25 hover:bg-beach-teal-light/20'
-                                                      : 'bg-white text-beach-teal border-beach-teal/15 hover:bg-beach-teal/5'
-                                                  }`}
-                                                >
-                                                  <span className={`w-3 h-3 rounded-full flex items-center justify-center border transition-all duration-300 ${
-                                                    res.completed
-                                                      ? 'bg-beach-teal-light border-beach-teal-light text-white'
-                                                      : 'border-beach-teal/20 bg-white'
-                                                  }`}>
-                                                    {res.completed && (
-                                                      <svg className="w-1.5 h-1.5 fill-current" viewBox="0 0 20 20">
-                                                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-                                                      </svg>
-                                                    )}
-                                                  </span>
-                                                  <span>{res.completed ? 'Completed' : 'Mark Done'}</span>
-                                                </button>
-                                              )
                                             )}
 
                                             {isAdmin && (
                                               <div className="flex items-center gap-1 border-l border-beach-teal/15 pl-2">
                                                 <button
                                                   onClick={() => {
-                                                    const initialLinks = res.links && res.links.length > 0
-                                                      ? res.links
-                                                      : [{ title: 'Access Resource', url: res.link || '' }];
                                                     setResForm({
-                                                      id: res.id,
-                                                      title: res.title,
-                                                      description: res.description,
-                                                      week: res.week,
-                                                      order: res.order,
-                                                      links: initialLinks
+                                                      ...res,
+                                                      links: Array.isArray(res.links) && res.links.length > 0
+                                                        ? res.links
+                                                        : res.link
+                                                          ? [{ label: 'Resource', url: res.link }]
+                                                          : [{ label: '', url: '' }]
                                                     });
                                                     setShowResModal(true);
                                                   }}
@@ -716,12 +695,12 @@ export default function DomainPage() {
                               </div>
                             </div>
                           </div>
+                        )}
 
-                        </div>
-                      );
-                    })}
-                  </div>
-
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -753,7 +732,6 @@ export default function DomainPage() {
                     {announcements.map((ann) => (
                       <div key={ann.id} className="glass p-6 rounded-2xl border border-white/60 relative overflow-hidden shadow-sm text-beach-teal-dark">
                         <BeachDecoration icon={Sun} className="top-3 right-3" />
-                        
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <span className="p-2 rounded-lg bg-beach-coral/10 text-beach-coral">
@@ -766,7 +744,6 @@ export default function DomainPage() {
                               </p>
                             </div>
                           </div>
-
                           {isAdmin && (
                             <button
                               onClick={() => handleAnnouncementDelete(ann.id)}
@@ -785,10 +762,9 @@ export default function DomainPage() {
             )}
 
           </div>
-
         </div>
 
-        {/* Right Column: Leaderboard Panel (Always Visible) */}
+        {/* Right Column: Leaderboard */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-5 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-beach-teal/10 pb-3 gap-2">
@@ -796,7 +772,6 @@ export default function DomainPage() {
                 <h3 className="text-sm font-black text-beach-teal-dark">Domain Rankings</h3>
                 <p className="text-[9px] text-beach-teal/65 font-bold uppercase tracking-wider mt-0.5">Leaderboard</p>
               </div>
-              
               <select
                 value={leaderboardView === 'overall' ? 'overall' : `weekly:${leaderboardWeek}`}
                 onChange={(e) => {
@@ -893,9 +868,7 @@ export default function DomainPage() {
                       {showUserRowAtBottom && (
                         <>
                           <tr className="bg-beach-teal-light/5 border-b border-beach-teal/10">
-                            <td colSpan={3} className="py-1 px-3 text-center text-beach-teal/45 font-bold italic select-none">
-                              •••
-                            </td>
+                            <td colSpan={3} className="py-1 px-3 text-center text-beach-teal/45 font-bold italic select-none">•••</td>
                           </tr>
                           <tr key={userLeaderboardEntry._id || 'user-row'} className="bg-beach-teal/10 transition border-l-2 border-beach-teal font-bold text-beach-teal-dark">
                             <td className="py-2.5 px-3 text-center">
@@ -918,291 +891,151 @@ export default function DomainPage() {
                 </div>
               </div>
             )}
-
           </div>
         </div>
 
       </div>
 
-
-      {/* --- RESOURCE MODAL --- */}
+      {/* Resource Modal */}
       {showResModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-beach-teal-dark/30 backdrop-blur-sm">
           <div className="glass max-w-lg w-full p-8 rounded-3xl border border-white/70 space-y-6 relative shadow-xl text-beach-teal-dark">
             <BeachDecoration icon={Sun} className="top-4 right-4" />
             <h4 className="text-base font-bold text-beach-teal-dark">{resForm.id ? 'Edit Resource' : 'Add New Resource'}</h4>
-            
             <form onSubmit={handleResourceSubmit} className="space-y-4 text-left">
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Week Section</label>
-                <select
-                  value={resForm.week}
-                  onChange={(e) => setResForm({ ...resForm, week: e.target.value })}
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark focus:outline-none text-xs cursor-pointer font-semibold bg-white/70"
-                >
-                  <option className="bg-[#f7f5f0]" value="Week 1">Week 1</option>
-                  <option className="bg-[#f7f5f0]" value="Week 2">Week 2</option>
-                  <option className="bg-[#f7f5f0]" value="Week 3">Week 3</option>
-                  <option className="bg-[#f7f5f0]" value="Week 4">Week 4</option>
-                  <option className="bg-[#f7f5f0]" value="Week 5">Week 5</option>
-                  <option className="bg-[#f7f5f0]" value="Week 6">Week 6</option>
-                  <option className="bg-[#f7f5f0]" value="Week 7">Week 7</option>
+                <select value={resForm.week} onChange={(e) => setResForm({ ...resForm, week: e.target.value })} className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark focus:outline-none text-xs cursor-pointer font-semibold bg-white/70">
+                  {['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7'].map(w => <option className="bg-[#f7f5f0]" key={w} value={w}>{w}</option>)}
                 </select>
               </div>
-
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Resource Title</label>
-                <input
-                  type="text"
-                  required
-                  value={resForm.title}
-                  onChange={(e) => setResForm({ ...resForm, title: e.target.value })}
-                  placeholder="e.g. Master React Hooks"
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                />
+                <input type="text" required value={resForm.title} onChange={(e) => setResForm({ ...resForm, title: e.target.value })} placeholder="e.g. Master React Hooks" className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold" />
               </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Resource Links</label>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Reference Links</label>
+                  <button
+                    type="button"
+                    onClick={() => setResForm({ ...resForm, links: [...resForm.links, { label: '', url: '' }] })}
+                    className="flex items-center gap-1 text-[10px] font-bold text-[#7c3aed] hover:text-[#6d28d9] transition cursor-pointer"
+                  >
+                    <Plus size={11} />
+                    <span>Add Link</span>
+                  </button>
                 </div>
-                {(resForm.links || []).map((lnk, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <input
-                      type="text"
-                      required
-                      value={lnk.title}
-                      onChange={(e) => {
-                        const newLinks = [...resForm.links];
-                        newLinks[idx] = { ...newLinks[idx], title: e.target.value };
-                        setResForm({ ...resForm, links: newLinks });
-                      }}
-                      placeholder="Label (e.g. Slides)"
-                      className="block w-1/3 px-3 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                    />
-                    <input
-                      type="url"
-                      required
-                      value={lnk.url}
-                      onChange={(e) => {
-                        const newLinks = [...resForm.links];
-                        newLinks[idx] = { ...newLinks[idx], url: e.target.value };
-                        setResForm({ ...resForm, links: newLinks });
-                      }}
-                      placeholder="https://..."
-                      className="block flex-1 px-3 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                    />
-                    {resForm.links.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newLinks = resForm.links.filter((_, i) => i !== idx);
-                          setResForm({ ...resForm, links: newLinks });
+                <div className="space-y-2">
+                  {resForm.links.map((lnk, li) => (
+                    <div key={li} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={lnk.label}
+                        onChange={(e) => {
+                          const updated = resForm.links.map((l, i) => i === li ? { ...l, label: e.target.value } : l);
+                          setResForm({ ...resForm, links: updated });
                         }}
-                        className="text-beach-coral hover:text-beach-coral/85 p-1 rounded transition cursor-pointer"
-                        title="Remove link"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setResForm({ ...resForm, links: [...(resForm.links || []), { title: '', url: '' }] });
-                  }}
-                  className="mt-1 flex items-center gap-1 text-[11px] font-bold text-[#7c3aed] hover:text-[#6d28d9] transition cursor-pointer"
-                >
-                  <Plus size={12} />
-                  <span>Add another link</span>
-                </button>
+                        placeholder="Label (e.g. Video)"
+                        className="w-28 shrink-0 px-2.5 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
+                      />
+                      <input
+                        type="url"
+                        required
+                        value={lnk.url}
+                        onChange={(e) => {
+                          const updated = resForm.links.map((l, i) => i === li ? { ...l, url: e.target.value } : l);
+                          setResForm({ ...resForm, links: updated });
+                        }}
+                        placeholder="https://..."
+                        className="flex-1 px-2.5 py-2 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
+                      />
+                      {resForm.links.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setResForm({ ...resForm, links: resForm.links.filter((_, i) => i !== li) })}
+                          className="text-beach-coral hover:text-beach-coral/70 p-1 rounded transition cursor-pointer shrink-0"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Description</label>
-                <textarea
-                  value={resForm.description}
-                  onChange={(e) => setResForm({ ...resForm, description: e.target.value })}
-                  placeholder="Brief summary..."
-                  rows={3}
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold resize-none"
-                />
+                <textarea value={resForm.description} onChange={(e) => setResForm({ ...resForm, description: e.target.value })} placeholder="Brief summary..." rows={3} className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold resize-none" />
               </div>
-
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Resource Sequence Order (Number)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={resForm.order || 0}
-                  onChange={(e) => setResForm({ ...resForm, order: Number(e.target.value) })}
-                  placeholder="e.g. 1 (smaller orders appear first)"
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                />
+                <input type="number" min="0" value={resForm.order || 0} onChange={(e) => setResForm({ ...resForm, order: Number(e.target.value) })} placeholder="e.g. 1 (smaller orders appear first)" className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold" />
               </div>
-
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowResModal(false);
-                    setResForm({ id: null, title: '', description: '', week: 'Week 1', order: 0, links: [{ title: '', url: '' }] });
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
-                >
-                  Save
-                </button>
+                <button type="button" onClick={() => { setShowResModal(false); setResForm({ id: null, title: '', description: '', links: [{ label: '', url: '' }], week: 'Week 1', order: 0 }); }} className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer">Cancel</button>
+                <button type="submit" className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer">Save</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- ANNOUNCEMENT MODAL --- */}
+      {/* Announcement Modal */}
       {showAnnModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-beach-teal-dark/30 backdrop-blur-sm">
           <div className="glass max-w-lg w-full p-8 rounded-3xl border border-white/70 space-y-6 relative shadow-xl text-beach-teal-dark">
             <BeachDecoration icon={Sun} className="top-4 right-4" />
             <h4 className="text-base font-bold text-beach-teal-dark">Broadcast New Announcement</h4>
-            
             <form onSubmit={handleAnnouncementSubmit} className="space-y-4 text-left">
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={annForm.title}
-                  onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })}
-                  placeholder="e.g. Workshop Session Postponed"
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold"
-                />
+                <input type="text" required value={annForm.title} onChange={(e) => setAnnForm({ ...annForm, title: e.target.value })} placeholder="e.g. Workshop Session Postponed" className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold" />
               </div>
-
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Announcement Content</label>
-                <textarea
-                  required
-                  value={annForm.content}
-                  onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })}
-                  placeholder="Write the announcement details here..."
-                  rows={5}
-                  className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold resize-none"
-                />
+                <textarea required value={annForm.content} onChange={(e) => setAnnForm({ ...annForm, content: e.target.value })} placeholder="Write the announcement details here..." rows={5} className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark placeholder-beach-teal/30 text-xs font-semibold resize-none" />
               </div>
-
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAnnModal(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
-                >
-                  Post
-                </button>
+                <button type="button" onClick={() => setShowAnnModal(false)} className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer">Cancel</button>
+                <button type="submit" className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer">Post</button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* --- LEADERBOARD UPLOAD MODAL --- */}
+
+      {/* Leaderboard Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-beach-teal-dark/30 backdrop-blur-sm">
           <div className="glass max-w-lg w-full p-8 rounded-3xl border border-white/70 space-y-6 relative shadow-xl text-beach-teal-dark">
             <BeachDecoration icon={Sun} className="top-4 right-4" />
-            <h4 className="text-base font-bold text-beach-teal-dark">
-              Upload {uploadModalType === 'weekly' ? 'Weekly' : 'Overall'} Standings CSV
-            </h4>
-            
+            <h4 className="text-base font-bold text-beach-teal-dark">Upload {uploadModalType === 'weekly' ? 'Weekly' : 'Overall'} Standings CSV</h4>
             <form onSubmit={handleLeaderboardUpload} className="space-y-4 text-left">
               {uploadModalType === 'weekly' && (
                 <div>
                   <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Week Number</label>
-                  <select
-                    value={uploadModalWeek}
-                    onChange={(e) => setUploadModalWeek(e.target.value)}
-                    className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(w => (
-                      <option className="bg-[#f7f5f0]" key={w} value={w}>Week {w}</option>
-                    ))}
+                  <select value={uploadModalWeek} onChange={(e) => setUploadModalWeek(e.target.value)} className="block w-full px-3 py-2.5 brand-input text-beach-teal-dark text-xs cursor-pointer font-semibold bg-white/70">
+                    {[1,2,3,4,5,6,7,8].map(w => <option className="bg-[#f7f5f0]" key={w} value={w}>Week {w}</option>)}
                   </select>
                 </div>
               )}
-
               <div>
                 <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-2">Select CSV File</label>
-                <input
-                  type="file"
-                  accept=".csv"
-                  required
-                  onChange={(e) => setUploadModalFile(e.target.files[0])}
-                  className="block w-full text-xs text-beach-teal-dark font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-bold file:bg-beach-teal/10 file:text-beach-teal file:cursor-pointer hover:file:bg-beach-teal/20"
-                />
+                <input type="file" accept=".csv" required onChange={(e) => setUploadModalFile(e.target.files[0])} className="block w-full text-xs text-beach-teal-dark font-semibold file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xxs file:font-bold file:bg-beach-teal/10 file:text-beach-teal file:cursor-pointer hover:file:bg-beach-teal/20" />
                 <p className="text-[10px] text-beach-teal/60 font-semibold mt-1">
-                  {uploadModalType === 'weekly' 
-                    ? 'Expected headers: Rank, Reg no, Name, Points'
-                    : 'Expected headers: Rank, Reg no, Name, Points Week 1, Points Week 2, ..., Total'
-                  }
+                  {uploadModalType === 'weekly' ? 'Expected headers: Rank, Reg no, Name, Points' : 'Expected headers: Rank, Reg no, Name, Points Week 1, Points Week 2, ..., Total'}
                 </p>
               </div>
-
-              {uploadModalError && (
-                <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-3 rounded-xl text-xxs font-semibold">
-                  {uploadModalError}
-                </div>
-              )}
-
-              {uploadModalSuccess && (
-                <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-3 rounded-xl text-xxs font-semibold">
-                  {uploadModalSuccess}
-                </div>
-              )}
-
+              {uploadModalError && <div className="bg-beach-coral/10 border border-beach-coral/20 text-beach-coral p-3 rounded-xl text-xxs font-semibold">{uploadModalError}</div>}
+              {uploadModalSuccess && <div className="bg-emerald-600/10 border border-emerald-600/20 text-emerald-600 p-3 rounded-xl text-xxs font-semibold">{uploadModalSuccess}</div>}
               {uploadModalSkipped.length > 0 && (
                 <div className="bg-beach-coral/10 border border-beach-coral/20 p-4 rounded-xl space-y-2 text-beach-coral text-xxs font-semibold max-h-32 overflow-y-auto">
                   <p className="font-bold uppercase tracking-wider">Skipped Rows / Errors ({uploadModalSkipped.length}):</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {uploadModalSkipped.map((err, idx) => (
-                      <li key={idx}>{err}</li>
-                    ))}
-                  </ul>
+                  <ul className="list-disc pl-4 space-y-1">{uploadModalSkipped.map((err, idx) => <li key={idx}>{err}</li>)}</ul>
                 </div>
               )}
-
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowUploadModal(false);
-                    setUploadModalFile(null);
-                    setUploadModalError('');
-                    setUploadModalSuccess('');
-                    setUploadModalSkipped([]);
-                  }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer"
-                  disabled={uploadModalLoading}
-                >
-                  Close
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer"
-                  disabled={uploadModalLoading}
-                >
-                  {uploadModalLoading ? 'Uploading...' : 'Upload'}
-                </button>
+                <button type="button" onClick={() => { setShowUploadModal(false); setUploadModalFile(null); setUploadModalError(''); setUploadModalSuccess(''); setUploadModalSkipped([]); }} className="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/40 hover:bg-white/60 text-beach-teal border border-beach-teal/10 cursor-pointer" disabled={uploadModalLoading}>Close</button>
+                <button type="submit" className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#7c3aed] hover:bg-[#6d28d9] text-white cursor-pointer" disabled={uploadModalLoading}>{uploadModalLoading ? 'Uploading...' : 'Upload'}</button>
               </div>
             </form>
           </div>

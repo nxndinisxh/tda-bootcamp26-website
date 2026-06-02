@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Landing from './pages/Landing';
@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import DomainPage from './pages/DomainPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Verify from './pages/Verify';
-import { LogOut, LayoutDashboard, Sun, Moon, Bell } from 'lucide-react';
+import { LogOut, LayoutDashboard, Sun, Moon } from 'lucide-react';
 
 // Protected Route Guard for general logged-in users
 const ProtectedRoute = ({ children }) => {
@@ -30,55 +30,6 @@ const AdminRoute = ({ children }) => {
 // Navigation Header Component
 const Navbar = ({ darkMode, toggleTheme }) => {
   const { user, logout } = useAuth();
-  const [announcements, setAnnouncements] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (!user) return;
-    const fetchAnnouncements = async () => {
-      try {
-        const token = localStorage.getItem('tda_token');
-        const res = await fetch('/api/dashboard/announcements', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setAnnouncements(data || []);
-          if (data && data.length > 0) {
-            const seenCount = Number(localStorage.getItem('tda_seen_announcements_count') || 0);
-            if (data.length > seenCount) {
-              setHasUnread(true);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching announcements:', err);
-      }
-    };
-    fetchAnnouncements();
-    const interval = setInterval(fetchAnnouncements, 120000);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleBellClick = () => {
-    setIsOpen(!isOpen);
-    if (!isOpen) {
-      setHasUnread(false);
-      localStorage.setItem('tda_seen_announcements_count', announcements.length.toString());
-    }
-  };
 
   return (
     <nav className="glass fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between border-b border-white/40">
@@ -87,6 +38,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
       </Link>
 
       <div className="flex items-center gap-6">
+
 
         {user && (
           <>
@@ -112,69 +64,6 @@ const Navbar = ({ darkMode, toggleTheme }) => {
               </Link>
             )}
           </>
-        )}
-
-        {/* Bell Icon Dropdown (Logged in users only) */}
-        {user && (
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={handleBellClick}
-              className="bg-white/80 dark:bg-white/5 backdrop-blur border border-beach-teal/10 dark:border-white/15 rounded-xl p-2 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer flex items-center justify-center dark:hover:border-white/30 dark:hover:bg-white/10 relative"
-              title="Recent Announcements"
-            >
-              <Bell size={18} className="text-beach-teal dark:text-slate-300" />
-              {hasUnread && (
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7c3aed] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#7c3aed]"></span>
-                </span>
-              )}
-            </button>
-
-            {/* Dropdown Menu (No glassmorphism) */}
-            {isOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl z-50 overflow-hidden text-left">
-                <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
-                  <span className="text-xs font-bold text-beach-teal-dark dark:text-white uppercase tracking-wider">
-                    Recent Updates
-                  </span>
-                  <span className="bg-[#7c3aed]/10 text-[#7c3aed] dark:text-[#a78bfa] text-[10px] px-2 py-0.5 rounded-full font-bold">
-                    {announcements.length} New
-                  </span>
-                </div>
-
-                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
-                  {announcements.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-slate-400 dark:text-slate-500 italic font-medium">
-                      No announcements yet.
-                    </div>
-                  ) : (
-                    announcements.map((ann) => (
-                      <div 
-                        key={ann.id || ann._id} 
-                        className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition duration-150"
-                      >
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="text-[9px] font-bold text-[#7c3aed] dark:text-[#a78bfa] uppercase tracking-wider bg-[#7c3aed]/5 px-2 py-0.5 rounded">
-                            {ann.domain}
-                          </span>
-                          <span className="text-[9px] text-slate-400 font-semibold shrink-0">
-                            {new Date(ann.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <h4 className="font-bold text-xs text-slate-800 dark:text-white mt-1">
-                          {ann.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-normal font-medium whitespace-pre-wrap">
-                          {ann.content}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
         )}
 
         <button

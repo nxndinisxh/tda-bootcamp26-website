@@ -82,13 +82,94 @@ function StatPill({ value, label, suffix = '', duration = 1400 }) {
   );
 }
 
+function getGreeting(name) {
+  const hr = new Date().getHours();
+  let greet = "Hello";
+  if (hr < 12) greet = "Good morning";
+  else if (hr < 17) greet = "Good afternoon";
+  else greet = "Good evening";
+  
+  return `${greet}, ${name || 'Builder'}! 👋`;
+}
+
+function ProgressSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="border border-beach-teal/10 rounded-xl p-3 bg-white/40 shadow-xxs animate-pulse">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-beach-teal/10 shrink-0" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="h-3 bg-beach-teal/10 rounded w-24" />
+                <div className="h-2.5 bg-beach-teal/10 rounded w-12" />
+              </div>
+              <div className="w-full bg-beach-teal/10 rounded-full h-1.5 overflow-hidden">
+                <div className="bg-beach-teal/20 h-full w-1/3 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StandingsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2].map((i) => (
+        <div key={i} className="border border-beach-teal/10 rounded-xl p-3 bg-white/40 shadow-xxs flex items-center justify-between gap-3 animate-pulse">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-md bg-beach-teal/10 shrink-0" />
+            <div className="h-3 bg-beach-teal/10 rounded w-16" />
+          </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="space-y-1">
+              <div className="h-2 bg-beach-teal/10 rounded w-8 ml-auto" />
+              <div className="h-3 bg-beach-teal/10 rounded w-10" />
+            </div>
+            <div className="space-y-1 border-l border-beach-teal/10 pl-4">
+              <div className="h-2 bg-beach-teal/10 rounded w-8 ml-auto" />
+              <div className="h-3 bg-beach-teal/10 rounded w-10" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AnnouncementsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2].map((i) => (
+        <div key={i} className="border border-beach-teal/10 rounded-xl p-4 bg-white/40 shadow-xxs space-y-2 animate-pulse">
+          <div className="flex justify-between items-center">
+            <div className="h-2.5 bg-beach-teal/10 rounded w-16" />
+            <div className="h-2.5 bg-beach-teal/10 rounded w-12" />
+          </div>
+          <div className="h-3 bg-beach-teal/10 rounded w-1/2 mt-1.5" />
+          <div className="space-y-1.5 mt-1">
+            <div className="h-2.5 bg-beach-teal/10 rounded w-full" />
+            <div className="h-2.5 bg-beach-teal/10 rounded w-4/5" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Landing() {
   const { user } = useAuth();
   const [standings, setStandings] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [progress, setProgress] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      setIsLoading(true);
       try {
         const token = localStorage.getItem('tda_token');
 
@@ -96,19 +177,20 @@ export default function Landing() {
           Authorization: `Bearer ${token}`
         };
 
-        const standingsRes = await fetch(
-          '/api/dashboard/standings',
-          { headers }
-        );
-
-        const progressRes = await fetch(
-          '/api/dashboard/progress',
-          { headers }
-        );
+        const [standingsRes, announcementsRes, progressRes] = await Promise.all([
+          fetch('/api/dashboard/standings', { headers }),
+          fetch('/api/dashboard/announcements', { headers }),
+          fetch('/api/dashboard/progress', { headers })
+        ]);
 
         if (standingsRes.ok) {
           const standingsData = await standingsRes.json();
           setStandings(standingsData.standings || []);
+        }
+
+        if (announcementsRes.ok) {
+          const announcementsData = await announcementsRes.json();
+          setAnnouncements(announcementsData || []);
         }
 
         if (progressRes.ok) {
@@ -117,13 +199,18 @@ export default function Landing() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     if (user) {
       fetchDashboardData();
+    } else {
+      setIsLoading(false);
     }
   }, [user]);
+
   const displayedDomains = DOMAIN_DETAILS.filter((d) =>
     !user ? true : user.domains?.includes(d.name)
   );
@@ -131,7 +218,6 @@ export default function Landing() {
   return (
     <div className="flex flex-col gap-0 relative overflow-x-hidden">
 
-      {/* ── HERO ────────────────────────────────────────────── */}
       {/* ── HERO ────────────────────────────────────────────── */}
       {!user && (
         <section className="relative flex flex-col items-center justify-center text-center pt-20 pb-16 px-6 min-h-[52vh]">
@@ -152,7 +238,7 @@ export default function Landing() {
             TDA Bootcamp '26
           </span>
 
-          {/* Headline — tight & impactful */}
+          {/* Headline */}
           <h1
             className="text-[clamp(2.4rem,6vw,4.5rem)] font-black leading-[1.04] tracking-tighter text-beach-teal-dark max-w-3xl"
             style={{ animation: 'fadeUp 0.55s 0.08s ease both' }}
@@ -207,17 +293,36 @@ export default function Landing() {
           </div>
         </section>
       )}
+
+      {/* ── LOGGED-IN DASHBOARD ──────────────────────────────── */}
       {user && (
         <section className="max-w-6xl mx-auto w-full px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {/* PROGRESS OVERVIEW (Left Panel) */}
+          {/* Greeting Banner — no mascot, no description */}
+          <div className="relative mb-8 bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl px-6 py-5 shadow-sm overflow-hidden">
+            <div className="absolute top-0 right-0 -z-10 w-72 h-72 bg-gradient-to-br from-[#7c3aed]/10 to-[#a78bfa]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 left-10 -z-10 w-48 h-48 bg-gradient-to-tr from-[#6d28d9]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-extrabold tracking-wider uppercase text-beach-coral bg-[#6d28d9]/10 px-3 py-1 rounded-full mb-2">
+              Dashboard Overview
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-black text-beach-teal-dark tracking-tight">
+              {getGreeting(user.name)}
+            </h2>
+          </div>
+
+          {/* ROW 1: Progress Overview + My Standings — equal height, side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+            {/* PROGRESS OVERVIEW */}
             <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6 shadow-sm">
               <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
                 Progress Overview
               </p>
-              <div className="space-y-4">
-                {progress.length === 0 ? (
+              <div className="space-y-3">
+                {isLoading ? (
+                  <ProgressSkeleton />
+                ) : progress.length === 0 ? (
                   <p className="text-beach-teal/50 text-xs italic font-semibold">
                     No progress data available.
                   </p>
@@ -230,30 +335,28 @@ export default function Landing() {
                       <Link
                         key={item.domain}
                         to={`/domains/${encodeURIComponent(item.domain)}`}
-                        className="block border border-beach-teal/10 rounded-2xl p-4 bg-white/40 hover:bg-white/60 hover:border-beach-teal/20 transition-all duration-200 shadow-xxs cursor-pointer"
+                        className="block border border-beach-teal/10 rounded-xl p-3 bg-white/40 hover:bg-white/60 hover:border-beach-teal/20 transition-all duration-200 shadow-xxs cursor-pointer"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white shrink-0`}>
-                              <Icon size={15} />
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                              <Icon size={14} />
                             </div>
-                            <span className="font-black text-beach-teal-dark text-sm">{item.domain}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-bold text-beach-teal-dark text-xs sm:text-sm truncate">{item.domain}</span>
+                                <span className="text-[10px] font-semibold text-beach-teal/70 shrink-0">
+                                  {item.completed}/{item.total} ({item.percentage}%)
+                                </span>
+                              </div>
+                              <div className="w-full bg-beach-teal/10 rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className={`bg-gradient-to-r ${gradient} h-full rounded-full transition-all duration-500`}
+                                  style={{ width: `${item.percentage}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <span className="text-xxs font-bold text-beach-teal/70">
-                            {item.completed}/{item.total} Resources
-                          </span>
-                        </div>
-                        
-                        {/* Progress Bar Container */}
-                        <div className="w-full bg-beach-teal/10 rounded-full h-2 overflow-hidden">
-                          <div 
-                            className={`bg-gradient-to-r ${gradient} h-full rounded-full transition-all duration-500`}
-                            style={{ width: `${item.percentage}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between items-center mt-1.5">
-                          <span className="text-[9px] text-beach-teal/40 font-semibold uppercase tracking-wider">Completion</span>
-                          <span className="text-xs font-extrabold text-beach-teal-dark">{item.percentage}%</span>
                         </div>
                       </Link>
                     );
@@ -262,73 +365,98 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* STANDING & RECENT UPDATES (Right Panel Stacked) */}
-            <div className="space-y-6">
-              
-              {/* MY STANDINGS */}
-              <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6 shadow-sm">
-                <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
-                  My Standings
-                </p>
-
-                <div className="space-y-3">
-                  {standings.length === 0 ? (
-                    <p className="text-beach-teal/50 text-xs italic font-semibold">
-                      No standings available.
-                    </p>
-                  ) : (
-                    standings.map((item) => {
-                      const details = DOMAIN_DETAILS.find(d => d.name === item.domain) || {};
-                      const gradient = details.gradient || 'from-beach-teal to-beach-teal-light';
-                      return (
-                        <div
-                          key={item.domain}
-                          className="border border-beach-teal/10 rounded-2xl p-4 bg-white/40 shadow-xxs"
-                        >
-                          <h3 className="font-black text-beach-teal-dark text-sm mb-2">
-                            {item.domain}
-                          </h3>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-beach-teal/5 rounded-xl p-2.5 text-center border border-beach-teal/5">
-                              <p className="text-[9px] text-beach-teal/50 font-bold uppercase tracking-wider">
-                                Weekly Rank
-                              </p>
-                              <p className={`text-xl font-black bg-gradient-to-br ${gradient} bg-clip-text text-transparent mt-1`}>
-                                {item.weeklyRank ? `#${item.weeklyRank}` : '-'}
-                              </p>
-                              {item.weeklyRank && (
-                                <p className="text-[8px] text-beach-teal/45 mt-0.5 font-medium">
-                                  Score: {item.weeklyScore} (W{item.latestWeek})
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="bg-beach-teal/5 rounded-xl p-2.5 text-center border border-beach-teal/5">
-                              <p className="text-[9px] text-beach-teal/50 font-bold uppercase tracking-wider">
-                                Overall Rank
-                              </p>
-                              <p className={`text-xl font-black bg-gradient-to-br ${gradient} bg-clip-text text-transparent mt-1`}>
-                                {item.overallRank ? `#${item.overallRank}` : '-'}
-                              </p>
-                              {item.overallRank && (
-                                <p className="text-[8px] text-beach-teal/45 mt-0.5 font-medium">
-                                  Score: {item.overallScore}
-                                </p>
-                              )}
-                            </div>
+            {/* MY STANDINGS */}
+            <div className="bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6 shadow-sm">
+              <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
+                My Standings
+              </p>
+              <div className="space-y-3">
+                {isLoading ? (
+                  <StandingsSkeleton />
+                ) : standings.length === 0 ? (
+                  <p className="text-beach-teal/50 text-xs italic font-semibold">
+                    No standings available.
+                  </p>
+                ) : (
+                  standings.map((item) => {
+                    const details = DOMAIN_DETAILS.find(d => d.name === item.domain) || {};
+                    const gradient = details.gradient || 'from-beach-teal to-beach-teal-light';
+                    const Icon = details.icon || Code;
+                    return (
+                      <div
+                        key={item.domain}
+                        className="border border-beach-teal/10 rounded-xl p-3 bg-white/40 shadow-xxs flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-7 h-7 rounded-md bg-gradient-to-br ${gradient} flex items-center justify-center text-white shrink-0 shadow-sm`}>
+                            <Icon size={13} />
+                          </div>
+                          <span className="font-bold text-beach-teal-dark text-xs sm:text-sm truncate">{item.domain}</span>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className="text-right">
+                            <span className="block text-[8px] text-beach-teal/50 font-bold uppercase tracking-wider leading-none">Weekly</span>
+                            <span className={`text-sm font-black bg-gradient-to-br ${gradient} bg-clip-text text-transparent`}>
+                              {item.weeklyRank ? `#${item.weeklyRank}` : '-'}
+                            </span>
+                            {item.weeklyRank && (
+                              <span className="text-[9px] text-beach-teal/60 ml-1 font-semibold">({item.weeklyScore} pts)</span>
+                            )}
+                          </div>
+                          <div className="text-right border-l border-beach-teal/10 pl-4">
+                            <span className="block text-[8px] text-beach-teal/50 font-bold uppercase tracking-wider leading-none">Overall</span>
+                            <span className={`text-sm font-black bg-gradient-to-br ${gradient} bg-clip-text text-transparent`}>
+                              {item.overallRank ? `#${item.overallRank}` : '-'}
+                            </span>
+                            {item.overallRank && (
+                              <span className="text-[9px] text-beach-teal/60 ml-1 font-semibold">({item.overallScore} pts)</span>
+                            )}
                           </div>
                         </div>
-                      );
-                    })
-                  )}
-                </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
-
-              {/* MY STANDINGS ONLY (RECENT UPDATES REMOVED) */}
-
             </div>
+          </div>
 
+          {/* ROW 2: Recent Updates — full width */}
+          <div className="mt-6 bg-white/60 backdrop-blur-sm border border-white/80 rounded-3xl p-6 shadow-sm">
+            <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-4">
+              Recent Updates
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {isLoading ? (
+                <div className="col-span-full"><AnnouncementsSkeleton /></div>
+              ) : announcements.length === 0 ? (
+                <p className="col-span-full text-beach-teal/50 text-xs italic font-semibold">
+                  No announcements yet.
+                </p>
+              ) : (
+                announcements.map((announcement) => (
+                  <div
+                    key={announcement.id}
+                    className="border border-beach-teal/10 rounded-xl p-4 bg-white/40 shadow-xxs"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-xxs font-bold text-beach-coral">
+                        {announcement.domain}
+                      </span>
+                      <span className="text-[10px] text-beach-teal/40 font-semibold">
+                        {new Date(announcement.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-xs text-beach-teal-dark mt-1.5">
+                      {announcement.title}
+                    </h4>
+                    <p className="text-xs text-beach-teal/70 mt-1 leading-relaxed font-semibold">
+                      {announcement.content}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -341,7 +469,6 @@ export default function Landing() {
       {/* ── DOMAINS ──────────────────────────────────────────── */}
       {!user && (
         <section className="py-16 px-4 max-w-6xl mx-auto w-full">
-
           <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
               <p className="text-[11px] font-bold tracking-[0.16em] uppercase text-beach-coral mb-1">Learning Tracks</p>
@@ -366,7 +493,6 @@ export default function Landing() {
                     animationDelay: `${i * 90}ms`,
                   }}
                 >
-                  {/* Left: icon + text */}
                   <div className="flex items-center gap-4 min-w-0">
                     <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${domain.gradient} flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform duration-300`}>
                       <Icon size={18} />

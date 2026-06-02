@@ -17,7 +17,7 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
   try {
     // Sort resources by order ascending, then by createdAt ascending
     const domainResources = await Resource.find({ domain }).sort({ order: 1, createdAt: 1 });
-    
+
     // Fetch week lock definitions for this domain
     const locks = await WeekLock.find({ domain });
     const lockMap = {};
@@ -71,17 +71,21 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
 // Add resource
 router.post('/:domain/resources', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain } = req.params;
-  const { title, description, link, week, order, links } = req.body;
+  const { title, description, link, links, week, order } = req.body;
 
-  let finalLinks = [];
-  if (links && Array.isArray(links) && links.length > 0) {
-    finalLinks = links.filter(l => l.title && l.url);
-  } else if (link) {
-    finalLinks = [{ title: 'Access Resource', url: link }];
+  // Accept either a links array or a single link string
+  const resolvedLinks = Array.isArray(links) && links.length > 0
+    ? links.filter(l => l && l.url)
+    : link
+      ? [{ label: 'Resource', url: link }]
+      : [];
+
+  if (!title || !week) {
+    return res.status(400).json({ message: 'Title and week are required.' });
   }
 
-  if (!title || finalLinks.length === 0 || !week) {
-    return res.status(400).json({ message: 'Title, week, and at least one link are required.' });
+  if (resolvedLinks.length === 0) {
+    return res.status(400).json({ message: 'At least one link is required.' });
   }
 
   try {
@@ -91,8 +95,8 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
       domain,
       title,
       description: description || '',
-      link: firstLink,
-      links: finalLinks,
+      link: resolvedLinks[0]?.url || '',
+      links: resolvedLinks,
       week,
       order: Number(order) || 0,
       createdAt: new Date().toISOString()
@@ -100,13 +104,15 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 
     res.status(201).json(newResource);
   } catch (error) {
+    console.error('Failed to add resource:', error);
     res.status(500).json({ message: 'Failed to add resource.' });
   }
 });
 
 // Update resource
 router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
-  const { title, description, link, week, order, links } = req.body;
+  const { id } = req.params;
+  const { title, description, link, links, week, order } = req.body;
 
   try {
     const updateData = {};
@@ -115,15 +121,14 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
     if (week) updateData.week = week;
     if (order !== undefined) updateData.order = Number(order) || 0;
 
-    if (links && Array.isArray(links)) {
-      const finalLinks = links.filter(l => l.title && l.url);
-      if (finalLinks.length > 0) {
-        updateData.links = finalLinks;
-        updateData.link = finalLinks[0].url;
-      }
+    // Handle links array
+    if (Array.isArray(links)) {
+      const resolvedLinks = links.filter(l => l && l.url);
+      updateData.links = resolvedLinks;
+      updateData.link = resolvedLinks[0]?.url || '';
     } else if (link) {
       updateData.link = link;
-      updateData.links = [{ title: 'Access Resource', url: link }];
+      updateData.links = [{ label: 'Resource', url: link }];
     }
 
     const updated = await Resource.findOneAndUpdate(
@@ -138,6 +143,7 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
 
     res.json(updated);
   } catch (error) {
+    console.error('Failed to update resource:', error);
     res.status(500).json({ message: 'Failed to update resource.' });
   }
 });
