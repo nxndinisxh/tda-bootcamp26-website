@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@clerk/backend": "^3.4.13",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
