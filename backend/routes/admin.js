@@ -155,29 +155,23 @@ router.post('/leaderboards/weekly', authenticateToken, csvUpload.single('csvFile
         leaderboardType: 'weekly',
         weekNumber: parsedWeek,
         score: scoreNum,
+        rank: rankNum, // Keep CSV rank!
         originalIndex: i,
         uploadedAt: new Date()
       });
       uploadedCount++;
     }
 
-    // Sort documents by score descending, preserving original CSV order for ties
+    // Sort documents by rank ascending, preserving original CSV order if ranks are equal
     documents.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
+      if (a.rank !== b.rank) {
+        return a.rank - b.rank;
       }
       return a.originalIndex - b.originalIndex;
     });
 
-    // Calculate dense ranks
-    let currentRank = 0;
-    let currentScore = -1;
+    // Clean up originalIndex
     for (let i = 0; i < documents.length; i++) {
-      if (documents[i].score !== currentScore) {
-        currentRank++;
-        currentScore = documents[i].score;
-      }
-      documents[i].rank = currentRank;
       delete documents[i].originalIndex;
     }
 
@@ -288,6 +282,7 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
         domain,
         leaderboardType: 'overall',
         score: scoreNum,
+        rank: rankNum, // Keep CSV rank!
         weeklyBreakdown,
         originalIndex: i,
         uploadedAt: new Date()
@@ -295,23 +290,16 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
       uploadedCount++;
     }
 
-    // Sort documents by score descending, preserving original CSV order for ties
+    // Sort documents by rank ascending, preserving original CSV order if ranks are equal
     documents.sort((a, b) => {
-      if (b.score !== a.score) {
-        return b.score - a.score;
+      if (a.rank !== b.rank) {
+        return a.rank - b.rank;
       }
       return a.originalIndex - b.originalIndex;
     });
 
-    // Calculate dense ranks
-    let currentRank = 0;
-    let currentScore = -1;
+    // Clean up originalIndex
     for (let i = 0; i < documents.length; i++) {
-      if (documents[i].score !== currentScore) {
-        currentRank++;
-        currentScore = documents[i].score;
-      }
-      documents[i].rank = currentRank;
       delete documents[i].originalIndex;
     }
 
