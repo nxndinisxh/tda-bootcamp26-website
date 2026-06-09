@@ -74,6 +74,28 @@ const WEEK_TITLES = {
   }
 };
 
+const DOMAIN_GROUPS = [
+  ['DSA'],
+  ['DAV'],
+  ['ML/DL', 'AI ML', 'Machine Learning', 'Deep Learning'],
+  ['Gen & Agentic AI', 'Gen Ai'],
+  ['WebDev']
+];
+
+const getEquivalentDomains = (domain) => {
+  const group = DOMAIN_GROUPS.find(d => d.includes(domain));
+  return group || [domain];
+};
+
+const domainMatches = (leftDomain, rightDomain) => {
+  if (!leftDomain || !rightDomain) return false;
+
+  const leftGroup = getEquivalentDomains(leftDomain);
+  const rightGroup = new Set(getEquivalentDomains(rightDomain));
+
+  return leftGroup.some(domain => rightGroup.has(domain));
+};
+
 const BeachDecoration = ({ icon: Icon, className }) => (
   <span className={`text-beach-coral/30 pointer-events-none select-none absolute ${className}`}>
     <Icon size={16} />
@@ -90,7 +112,13 @@ export default function DomainPage() {
   const [expandedWeeks, setExpandedWeeks] = useState({ 'Week 1': true });
 
   const isSuperAdmin = user && user.role === 'super_admin';
-  const isAdmin = user && (user.role === 'super_admin' || (user.role === 'admin' && user.adminDomains.includes(decodedDomain)));
+  const isAdmin = user && (
+    user.role === 'super_admin' ||
+    (user.role === 'admin' && Array.isArray(user.adminDomains) && user.adminDomains.some(domain => domainMatches(domain, decodedDomain)))
+  );
+  const hasDomainAccess = !user || user.role !== 'user' || (
+    Array.isArray(user.domains) && user.domains.some(domain => domainMatches(domain, decodedDomain))
+  );
 
   const canExpandWeek = (weekLocked) => {
     if (!weekLocked) return true;          // unlocked — anyone can expand
@@ -140,12 +168,12 @@ export default function DomainPage() {
   const [annForm, setAnnForm] = useState({ title: '', content: '' });
 
   useEffect(() => {
-    if (user && user.role === 'user' && !user.domains.includes(decodedDomain)) {
+    if (user && user.role === 'user' && !hasDomainAccess) {
       navigate('/', { replace: true });
       return;
     }
     fetchDomainData();
-  }, [decodedDomain, user]);
+  }, [decodedDomain, hasDomainAccess, user]);
 
   const fetchDomainData = async () => {
     setLoading(true);

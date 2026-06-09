@@ -6,6 +6,7 @@ import Resource from '../models/Resource.js';
 import WeekLock from '../models/WeekLock.js';
 import UserProgress from '../models/UserProgress.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { getEquivalentDomains } from '../config/constants.js';
 
 const router = express.Router();
 
@@ -119,11 +120,13 @@ router.get('/progress', authenticateToken, async (req, res) => {
     const progressData = [];
 
     for (const domain of user.domains) {
+      const equivalentDomains = getEquivalentDomains(domain);
+
       // 1. Fetch all resources for this domain
-      const resources = await Resource.find({ domain });
+      const resources = await Resource.find({ domain: { $in: equivalentDomains } });
       
       // 2. Fetch locks for this domain
-      const locks = await WeekLock.find({ domain });
+      const locks = await WeekLock.find({ domain: { $in: equivalentDomains } });
       const lockMap = {};
       locks.forEach(l => {
         lockMap[l.week] = l.isLocked;

@@ -3,23 +3,28 @@ import Resource from '../models/Resource.js';
 import WeekLock from '../models/WeekLock.js';
 import UserProgress from '../models/UserProgress.js';
 import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
+import { getEquivalentDomains, normalizeDomain, domainMatches } from '../config/constants.js';
 
 const router = express.Router();
 
 // Get domain resources
 router.get('/:domain/resources', authenticateToken, async (req, res) => {
   const { domain } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
+  const hasUserAccess =
+    req.user.role !== 'user' ||
+    (Array.isArray(req.user.domains) && req.user.domains.some(userDomain => domainMatches(userDomain, domain)));
 
-  if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
+  if (!hasUserAccess) {
     return res.status(403).json({ message: `Access denied. You are not registered for the ${domain} domain.` });
   }
 
   try {
     // Sort resources by order ascending, then by createdAt ascending
-    const domainResources = await Resource.find({ domain }).sort({ order: 1, createdAt: 1 });
+    const domainResources = await Resource.find({ domain: { $in: equivalentDomains } }).sort({ order: 1, createdAt: 1 });
     
     // Fetch week lock definitions for this domain
-    const locks = await WeekLock.find({ domain });
+    const locks = await WeekLock.find({ domain: { $in: equivalentDomains } });
     const lockMap = {};
     locks.forEach(l => {
       lockMap[l.week] = l.isLocked;
@@ -31,7 +36,11 @@ router.get('/:domain/resources', authenticateToken, async (req, res) => {
       progressList.filter(p => p.completed).map(p => p.resourceId)
     );
 
-    const isUserAdmin = req.user.role === 'super_admin' || (req.user.role === 'admin' && req.user.adminDomains.includes(domain));
+    const isUserAdmin = req.user.role === 'super_admin' || (
+      req.user.role === 'admin' &&
+      Array.isArray(req.user.adminDomains) &&
+      req.user.adminDomains.some(adminDomain => domainMatches(adminDomain, domain))
+    );
 
     // Map progress and mask locked resources if user is a normal student
     const processedResources = domainResources.map(res => {
@@ -83,8 +92,8 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 
   try {
     const newResource = await Resource.create({
-      id: `res_${Date.now()}`,
-      domain,
+      id: `res_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      domain: normalizeDomain(domain),
       title,
       description: description || '',
       link: resolvedLinks[0]?.url || '',
@@ -104,6 +113,8 @@ router.post('/:domain/resources', authenticateToken, requireDomainAccess(), asyn
 // Update resource
 router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { id } = req.params;
+  const { domain } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
   const { title, description, link, links, week, order } = req.body;
 
   try {
@@ -112,6 +123,7 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
     if (description !== undefined) updateData.description = description;
     if (week) updateData.week = week;
     if (order !== undefined) updateData.order = Number(order) || 0;
+    updateData.domain = normalizeDomain(domain);
 
     // Handle links array
     if (Array.isArray(links)) {
@@ -124,7 +136,7 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
     }
 
     const updated = await Resource.findOneAndUpdate(
-      { id },
+      { id, domain: { $in: equivalentDomains } },
       { $set: updateData },
       { new: true }
     );
@@ -142,10 +154,11 @@ router.put('/:domain/resources/:id', authenticateToken, requireDomainAccess(), a
 
 // Delete resource
 router.delete('/:domain/resources/:id', authenticateToken, requireDomainAccess(), async (req, res) => {
-  const { id } = req.params;
+  const { id, domain } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
 
   try {
-    const deleted = await Resource.findOneAndDelete({ id });
+    const deleted = await Resource.findOneAndDelete({ id, domain: { $in: equivalentDomains } });
 
     if (!deleted) {
       return res.status(404).json({ message: 'Resource not found' });
@@ -160,6 +173,7 @@ router.delete('/:domain/resources/:id', authenticateToken, requireDomainAccess()
 // Toggle week lock status
 router.put('/:domain/weeks/:week/lock', authenticateToken, requireDomainAccess(), async (req, res) => {
   const { domain, week } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
   const { isLocked } = req.body;
 
   if (isLocked === undefined) {
@@ -168,8 +182,8 @@ router.put('/:domain/weeks/:week/lock', authenticateToken, requireDomainAccess()
 
   try {
     const lock = await WeekLock.findOneAndUpdate(
-      { domain, week },
-      { $set: { isLocked: Boolean(isLocked) } },
+      { domain: { $in: equivalentDomains }, week },
+      { $set: { domain: normalizeDomain(domain), isLocked: Boolean(isLocked) } },
       { upsert: true, new: true }
     );
     res.json({ message: 'Week lock status updated successfully.', lock });
@@ -182,27 +196,35 @@ router.put('/:domain/weeks/:week/lock', authenticateToken, requireDomainAccess()
 // Toggle resource completion progress
 router.put('/:domain/resources/:id/progress', authenticateToken, async (req, res) => {
   const { domain, id } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
   const { completed } = req.body;
 
   if (completed === undefined) {
     return res.status(400).json({ message: 'completed field is required.' });
   }
 
-  if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
+  if (
+    req.user.role === 'user' &&
+    (!Array.isArray(req.user.domains) || !req.user.domains.some(userDomain => domainMatches(userDomain, domain)))
+  ) {
     return res.status(403).json({ message: `Access denied. You are not registered for the ${domain} domain.` });
   }
 
   try {
     // Find the resource
-    const resource = await Resource.findOne({ id, domain });
+    const resource = await Resource.findOne({ id, domain: { $in: equivalentDomains } });
     if (!resource) {
       return res.status(404).json({ message: 'Resource not found in this domain.' });
     }
 
     // Verify if week is locked
-    const lock = await WeekLock.findOne({ domain, week: resource.week });
+    const lock = await WeekLock.findOne({ domain: { $in: getEquivalentDomains(resource.domain) }, week: resource.week });
     const isWeekLocked = lock ? lock.isLocked : true;
-    const isUserAdmin = req.user.role === 'super_admin' || (req.user.role === 'admin' && req.user.adminDomains.includes(domain));
+    const isUserAdmin = req.user.role === 'super_admin' || (
+      req.user.role === 'admin' &&
+      Array.isArray(req.user.adminDomains) &&
+      req.user.adminDomains.some(adminDomain => domainMatches(adminDomain, domain))
+    );
     if (isWeekLocked && !isUserAdmin) {
       return res.status(403).json({ message: 'Cannot mark resource as completed in a locked week.' });
     }
