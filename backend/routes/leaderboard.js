@@ -49,11 +49,9 @@ const getOverallLeaderboard = async (domain) => {
 
       let currentRank = 0;
       let currentScore = -1;
-      let count = 0;
       entries = sorted.map((entry) => {
-        count++;
         if (entry.score !== currentScore) {
-          currentRank = count;
+          currentRank++;
           currentScore = entry.score;
         }
         return {

@@ -108,6 +108,7 @@ router.post('/leaderboards/weekly', authenticateToken, csvUpload.single('csvFile
       const rankVal = row['rank'];
       const regNoVal = row['reg no'] || row['regno'] || row['registration number'];
       const pointsVal = row['points'] || row['score'] || row['total'];
+      const nameVal = row['name'] || row['participant'] || row['student name'] || row['student_name'];
 
       if (!rankVal || !regNoVal || pointsVal === undefined) {
         errors.push(`Row ${i + 2}: Missing required fields (Rank, Reg no, or Points).`);
@@ -126,9 +127,14 @@ router.post('/leaderboards/weekly', authenticateToken, csvUpload.single('csvFile
       }
 
       // Verify User Exists
-      const user = await User.findOne({ id: normalizedRegNo });
+      let user = await User.findOne({ id: normalizedRegNo });
+      if (!user && nameVal) {
+        const trimmedName = String(nameVal).trim();
+        user = await User.findOne({ name: { $regex: new RegExp('^' + trimmedName + '$', 'i') } });
+      }
+
       if (!user) {
-        errors.push(`Row ${i + 2}: Student with Reg no '${originalRegNo}' not found in database.`);
+        errors.push(`Row ${i + 2}: Student with Reg no '${originalRegNo}'${nameVal ? ` or Name '${nameVal}'` : ''} not found in database.`);
         skippedCount++;
         continue;
       }
@@ -149,10 +155,24 @@ router.post('/leaderboards/weekly', authenticateToken, csvUpload.single('csvFile
         leaderboardType: 'weekly',
         weekNumber: parsedWeek,
         score: scoreNum,
-        rank: rankNum,
+        rank: rankNum, // Keep CSV rank!
+        originalIndex: i,
         uploadedAt: new Date()
       });
       uploadedCount++;
+    }
+
+    // Sort documents by rank ascending, preserving original CSV order if ranks are equal
+    documents.sort((a, b) => {
+      if (a.rank !== b.rank) {
+        return a.rank - b.rank;
+      }
+      return a.originalIndex - b.originalIndex;
+    });
+
+    // Clean up originalIndex
+    for (let i = 0; i < documents.length; i++) {
+      delete documents[i].originalIndex;
     }
 
     // Delete existing weekly data for this week and domain
@@ -203,6 +223,7 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
       const rankVal = row['rank'];
       const regNoVal = row['reg no'] || row['regno'] || row['registration number'];
       const totalVal = row['total'] || row['points'] || row['score'];
+      const nameVal = row['name'] || row['participant'] || row['student name'] || row['student_name'];
 
       if (!rankVal || !regNoVal || totalVal === undefined) {
         errors.push(`Row ${i + 2}: Missing required fields (Rank, Reg no, or Total).`);
@@ -221,9 +242,14 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
       }
 
       // Verify User Exists
-      const user = await User.findOne({ id: normalizedRegNo });
+      let user = await User.findOne({ id: normalizedRegNo });
+      if (!user && nameVal) {
+        const trimmedName = String(nameVal).trim();
+        user = await User.findOne({ name: { $regex: new RegExp('^' + trimmedName + '$', 'i') } });
+      }
+
       if (!user) {
-        errors.push(`Row ${i + 2}: Student with Reg no '${originalRegNo}' not found in database.`);
+        errors.push(`Row ${i + 2}: Student with Reg no '${originalRegNo}'${nameVal ? ` or Name '${nameVal}'` : ''} not found in database.`);
         skippedCount++;
         continue;
       }
@@ -256,11 +282,25 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
         domain,
         leaderboardType: 'overall',
         score: scoreNum,
+        rank: rankNum, // Keep CSV rank!
         weeklyBreakdown,
-        rank: rankNum,
+        originalIndex: i,
         uploadedAt: new Date()
       });
       uploadedCount++;
+    }
+
+    // Sort documents by rank ascending, preserving original CSV order if ranks are equal
+    documents.sort((a, b) => {
+      if (a.rank !== b.rank) {
+        return a.rank - b.rank;
+      }
+      return a.originalIndex - b.originalIndex;
+    });
+
+    // Clean up originalIndex
+    for (let i = 0; i < documents.length; i++) {
+      delete documents[i].originalIndex;
     }
 
     // Delete existing overall data for that domain
