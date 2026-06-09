@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { domainMatches } from '../config/constants.js';
 
 // JWT Authentication Middleware
 export const authenticateToken = (req, res, next) => {
@@ -43,7 +44,11 @@ export const requireDomainAccess = (getDomainParam = (req) => req.params.domain)
     }
 
     // Domain Admin must have access to this specific domain
-    if (req.user.role === 'admin' && req.user.adminDomains && req.user.adminDomains.includes(domain)) {
+    if (
+      req.user.role === 'admin' &&
+      Array.isArray(req.user.adminDomains) &&
+      req.user.adminDomains.some(adminDomain => domainMatches(adminDomain, domain))
+    ) {
       return next();
     }
 
