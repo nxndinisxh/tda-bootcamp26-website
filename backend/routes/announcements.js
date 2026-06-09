@@ -1,19 +1,25 @@
 import express from 'express';
 import Announcement from '../models/Announcement.js';
 import { authenticateToken, requireDomainAccess } from '../middleware/auth.js';
+import { getEquivalentDomains, normalizeDomain, domainMatches } from '../config/constants.js';
 
 const router = express.Router();
 
 // Get domain announcements
 router.get('/:domain/announcements', authenticateToken, async (req, res) => {
   const { domain } = req.params;
+  const equivalentDomains = getEquivalentDomains(domain);
 
-  if (req.user.role === 'user' && !req.user.domains.includes(domain)) {
+  const hasUserAccess =
+    req.user.role !== 'user' ||
+    (Array.isArray(req.user.domains) && req.user.domains.some(userDomain => domainMatches(userDomain, domain)));
+
+  if (!hasUserAccess) {
     return res.status(403).json({ message: `Access denied. You are not registered for the ${domain} domain.` });
   }
 
   try {
-    const domainAnnouncements = await Announcement.find({ domain }).sort({ date: -1 });
+    const domainAnnouncements = await Announcement.find({ domain: { $in: equivalentDomains } }).sort({ date: -1 });
     res.json(domainAnnouncements);
   } catch (error) {
     res.status(500).json({ message: 'Failed to load announcements.' });
@@ -32,7 +38,7 @@ router.post('/:domain/announcements', authenticateToken, requireDomainAccess(), 
   try {
     const newAnnouncement = await Announcement.create({
       id: `ann_${Date.now()}`,
-      domain,
+      domain: normalizeDomain(domain),
       title,
       content,
       date: new Date().toISOString(),
@@ -50,7 +56,7 @@ router.delete('/:domain/announcements/:id', authenticateToken, requireDomainAcce
   const { id } = req.params;
 
   try {
-    const deleted = await Announcement.findOneAndDelete({ id });
+    const deleted = await Announcement.findOneAndDelete({ id, domain: { $in: getEquivalentDomains(req.params.domain) } });
 
     if (!deleted) {
       return res.status(404).json({ message: 'Announcement not found' });
