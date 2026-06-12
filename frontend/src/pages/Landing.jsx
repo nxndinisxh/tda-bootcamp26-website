@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toTitleCase } from '../utils/string';
 import { Code, Brain, Globe, BarChart2, Shield, ArrowRight, Moon, Sun } from 'lucide-react';
 
 const DOMAIN_DETAILS = [
@@ -307,7 +308,7 @@ export default function Landing() {
               Dashboard Overview
             </span>
             <h2 className="text-2xl sm:text-3xl font-black text-beach-teal-dark tracking-tight">
-              {getGreeting(user.name)}
+              {getGreeting(toTitleCase(user.name))}
             </h2>
           </div>
 

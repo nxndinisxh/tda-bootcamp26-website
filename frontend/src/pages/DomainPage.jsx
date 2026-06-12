@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { toTitleCase } from '../utils/string';
 import { 
   BookOpen, 
   Megaphone, 
@@ -883,9 +884,9 @@ export default function DomainPage() {
                                 {entry.rank}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 font-bold truncate max-w-[110px] flex items-center gap-1.5">
-                              <User size={12} className={isCurrentUser ? 'text-beach-teal' : 'text-beach-teal/50'} />
-                              <span>{entry.userName}</span>
+                            <td className="py-2.5 px-3 font-bold flex items-center gap-1.5">
+                              <User size={12} className={`shrink-0 ${isCurrentUser ? 'text-beach-teal' : 'text-beach-teal/50'}`} />
+                              <span className="truncate max-w-[110px]">{toTitleCase(entry.userName)}</span>
                             </td>
                             <td className="py-2.5 px-3 text-right font-extrabold text-beach-teal-dark">
                               <span className={entry.rank <= 3 || isCurrentUser ? 'text-beach-coral' : ''}>{entry.score}</span>
@@ -904,9 +905,9 @@ export default function DomainPage() {
                                 {userLeaderboardEntry.rank}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 font-bold truncate max-w-[110px] flex items-center gap-1.5">
-                              <User size={12} className="text-beach-teal" />
-                              <span>{userLeaderboardEntry.userName}</span>
+                            <td className="py-2.5 px-3 font-bold flex items-center gap-1.5">
+                              <User size={12} className="text-beach-teal shrink-0" />
+                              <span className="truncate max-w-[110px]">{toTitleCase(userLeaderboardEntry.userName)}</span>
                             </td>
                             <td className="py-2.5 px-3 text-right font-extrabold text-beach-coral">
                               {userLeaderboardEntry.score}

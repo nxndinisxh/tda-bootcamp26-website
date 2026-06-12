@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toTitleCase } from '../utils/string';
 import { 
   Users, 
   Award, 
@@ -498,7 +499,7 @@ export default function AdminDashboard() {
                               </span>
                             </td>
                             <td className="py-3 px-4 font-bold">
-                              {entry.userName}
+                              {toTitleCase(entry.userName)}
                             </td>
                             {viewType === 'weekly' && (
                               <td className="py-3 px-4 text-beach-teal/80">
@@ -544,7 +545,7 @@ export default function AdminDashboard() {
                         <tr key={usr.id} className="hover:bg-white/40 transition">
                           {/* Name */}
                           <td className="py-4 px-6 font-bold">
-                            {usr.name}
+                            {toTitleCase(usr.name)}
                           </td>
                           
                           {/* Email */}

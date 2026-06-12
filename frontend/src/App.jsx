@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { toTitleCase } from './utils/string';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import DomainPage from './pages/DomainPage';
@@ -81,7 +82,7 @@ const Navbar = ({ darkMode, toggleTheme }) => {
         {user ? (
           <div className="flex items-center gap-4 pl-4 border-l border-beach-teal/15">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-beach-teal-dark">{user.name}</p>
+              <p className="text-sm font-bold text-beach-teal-dark">{toTitleCase(user.name)}</p>
               <p className="text-[10px] text-beach-teal/70 capitalize font-medium">{user.role.replace('_', ' ')}</p>
             </div>
             <button
