@@ -16,11 +16,17 @@ The **TDA Bootcamp '26 Portal** resolves these operational overheads. It provide
 
 ## 📸 Portal in Action
 
-### 1. Unified Student Domain Workspace
-![Student Domain Portal](./dashboard-preview.png)
+### 1. Landing Page
+![Landing Page](./landing-preview.png)
 
-### 2. Standings & Leaderboard Rankings
-![standings](./leaderboard-preview.png)
+### 2. Set New Password
+![Set New Password](./set-password-preview.png)
+
+### 3. Management Console - Score Board Grading
+![Score Board Grading](./management-scores-preview.png)
+
+### 4. Management Console - User Directory & Roles
+![User Directory and Roles](./management-console-preview.png)
 
 ---
 

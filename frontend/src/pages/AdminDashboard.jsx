@@ -11,7 +11,18 @@ import {
   ArrowRight,
   TrendingUp,
   Sun,
-  Waves
+  Waves,
+  Search,
+  Filter,
+  Plus,
+  Key,
+  Edit,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  X,
+  BookOpen
 } from 'lucide-react';
 
 const VALID_DOMAINS = ['DSA', 'DAV', 'ML/DL', 'Gen & Agentic AI', 'WebDev'];
@@ -54,6 +65,44 @@ export default function AdminDashboard() {
   const [promotionForm, setPromotionForm] = useState({
     role: 'user',
     adminDomains: []
+  });
+
+  // Search & filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+
+  // Expanded user progress details
+  const [expandedUserId, setExpandedUserId] = useState(null);
+  const [userProgressData, setUserProgressData] = useState(null);
+  const [loadingProgress, setLoadingProgress] = useState(false);
+
+  // Onboard new user modal state
+  const [showOnboardModal, setShowOnboardModal] = useState(false);
+  const [onboardForm, setOnboardForm] = useState({
+    id: '',
+    name: '',
+    email: '',
+    domains: [],
+    role: 'user',
+    adminDomains: [],
+    password: ''
+  });
+
+  // Edit user details modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    domains: []
+  });
+
+  // Reset password modal state
+  const [showResetPwdModal, setShowResetPwdModal] = useState(false);
+  const [resetPwdUserId, setResetPwdUserId] = useState(null);
+  const [resetPwdForm, setResetPwdForm] = useState({
+    password: '',
+    forceFirstLogin: true
   });
 
   const isSuperAdmin = user && user.role === 'super_admin';
@@ -179,6 +228,139 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleToggleExpand = async (userId) => {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      setUserProgressData(null);
+      return;
+    }
+    setExpandedUserId(userId);
+    setLoadingProgress(true);
+    setUserProgressData(null);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/progress`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserProgressData(data.progress);
+      } else {
+        throw new Error('Failed to load user progress.');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Could not retrieve user progress details.');
+    } finally {
+      setLoadingProgress(false);
+    }
+  };
+
+  const handleOnboardSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/admin/users/onboard', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(onboardForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to onboard user.');
+      
+      setSuccess(`User "${onboardForm.name}" onboarded successfully!`);
+      setShowOnboardModal(false);
+      setOnboardForm({
+        id: '',
+        name: '',
+        email: '',
+        domains: [],
+        role: 'user',
+        adminDomains: [],
+        password: ''
+      });
+      await fetchInitialData();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/users/${editingUser.id}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update user details.');
+      
+      setSuccess(`User details updated successfully.`);
+      setShowEditModal(false);
+      setEditingUser(null);
+      await fetchInitialData();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleResetPwdSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/users/${resetPwdUserId}/reset-password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(resetPwdForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to reset user password.');
+      
+      setSuccess(`User password updated successfully.`);
+      setShowResetPwdModal(false);
+      setResetPwdUserId(null);
+      setResetPwdForm({ password: '', forceFirstLogin: true });
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Are you absolutely sure you want to delete participant "${userName}"? This will permanently remove their record.`)) {
+      return;
+    }
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to delete user.');
+      
+      setSuccess(`User "${userName}" deleted successfully.`);
+      await fetchInitialData();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   // CSV Upload Handlers (Admins / Super Admin)
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
@@ -233,6 +415,21 @@ export default function AdminDashboard() {
       setError(err.message);
     }
   };
+
+  const filteredUsers = allUsers.filter(usr => {
+    const matchesSearch = 
+      usr.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      usr.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      usr.id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRole = 
+      roleFilter === 'all' ||
+      (roleFilter === 'user' && usr.role === 'user') ||
+      (roleFilter === 'admin' && usr.role === 'admin') ||
+      (roleFilter === 'super_admin' && usr.role === 'super_admin');
+      
+    return matchesSearch && matchesRole;
+  });
 
   return (
     <div className="space-y-8 py-4 text-beach-teal-dark">
@@ -523,125 +720,306 @@ export default function AdminDashboard() {
         {/* Users Panel (Super Admin only) */}
         {activePanel === 'users' && isSuperAdmin && (
           <div className="space-y-4">
-            <h3 className="font-bold text-base text-beach-teal-dark">Registered Student Directory</h3>
-            
+            {/* Header / Search bar & Filters */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/30 p-4 rounded-2xl border border-white/40 shadow-xs">
+              <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+                {/* Search Bar */}
+                <div className="relative flex-1">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-beach-teal/40">
+                    <Search size={16} />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by Name, Email, or Reg No..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-beach-teal/15 text-xs text-beach-teal-dark font-semibold focus:outline-none focus:border-[#7c3aed] bg-white/70 shadow-xxs placeholder-beach-teal/40"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-beach-teal/40">
+                    <Filter size={14} />
+                  </span>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="pl-8 pr-4 py-2.5 rounded-xl border border-beach-teal/15 text-xs text-beach-teal-dark font-semibold focus:outline-none focus:border-[#7c3aed] bg-white/70 shadow-xxs cursor-pointer"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="user">Participants</option>
+                    <option value="admin">Domain Heads</option>
+                    <option value="super_admin">Super Admins</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Onboard Button */}
+              <button
+                onClick={() => {
+                  setOnboardForm({ id: '', name: '', email: '', domains: [], role: 'user', adminDomains: [], password: '' });
+                  setShowOnboardModal(true);
+                }}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md shadow-[#7c3aed]/10 cursor-pointer"
+              >
+                <Plus size={14} />
+                <span>Onboard Participant</span>
+              </button>
+            </div>
+
             <div className="glass rounded-2xl border border-white/60 overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-beach-teal-light/10 border-b border-beach-teal/10 text-xxs font-bold uppercase tracking-wider text-beach-teal-dark">
-                      <th className="py-4 px-6">User</th>
-                      <th className="py-4 px-6">Email</th>
-                      <th className="py-4 px-6">Selected Tracks</th>
-                      <th className="py-4 px-6">Access Level</th>
-                      <th className="py-4 px-6 text-right">Actions</th>
+                      <th className="py-4 px-4 w-10"></th>
+                      <th className="py-4 px-4">User</th>
+                      <th className="py-4 px-4">Email</th>
+                      <th className="py-4 px-4">Selected Tracks</th>
+                      <th className="py-4 px-4">Access Level</th>
+                      <th className="py-4 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-beach-teal/5 text-xs font-semibold text-beach-teal-dark bg-white/20">
-                    {allUsers.map((usr) => {
+                    {filteredUsers.map((usr) => {
                       const isEditing = editingUserId === usr.id;
+                      const isExpanded = expandedUserId === usr.id;
                       
                       return (
-                        <tr key={usr.id} className="hover:bg-white/40 transition">
-                          {/* Name */}
-                          <td className="py-4 px-6 font-bold">
-                            {toTitleCase(usr.name)}
-                          </td>
-                          
-                          {/* Email */}
-                          <td className="py-4 px-6 text-beach-teal/80 font-mono">
-                            {usr.email}
-                          </td>
-                          
-                          {/* Selected Domains */}
-                          <td className="py-4 px-6">
-                            <div className="flex flex-wrap gap-1.5">
-                              {usr.domains.map(d => (
-                                <span key={d} className="bg-beach-teal/10 text-beach-teal border border-beach-teal/20 px-2 py-0.5 rounded-full text-xxs font-bold">
-                                  {d}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
+                        <React.Fragment key={usr.id}>
+                          <tr className="hover:bg-white/40 transition">
+                            {/* Expand arrow */}
+                            <td className="py-4 px-4 text-center w-10">
+                              <button
+                                onClick={() => handleToggleExpand(usr.id)}
+                                className="text-beach-teal/60 hover:text-[#7c3aed] transition p-1 hover:bg-white/55 rounded-lg cursor-pointer"
+                                title="View Progress Details"
+                              >
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            </td>
 
-                          {/* Access Level role badge */}
-                          <td className="py-4 px-6">
-                            {isEditing ? (
-                              <div className="flex flex-col gap-2">
-                                <select
-                                  value={promotionForm.role}
-                                  onChange={(e) => setPromotionForm({ ...promotionForm, role: e.target.value })}
-                                  className="px-2.5 py-1.5 brand-input text-beach-teal-dark text-xs focus:outline-none cursor-pointer font-bold bg-white/70"
-                                >
-                                  <option className="bg-[#f7f5f0]" value="user">Participant</option>
-                                  <option className="bg-[#f7f5f0]" value="admin">Domain Head</option>
-                                  <option className="bg-[#f7f5f0]" value="super_admin">Super Admin</option>
-                                </select>
-                                
-                                {promotionForm.role === 'admin' && (
-                                  <div className="space-y-1 bg-white/60 p-2.5 rounded border border-beach-teal/15 mt-1 shadow-xxs">
-                                    <p className="text-[10px] text-beach-teal/70 font-bold uppercase tracking-wider">Select Assigned Tracks:</p>
-                                    {VALID_DOMAINS.map(d => (
-                                      <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={promotionForm.adminDomains.includes(d)}
-                                          onChange={() => handleDomainCheckboxChange(d)}
-                                          className="accent-beach-coral"
-                                        />
-                                        <span>{d}</span>
-                                      </label>
-                                    ))}
+                            {/* Name */}
+                            <td className="py-4 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-sm text-beach-teal-dark">{toTitleCase(usr.name)}</span>
+                                <span className="text-[10px] text-beach-teal/55 font-mono mt-0.5">{usr.id}</span>
+                              </div>
+                            </td>
+                            
+                            {/* Email */}
+                            <td className="py-4 px-4 text-beach-teal/80 font-mono">
+                              {usr.email}
+                            </td>
+                            
+                            {/* Selected Tracks */}
+                            <td className="py-4 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                {usr.domains && usr.domains.length > 0 ? (
+                                  usr.domains.map(d => (
+                                    <span key={d} className="bg-beach-teal/10 text-beach-teal border border-beach-teal/15 px-2 py-0.5 rounded-full text-xxs font-bold">
+                                      {d}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xxs text-beach-teal/40 italic">None</span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Access Level role badge */}
+                            <td className="py-4 px-4">
+                              {isEditing ? (
+                                <div className="flex flex-col gap-2">
+                                  <select
+                                    value={promotionForm.role}
+                                    onChange={(e) => setPromotionForm({ ...promotionForm, role: e.target.value })}
+                                    className="px-2.5 py-1.5 brand-input text-beach-teal-dark text-xs focus:outline-none cursor-pointer font-bold bg-white/70"
+                                  >
+                                    <option className="bg-[#f7f5f0]" value="user">Participant</option>
+                                    <option className="bg-[#f7f5f0]" value="admin">Domain Head</option>
+                                    <option className="bg-[#f7f5f0]" value="super_admin">Super Admin</option>
+                                  </select>
+                                  
+                                  {promotionForm.role === 'admin' && (
+                                    <div className="space-y-1 bg-white/60 p-2.5 rounded border border-beach-teal/15 mt-1 shadow-xxs">
+                                      <p className="text-[10px] text-beach-teal/70 font-bold uppercase tracking-wider">Select Assigned Tracks:</p>
+                                      {VALID_DOMAINS.map(d => (
+                                        <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={promotionForm.adminDomains.includes(d)}
+                                            onChange={() => handleDomainCheckboxChange(d)}
+                                            className="accent-[#7c3aed]"
+                                          />
+                                          <span>{d}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-1">
+                                  <span className={`self-start uppercase tracking-wider text-[10px] font-bold px-2.5 py-0.5 rounded-lg border ${
+                                    usr.role === 'super_admin' ? 'bg-beach-coral/15 text-beach-coral border-beach-coral/25' :
+                                    usr.role === 'admin' ? 'bg-beach-teal/15 text-beach-teal border-beach-teal/25' :
+                                    'bg-white/50 text-beach-teal/50 border-beach-teal/10'
+                                  }`}>
+                                    {usr.role.replace('_', ' ')}
+                                  </span>
+                                  {usr.role === 'admin' && usr.adminDomains && (
+                                    <span className="text-[10px] text-beach-teal/50 font-bold">
+                                      Heads: {usr.adminDomains.join(', ')}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-4 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {isEditing ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleSaveRole(usr.id)}
+                                      className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-wider px-2 py-1.5 rounded-lg transition cursor-pointer shadow-sm shadow-emerald-600/10"
+                                    >
+                                      <Check size={12} />
+                                      <span>Save</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingUserId(null)}
+                                      className="text-beach-teal hover:text-beach-coral font-bold text-[10px] uppercase tracking-wider px-2 py-1.5 rounded-lg transition cursor-pointer border border-beach-teal/10 bg-white/40"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* Edit Details */}
+                                    <button
+                                      onClick={() => {
+                                        setEditingUser(usr);
+                                        setEditForm({ name: usr.name, email: usr.email, domains: usr.domains || [] });
+                                        setShowEditModal(true);
+                                      }}
+                                      className="p-1.5 text-beach-teal hover:text-beach-coral hover:bg-white/50 rounded-lg transition cursor-pointer border border-transparent"
+                                      title="Edit Details"
+                                    >
+                                      <Edit size={14} />
+                                    </button>
+
+                                    {/* Reset Password */}
+                                    <button
+                                      onClick={() => {
+                                        setResetPwdUserId(usr.id);
+                                        setResetPwdForm({ password: '', forceFirstLogin: true });
+                                        setShowResetPwdModal(true);
+                                      }}
+                                      className="p-1.5 text-beach-teal hover:text-[#7c3aed] hover:bg-white/50 rounded-lg transition cursor-pointer border border-transparent"
+                                      title="Reset Password"
+                                    >
+                                      <Key size={14} />
+                                    </button>
+
+                                    {/* Adjust Access Level */}
+                                    <button
+                                      onClick={() => startPromotion(usr)}
+                                      className="p-1.5 text-beach-teal hover:text-beach-coral hover:bg-white/50 rounded-lg transition cursor-pointer border border-transparent"
+                                      title="Adjust Role & Access Level"
+                                    >
+                                      <UserCheck size={14} />
+                                    </button>
+
+                                    {/* Delete User */}
+                                    {usr.email !== 'admin@learner.manipal.edu' && (
+                                      <button
+                                        onClick={() => handleDeleteUser(usr.id, usr.name)}
+                                        className="p-1.5 text-beach-teal hover:text-red-500 hover:bg-white/50 rounded-lg transition cursor-pointer border border-transparent"
+                                        title="Delete Participant"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Expanded Progress details sub-row */}
+                          {isExpanded && (
+                            <tr className="bg-beach-seafoam/5">
+                              <td colSpan="6" className="py-4 px-6 border-b border-beach-teal/10">
+                                {loadingProgress ? (
+                                  <div className="flex items-center gap-2 text-xxs text-beach-teal/60 font-semibold italic animate-pulse">
+                                    <RefreshCw size={12} className="animate-spin text-beach-coral" />
+                                    <span>Fetching progress statistics...</span>
+                                  </div>
+                                ) : !userProgressData || userProgressData.length === 0 ? (
+                                  <div className="text-xxs text-beach-teal/50 italic">
+                                    No learning progress recorded for this user yet.
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    <h4 className="text-xxs font-bold uppercase tracking-wider text-beach-coral flex items-center gap-1.5">
+                                      <BookOpen size={12} />
+                                      <span>Learning Progress Profile</span>
+                                    </h4>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {userProgressData.map((prog, pidx) => (
+                                        <div key={pidx} className="bg-white/50 border border-beach-teal/10 rounded-xl p-3.5 space-y-3 shadow-xxs">
+                                          {/* Track Header */}
+                                          <div className="flex justify-between items-center">
+                                            <span className="font-bold text-xs text-beach-teal-dark">{prog.domain}</span>
+                                            <span className="text-xxs font-extrabold text-[#7c3aed] bg-[#7c3aed]/5 px-2 py-0.5 rounded-full">
+                                              {prog.completed}/{prog.total} Completed ({prog.percentage}%)
+                                            </span>
+                                          </div>
+
+                                          {/* Simple Progress Bar */}
+                                          <div className="w-full bg-beach-teal/10 rounded-full h-1.5 overflow-hidden">
+                                            <div
+                                              className="bg-[#7c3aed] h-1.5 rounded-full transition-all duration-300"
+                                              style={{ width: `${prog.percentage}%` }}
+                                            />
+                                          </div>
+
+                                          {/* Resource completions list */}
+                                          <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 text-xxs font-semibold">
+                                            {prog.resources && prog.resources.length > 0 ? (
+                                              prog.resources.map((resItem) => (
+                                                <div key={resItem.id} className="flex justify-between items-center bg-white/40 p-1.5 rounded border border-beach-teal/5">
+                                                  <span className="text-beach-teal-dark/80 line-clamp-1 flex-1 pr-2 text-left">
+                                                    [{resItem.week}] {resItem.title}
+                                                  </span>
+                                                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold ${
+                                                    resItem.completed 
+                                                      ? 'bg-emerald-600/10 text-emerald-600'
+                                                      : resItem.isLocked
+                                                        ? 'bg-beach-teal/5 text-beach-teal/40 italic'
+                                                        : 'bg-beach-coral/10 text-beach-coral'
+                                                  }`}>
+                                                    {resItem.completed ? 'Done' : resItem.isLocked ? 'Locked' : 'Pending'}
+                                                  </span>
+                                                </div>
+                                              ))
+                                            ) : (
+                                              <p className="text-[10px] text-beach-teal/40 italic">No resources added to this track yet.</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
-                              </div>
-                            ) : (
-                              <div className="flex flex-col gap-1">
-                                <span className={`self-start uppercase tracking-wider text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
-                                  usr.role === 'super_admin' ? 'bg-beach-coral/15 text-beach-coral border-beach-coral/25' :
-                                  usr.role === 'admin' ? 'bg-beach-teal/15 text-beach-teal border-beach-teal/25' :
-                                  'bg-white/50 text-beach-teal/50 border-beach-teal/10'
-                                }`}>
-                                  {usr.role.replace('_', ' ')}
-                                </span>
-                                {usr.role === 'admin' && usr.adminDomains && (
-                                  <span className="text-[10px] text-beach-teal/50 font-bold">
-                                    Heads: {usr.adminDomains.join(', ')}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-4 px-6 text-right">
-                            {isEditing ? (
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handleSaveRole(usr.id)}
-                                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer shadow-sm shadow-emerald-600/10"
-                                >
-                                  <Check size={12} />
-                                  <span>Save</span>
-                                </button>
-                                  <button
-                                  onClick={() => setEditingUserId(null)}
-                                  className="text-beach-teal hover:text-beach-coral font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer border border-beach-teal/10 bg-white/40"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => startPromotion(usr)}
-                                className="flex items-center gap-1 ml-auto bg-white/50 hover:bg-white/80 border border-beach-teal/10 text-beach-teal hover:text-beach-coral font-bold text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-lg transition cursor-pointer shadow-xxs"
-                              >
-                                <UserCheck size={12} className="text-beach-coral" />
-                                <span>Adjust Access</span>
-                              </button>
-                            )}
-                          </td>
-                        </tr>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
@@ -651,6 +1029,326 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Onboard User Modal */}
+      {showOnboardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-[#fcfbf7] border border-white/60 w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4 relative">
+            <button 
+              onClick={() => setShowOnboardModal(false)}
+              className="absolute top-4 right-4 text-beach-teal/60 hover:text-beach-coral transition p-1 hover:bg-beach-teal/10 rounded-lg cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-extrabold text-lg text-beach-teal-dark flex items-center gap-2 border-b border-beach-teal/10 pb-2.5">
+              <Plus size={18} className="text-[#7c3aed]" />
+              <span>Onboard New Participant</span>
+            </h3>
+
+            <form onSubmit={handleOnboardSubmit} className="space-y-3.5 text-xs font-semibold">
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Registration Number (ID)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 240904066"
+                  value={onboardForm.id}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, id: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Krithic C K"
+                  value={onboardForm.name}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, name: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. krithic.mitmpl2024@learner.manipal.edu"
+                  value={onboardForm.email}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, email: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Role</label>
+                <select
+                  value={onboardForm.role}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, role: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70 cursor-pointer"
+                >
+                  <option value="user">Participant</option>
+                  <option value="admin">Domain Head</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+
+              {onboardForm.role === 'admin' && (
+                <div className="bg-white/60 p-3 rounded-lg border border-beach-teal/10 space-y-1.5">
+                  <span className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Assigned Admin Tracks</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {VALID_DOMAINS.map(d => (
+                      <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={onboardForm.adminDomains.includes(d)}
+                          onChange={() => {
+                            const isChecked = onboardForm.adminDomains.includes(d);
+                            setOnboardForm({
+                              ...onboardForm,
+                              adminDomains: isChecked
+                                ? onboardForm.adminDomains.filter(item => item !== d)
+                                : [...onboardForm.adminDomains, d]
+                            });
+                          }}
+                          className="accent-[#7c3aed]"
+                        />
+                        <span>{d}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Default Password</label>
+                <input
+                  type="text"
+                  placeholder="Defaults to manipal123"
+                  value={onboardForm.password}
+                  onChange={(e) => setOnboardForm({ ...onboardForm, password: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div className="bg-white/60 p-3 rounded-lg border border-beach-teal/10 space-y-1.5">
+                <span className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Enrolled Tracks (Domains)</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {VALID_DOMAINS.map(d => (
+                    <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={onboardForm.domains.includes(d)}
+                        onChange={() => {
+                          const isChecked = onboardForm.domains.includes(d);
+                          setOnboardForm({
+                            ...onboardForm,
+                            domains: isChecked
+                              ? onboardForm.domains.filter(item => item !== d)
+                              : [...onboardForm.domains, d]
+                          });
+                        }}
+                        className="accent-[#7c3aed]"
+                      />
+                      <span>{d}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-beach-teal/10">
+                <button
+                  type="button"
+                  onClick={() => setShowOnboardModal(false)}
+                  className="px-4 py-2 border border-beach-teal/10 text-beach-teal hover:bg-beach-teal/5 font-bold text-xs rounded-xl cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition"
+                >
+                  Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-[#fcfbf7] border border-white/60 w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4 relative">
+            <button 
+              onClick={() => {
+                setShowEditModal(false);
+                setEditingUser(null);
+              }}
+              className="absolute top-4 right-4 text-beach-teal/60 hover:text-beach-coral transition p-1 hover:bg-beach-teal/10 rounded-lg cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-extrabold text-lg text-beach-teal-dark flex items-center gap-2 border-b border-beach-teal/10 pb-2.5">
+              <Edit size={18} className="text-[#7c3aed]" />
+              <span>Edit Participant Details</span>
+            </h3>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4 text-xs font-semibold">
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Registration Number (ID)</label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingUser.id}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal/40 bg-beach-teal/5 cursor-not-allowed border-beach-teal/10"
+                />
+                <span className="text-[10px] text-beach-teal/40 mt-1 block">Registration number cannot be changed once created.</span>
+              </div>
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. John Doe"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. john@learner.manipal.edu"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div className="bg-white/60 p-3 rounded-lg border border-beach-teal/10 space-y-1.5">
+                <span className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70">Enrolled Tracks (Domains)</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {VALID_DOMAINS.map(d => (
+                    <label key={d} className="flex items-center gap-1.5 text-xxs font-bold text-beach-teal-dark cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editForm.domains.includes(d)}
+                        onChange={() => {
+                          const isChecked = editForm.domains.includes(d);
+                          setEditForm({
+                            ...editForm,
+                            domains: isChecked
+                              ? editForm.domains.filter(item => item !== d)
+                              : [...editForm.domains, d]
+                          });
+                        }}
+                        className="accent-[#7c3aed]"
+                      />
+                      <span>{d}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-beach-teal/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingUser(null);
+                  }}
+                  className="px-4 py-2 border border-beach-teal/10 text-beach-teal hover:bg-beach-teal/5 font-bold text-xs rounded-xl cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {showResetPwdModal && resetPwdUserId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-[#fcfbf7] border border-white/60 w-full max-w-md rounded-2xl p-6 shadow-xl space-y-4 relative">
+            <button 
+              onClick={() => {
+                setShowResetPwdModal(false);
+                setResetPwdUserId(null);
+              }}
+              className="absolute top-4 right-4 text-beach-teal/60 hover:text-beach-coral transition p-1 hover:bg-beach-teal/10 rounded-lg cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="font-extrabold text-lg text-beach-teal-dark flex items-center gap-2 border-b border-beach-teal/10 pb-2.5">
+              <Key size={18} className="text-[#7c3aed]" />
+              <span>Reset Password</span>
+            </h3>
+
+            <form onSubmit={handleResetPwdSubmit} className="space-y-4 text-xs font-semibold">
+              <div>
+                <label className="block text-xxs font-bold uppercase tracking-wider text-beach-teal/70 mb-1.5">New Password</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter new password (e.g. manipal123)"
+                  value={resetPwdForm.password}
+                  onChange={(e) => setResetPwdForm({ ...resetPwdForm, password: e.target.value })}
+                  className="block w-full px-3 py-2 brand-input text-beach-teal-dark bg-white/70"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="forceFirstLoginCheck"
+                  checked={resetPwdForm.forceFirstLogin}
+                  onChange={(e) => setResetPwdForm({ ...resetPwdForm, forceFirstLogin: e.target.checked })}
+                  className="accent-[#7c3aed] cursor-pointer"
+                />
+                <label htmlFor="forceFirstLoginCheck" className="text-xxs font-bold text-beach-teal-dark/80 cursor-pointer">
+                  Require user to change password on next login
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-beach-teal/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowResetPwdModal(false);
+                    setResetPwdUserId(null);
+                  }}
+                  className="px-4 py-2 border border-beach-teal/10 text-beach-teal hover:bg-beach-teal/5 font-bold text-xs rounded-xl cursor-pointer transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition"
+                >
+                  Reset Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

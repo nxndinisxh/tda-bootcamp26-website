@@ -1,10 +1,14 @@
 import express from 'express';
 import { Readable } from 'stream';
 import csv from 'csv-parser';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Leaderboard from '../models/Leaderboard.js';
+import Resource from '../models/Resource.js';
+import UserProgress from '../models/UserProgress.js';
+import WeekLock from '../models/WeekLock.js';
 import csvUpload from '../middleware/csvUpload.js';
-import { VALID_DOMAINS } from '../config/constants.js';
+import { VALID_DOMAINS, getEquivalentDomains } from '../config/constants.js';
 import { authenticateToken, requireRole, requireDomainAccess } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -322,6 +326,205 @@ router.post('/leaderboards/overall', authenticateToken, csvUpload.single('csvFil
   } catch (error) {
     console.error('Overall leaderboard upload error:', error);
     res.status(500).json({ message: 'Failed to process CSV file.', error: error.message });
+  }
+});
+
+// GET user detailed progress profile
+router.get('/users/:id/progress', authenticateToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({ id });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const progressData = [];
+    for (const domain of user.domains) {
+      const equivalentDomains = getEquivalentDomains(domain);
+      
+      const resources = await Resource.find({ domain: { $in: equivalentDomains } }).sort({ week: 1, order: 1 });
+      const locks = await WeekLock.find({ domain: { $in: equivalentDomains } });
+      const lockMap = {};
+      locks.forEach(l => {
+        lockMap[l.week] = l.isLocked;
+      });
+
+      const resourceProgressList = [];
+      let completedCount = 0;
+      let totalUnlocked = 0;
+
+      for (const resItem of resources) {
+        const isLocked = lockMap[resItem.week] !== false;
+        if (!isLocked) {
+          totalUnlocked++;
+        }
+
+        const progress = await UserProgress.findOne({
+          userId: user.id,
+          resourceId: resItem.id
+        });
+
+        const isCompleted = progress ? progress.completed : false;
+        if (isCompleted && !isLocked) {
+          completedCount++;
+        }
+
+        resourceProgressList.push({
+          id: resItem.id,
+          title: resItem.title,
+          week: resItem.week,
+          isLocked,
+          completed: isCompleted
+        });
+      }
+
+      progressData.push({
+        domain,
+        completed: completedCount,
+        total: totalUnlocked,
+        percentage: totalUnlocked > 0 ? Math.round((completedCount / totalUnlocked) * 100) : 0,
+        resources: resourceProgressList
+      });
+    }
+
+    res.json({ progress: progressData });
+  } catch (error) {
+    console.error('Failed to fetch user progress:', error);
+    res.status(500).json({ message: 'Failed to fetch user progress' });
+  }
+});
+
+// Manual user creation / onboarding (Super Admin only)
+router.post('/users/onboard', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  const { id, name, email, domains, role, adminDomains, password } = req.body;
+
+  if (!id || !name || !email) {
+    return res.status(400).json({ message: 'Registration number (ID), Name, and Email are required.' });
+  }
+
+  try {
+    const existingUser = await User.findOne({ $or: [{ id: id.trim() }, { email: email.trim().toLowerCase() }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this Registration Number or Email already exists.' });
+    }
+
+    const defaultPassword = password || 'manipal123';
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(defaultPassword, salt);
+
+    const newUser = new User({
+      id: id.trim(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      passwordHash,
+      isVerified: true,
+      isFirstLogin: true,
+      domains: domains || [],
+      role: role || 'user',
+      adminDomains: role === 'admin' ? (adminDomains || []) : (role === 'super_admin' ? VALID_DOMAINS : [])
+    });
+
+    await newUser.save();
+
+    res.status(201).json({
+      message: 'User onboarded successfully.',
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        domains: newUser.domains,
+        adminDomains: newUser.adminDomains
+      }
+    });
+  } catch (error) {
+    console.error('Onboard user error:', error);
+    res.status(500).json({ message: 'Failed to onboard user.', error: error.message });
+  }
+});
+
+// Edit user profile details (Super Admin only)
+router.put('/users/:id/profile', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  const { id } = req.params;
+  const { name, email, domains } = req.body;
+
+  try {
+    const user = await User.findOne({ id });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (name) user.name = name.trim();
+    if (email) user.email = email.trim().toLowerCase();
+    if (domains) user.domains = domains;
+
+    await user.save();
+
+    res.json({
+      message: 'User profile updated successfully.',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        domains: user.domains,
+        adminDomains: user.adminDomains
+      }
+    });
+  } catch (error) {
+    console.error('Update user profile error:', error);
+    res.status(500).json({ message: 'Failed to update user profile.' });
+  }
+});
+
+// Reset user password (Super Admin only)
+router.put('/users/:id/reset-password', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  const { id } = req.params;
+  const { password, forceFirstLogin } = req.body;
+
+  try {
+    const user = await User.findOne({ id });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(password, salt);
+    }
+
+    if (forceFirstLogin !== undefined) {
+      user.isFirstLogin = forceFirstLogin;
+    }
+
+    await user.save();
+
+    res.json({ message: 'Password updated successfully.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Failed to reset password.' });
+  }
+});
+
+// Delete user account (Super Admin only)
+router.delete('/users/:id', authenticateToken, requireRole(['super_admin']), async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findOne({ id });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    if (user.email === 'admin@learner.manipal.edu') {
+      return res.status(400).json({ message: 'The primary Super Admin account cannot be deleted.' });
+    }
+
+    await User.deleteOne({ id });
+    res.json({ message: 'User deleted successfully.' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ message: 'Failed to delete user.' });
   }
 });
 
