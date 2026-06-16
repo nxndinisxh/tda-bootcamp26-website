@@ -8,10 +8,9 @@
 
 Coordinating a bootcamp for **400+ participants** across 5 learning tracks (**DSA, DAV, ML/DL, Gen & Agentic AI, and WebDev**) introduces significant administrative challenges:
 *   **Information Silos:** Distributing curriculum materials and tracking weekly locks via messaging groups becomes chaotic.
-*   **Data Integrity & Scientific Notation:** Grading cohorts using Excel spreadsheets often causes formatting corruption. When exporting data, 12-digit student IDs frequently get converted into scientific strings (e.g. `2.51e10`), rendering them unmatchable.
 *   **Registration Aliases:** Students registering with variations of domain names (like `GenAi` instead of `Gen & Agentic AI`) get missed by database queries.
 
-The **TDA Bootcamp '26 Portal** resolves these operational overheads. It provides students with a single glassmorphic dashboard to track their weekly assignments and domain progress, and offers admins a robust CSV import engine that automatically normalizes user registry aliases, resolves Excel notation issues, and preserves rankings.
+The **TDA Bootcamp '26 Portal** resolves these operational overheads. It provides students with a single glassmorphic dashboard to track their weekly assignments and domain progress, and offers admins a robust CSV import engine that automatically normalizes user registry aliases and preserves rankings.
 
 ---
 
@@ -30,7 +29,7 @@ The **TDA Bootcamp '26 Portal** resolves these operational overheads. It provide
 *   **🎓 Multi-Track Curriculum:** Structured week-by-week curriculum resources for all 5 domains.
 *   **🔒 Granular Week Lock System:** Domain heads can lock/unlock individual week contents to pace learning.
 *   **📊 Dynamic Standings:** Display of overall and weekly rankings showing the top 10 positions, highlighting the active user's position in-line or at the bottom.
-*   **⚡ Smart CSV Processor:** Upload rankings with automatic Excel scientific notation resolution, case-insensitive lookup fallbacks, and alias matching (e.g. mapping `GenAi` -> `Gen & Agentic AI`).
+*   **⚡ Smart CSV Processor:** Upload rankings with automatic case-insensitive lookup fallbacks and alias matching (e.g. mapping `GenAi` -> `Gen & Agentic AI`).
 *   **🔔 Announcement Feed:** Real-time cohort broadcast channel managed by administrators.
 
 ---
